@@ -27,13 +27,13 @@ First ensure that libzip is installed using (on an Ubuntu machine): sudo apt-get
 Then we need to obtain the RapidXml header for parsing XML files. This is downloaded from the site: http://rapidxml.sourceforge.net/
 We only need the file: 'rapidxml.hpp'. Download this file and put in the same folder as the code. To build the OpenIFS model:
 
-    g++ openifs.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
+    g++ openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
 
 (assuming boinc libraries are located in ../boinc relative to this repository)
 
 And to build on an ARM architecture machine:
 
-    g++ openifs.cpp -D_ARM -I../boinc-install/include -L../boinc-install/lib -lboinc_api -lboinc -lboinc_zip -static -pthread -lstdc++ -lm -std=c++11 -o oifs_43r3_1.00_aarch64-poky-linux
+    g++ openifs.cpp CPDN_control_code.cpp -D_ARM -I../boinc-install/include -L../boinc-install/lib -lboinc_api -lboinc -lboinc_zip -static -pthread -lstdc++ -lm -std=c++11 -o oifs_43r3_1.00_aarch64-poky-linux
 
 To compile the controller code on a Mac machine:
 
@@ -43,7 +43,7 @@ And that we have obtained the RapidXml header.
 
 Build the BOINC libraries using Xcode. Then build the controller code:
 
-    clang++ openifs.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -pthread -std=c++11 -o oifs_43r3_1.00_x86_64-apple-darwin
+    clang++ openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -pthread -std=c++11 -o oifs_43r3_1.00_x86_64-apple-darwin
 
 This will create an executable that is the app imported into the BOINC environment alongside the OpenIFS executable. Now to run this the OpenIFS ancillary files along with the OpenIFS executable will need to be alongside, the command to run this in standalone mode is (40r1):
 
