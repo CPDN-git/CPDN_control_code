@@ -1,6 +1,6 @@
-# Control code for ECMWF OpenIFS (43r3) running in climateprediction.net (CPDN)
+# CPDN control code for climate models running in climateprediction.net (CPDN)
 
-This respository contains the instructions and code for building the controlling application used for controlling the ECMWF OpenIFS code in the climateprediction.net project.
+This respository contains the instructions and code for building the controlling application used for controlling the climate models in the climateprediction.net project, at this point the ECMWF OpenIFS (43r3) and WRF models.
 
 To compile the controlling code you will need to download and build the BOINC code (this is available from: https://github.com/BOINC/boinc). For instructions on building this code see: https://boinc.berkeley.edu/trac/wiki/CompileClient.
 
@@ -25,7 +25,7 @@ To compile the controller code on a Linux machine:
 First ensure that libzip is installed using (on an Ubuntu machine): sudo apt-get install libzip-dev
 
 Then we need to obtain the RapidXml header for parsing XML files. This is downloaded from the site: http://rapidxml.sourceforge.net/
-We only need the file: 'rapidxml.hpp'. Download this file and put in the same folder as openifs.cpp.
+We only need the file: 'rapidxml.hpp'. Download this file and put in the same folder as the code. To build the OpenIFS model:
 
     g++ openifs.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
 
