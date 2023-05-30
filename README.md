@@ -25,7 +25,12 @@ To compile the controller code on a Linux machine:
 First ensure that libzip is installed using (on an Ubuntu machine): sudo apt-get install libzip-dev
 
 Then we need to obtain the RapidXml header for parsing XML files. This is downloaded from the site: http://rapidxml.sourceforge.net/
-We only need the file: 'rapidxml.hpp'. Download this file and put in the same folder as the code. To build the OpenIFS model:
+We only need the file: 'rapidxml.hpp'. Download this file and put in the same folder as the code. 
+To build the WRF model:
+
+    g++ wrf.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o wrf_1.00_x86_64-pc-linux-gnu
+    
+To build the OpenIFS model:
 
     g++ openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
 
