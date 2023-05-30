@@ -284,27 +284,9 @@ int main(int argc, char** argv) {
        last_upload = 0;
        model_completed = 0;
     }
-	    
-    // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
-    std::ofstream progress_file_out(progress_file);
-    cerr << "Creating progress file: " << progress_file << "\n";
-
-    progress_file_out.open(progress_file);
-    progress_file_out <<"<?xml version=\"1.0\" encoding=\"utf-8\"?>"<< '\n';
-    progress_file_out <<"<running_values>"<< '\n';
-    progress_file_out <<"  <last_cpu_time>"<<std::to_string(last_cpu_time)<<"</last_cpu_time>"<< '\n';
-    progress_file_out <<"  <upload_file_number>"<<std::to_string(upload_file_number)<<"</upload_file_number>"<< '\n';
-    progress_file_out <<"  <last_iter>"<<last_iter<<"</last_iter>"<< '\n';
-    progress_file_out <<"  <last_upload>"<<std::to_string(last_upload)<<"</last_upload>"<< '\n';
-    progress_file_out <<"  <model_completed>"<<std::to_string(model_completed)<<"</model_completed>"<< '\n';
-    progress_file_out <<"</running_values>"<< std::endl;
-    progress_file_out.close();
-
-    cerr << "last_cpu_time: " << last_cpu_time << "\n";
-    cerr << "upload_file_number: " << upload_file_number << "\n";
-    cerr << "last_iter: " << last_iter << "\n";
-    cerr << "last_upload: " << last_upload << "\n";
-    cerr << "model_completed: " << model_completed << "\n";
+	    	    
+    // Update progress file with current values
+    update_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
     fraction_done = 0;
     trickle_upload_count = 0;
@@ -350,19 +332,10 @@ int main(int argc, char** argv) {
 
        last_iter = iter;
        count = 0;
-	       
-       // Update the progress file	
-       progress_file_out.open(progress_file);
-       progress_file_out <<"<?xml version=\"1.0\" encoding=\"utf-8\"?>"<< '\n';
-       progress_file_out <<"<running_values>"<< '\n';
-       progress_file_out <<"  <last_cpu_time>"<<std::to_string(current_cpu_time)<<"</last_cpu_time>"<< '\n';
-       progress_file_out <<"  <upload_file_number>"<<std::to_string(upload_file_number)<<"</upload_file_number>"<< '\n';
-       progress_file_out <<"  <last_iter>"<<last_iter<<"</last_iter>"<< '\n';
-       progress_file_out <<"  <last_upload>"<<std::to_string(last_upload)<<"</last_upload>"<< '\n';
-       progress_file_out <<"  <model_completed>"<<std::to_string(model_completed)<<"</model_completed>"<< '\n';
-       progress_file_out <<"</running_values>"<< std::endl;
-       progress_file_out.close();
-          
+
+       // Update progress file with current values
+       update_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
+
        // Calculate current_cpu_time, only update if cpu_time returns a value
        if (cpu_time(handleProcess)) {
           current_cpu_time = last_cpu_time + cpu_time(handleProcess);
@@ -406,18 +379,9 @@ int main(int argc, char** argv) {
        while (process_status == 0) {
           sleep_until(system_clock::now() + seconds(1));
 
-          // Update the progress file	
-          progress_file_out.open(progress_file);
-          progress_file_out <<"<?xml version=\"1.0\" encoding=\"utf-8\"?>"<< '\n';
-          progress_file_out <<"<running_values>"<< '\n';
-          progress_file_out <<"  <last_cpu_time>"<<std::to_string(current_cpu_time)<<"</last_cpu_time>"<< '\n';
-          progress_file_out <<"  <upload_file_number>"<<std::to_string(upload_file_number)<<"</upload_file_number>"<< '\n';
-          progress_file_out <<"  <last_iter>"<<last_iter<<"</last_iter>"<< '\n';
-          progress_file_out <<"  <last_upload>"<<std::to_string(last_upload)<<"</last_upload>"<< '\n';
-          progress_file_out <<"  <model_completed>"<<std::to_string(model_completed)<<"</model_completed>"<< '\n';
-          progress_file_out <<"</running_values>"<< std::endl;
-          progress_file_out.close();
-          
+          // Update progress file with current values
+          update_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
+
           // Calculate current_cpu_time, only update if cpu_time returns a value
           if (cpu_time(handleProcess)) {
             current_cpu_time = last_cpu_time + cpu_time(handleProcess);
