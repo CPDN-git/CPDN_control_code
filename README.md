@@ -39,17 +39,17 @@ To build the OpenIFS model:
 
 (assuming boinc libraries are located in ../boinc relative to this repository)
 
-And to build on an ARM architecture machine:
+And to build OpenIFS on an ARM architecture machine:
 
     g++ openifs.cpp CPDN_control_code.cpp -D_ARM -I../boinc-install/include -L../boinc-install/lib -lboinc_api -lboinc -lboinc_zip -static -pthread -lstdc++ -lm -std=c++11 -o oifs_43r3_1.00_aarch64-poky-linux
 
-To compile the controller code on a Mac machine:
+To compile the OpenIFS code on a Mac machine:
 
 First ensure libzip is installed: brew install libzip
 
 And that we have obtained the RapidXml header.
 
-Build the BOINC libraries using Xcode. Then build the controller code:
+Build the BOINC libraries using Xcode. Then build the OpenIFS control code:
 
     clang++ openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -pthread -std=c++11 -o oifs_43r3_1.00_x86_64-apple-darwin
 
