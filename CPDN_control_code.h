@@ -46,6 +46,7 @@ bool oifs_parse_stat(std::string&, std::string&, int);
 bool oifs_get_stat(std::ifstream&, std::string&);
 bool oifs_valid_step(std::string&,int);
 int  print_last_lines(std::string filename, int nlines);
+void update_progress_file(std::string, int, int, std::string, int, int);
 
 using namespace std;
 using namespace std::chrono;
