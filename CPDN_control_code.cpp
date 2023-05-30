@@ -186,6 +186,34 @@ std::string get_tag(const std::string &filename) {
     return "";
 }
 
+
+// Update the progress file
+void update_progress_file(std::string progress_file, int last_cpu_time, int upload_file_number,
+                          std::string last_iter, int last_upload, int model_completed) {
+
+    std::ofstream progress_file_out(progress_file);
+    cerr << "Writing to progress file: " << progress_file << "\n";
+
+    // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
+    progress_file_out.open(progress_file);
+    progress_file_out <<"<?xml version=\"1.0\" encoding=\"utf-8\"?>"<< '\n';
+    progress_file_out <<"<running_values>"<< '\n';
+    progress_file_out <<"  <last_cpu_time>"<<std::to_string(last_cpu_time)<<"</last_cpu_time>"<< '\n';
+    progress_file_out <<"  <upload_file_number>"<<std::to_string(upload_file_number)<<"</upload_file_number>"<< '\n';
+    progress_file_out <<"  <last_iter>"<<last_iter<<"</last_iter>"<< '\n';
+    progress_file_out <<"  <last_upload>"<<std::to_string(last_upload)<<"</last_upload>"<< '\n';
+    progress_file_out <<"  <model_completed>"<<std::to_string(model_completed)<<"</model_completed>"<< '\n';
+    progress_file_out <<"</running_values>"<< std::endl;
+    progress_file_out.close();
+
+    cerr << "last_cpu_time: " << last_cpu_time << "\n";
+    cerr << "upload_file_number: " << upload_file_number << "\n";
+    cerr << "last_iter: " << last_iter << "\n";
+    cerr << "last_upload: " << last_upload << "\n";
+    cerr << "model_completed: " << model_completed << "\n";
+}
+
+
 // Produce the trickle and either upload to the project server or as a physical file
 void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep) {
     std::string trickle, trickle_location;
