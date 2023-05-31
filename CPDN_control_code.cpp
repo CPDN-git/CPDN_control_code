@@ -110,7 +110,8 @@ int check_boinc_status(long handleProcess, int process_status) {
     }
 }
 
-long launch_process(const std::string slot_path,const char* strCmd,const char* exptid, const std::string app_name) {
+
+long launch_process(const std::string slot_path, const char* strCmd, const char* exptid, const std::string app_name) {
     int retval = 0;
     long handleProcess;
 
@@ -163,6 +164,35 @@ long launch_process(const std::string slot_path,const char* strCmd,const char* e
     }
     return handleProcess;
 }
+
+
+long launch_process_wrf(const std::string slot_path, const char* strCmd) {
+    int retval = 0;
+    long handleProcess;
+
+    switch((handleProcess=fork())) {
+       case -1: {
+          cerr << "..Unable to start a new child process" << "\n";
+          exit(0);
+          break;
+       }
+       case 0: { //The child process
+          cerr << "Executing the command: " << strCmd << "\n";
+          retval = execl(strCmd,strCmd,NULL,NULL,NULL);
+
+          // If execl returns then there was an error
+          if (retval) {
+             cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << "\n";
+             exit(retval);
+             break;
+          }
+       }
+       default: 
+          cerr << "The child process has been launched with process id: " << handleProcess << "\n";
+    }
+    return handleProcess;
+}
+
 
 // Open a file and return the string contained between the arrow tags
 std::string get_tag(const std::string &filename) {
