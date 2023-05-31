@@ -34,6 +34,7 @@ const char* strip_path(const char* path);
 int check_child_status(long, int);
 int check_boinc_status(long, int);
 long launch_process(const std::string, const char*, const char*, const std::string);
+long launch_process_wrf(const std::string, const char*);
 std::string get_tag(const std::string &str);
 void process_trickle(double, const std::string, const std::string, const std::string, int);
 bool file_exists(const std::string &str);
