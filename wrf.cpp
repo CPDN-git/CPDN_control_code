@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
 
     // Read the exptid, batchid, version, wuid from the command line
     std::string start_date = argv[1]; // simulation start date
-    std::string exptid = argv[2];     // OpenIFS experiment id
+    std::string exptid = argv[2];     // experiment id
     std::string unique_member_id = argv[3];  // umid
     std::string batchid = argv[4];    // batch id
     std::string wuid = argv[5];       // workunit id
