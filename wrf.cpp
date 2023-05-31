@@ -312,7 +312,7 @@ int main(int argc, char** argv) {
     
     // Start part 1 of the WRF job
     std::string strCmd = slot_path + std::string("/real.exe");
-    handleProcess = launch_process(slot_path, strCmd.c_str(), exptid.c_str(), app_name);
+    handleProcess = launch_process_wrf(slot_path, strCmd.c_str());
     if (handleProcess > 0) process_status = 0;
 
     boinc_end_critical_section();
@@ -371,7 +371,7 @@ int main(int argc, char** argv) {
     // If first part successful start part 2 of the WRF job
     if (process_status) {
        std::string strCmd = slot_path + std::string("/wrf.exe");
-       handleProcess = launch_process(slot_path, strCmd.c_str(), exptid.c_str(), app_name);
+       handleProcess = launch_process_wrf(slot_path, strCmd.c_str());
        if (handleProcess > 0) process_status = 0;
 
 
