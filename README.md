@@ -8,6 +8,8 @@ As only the libraries are required, the boinc client and manager can be disabled
 
 In short:
 
+    mkdir build
+    mkdir boinc
     git clone https://github.com/BOINC/boinc.git
     cd boinc
     ./_autosetup
@@ -16,6 +18,7 @@ In short:
                 --prefix=/PATH_TO_BOINC_INSTALL/boinc-install  \
                 CXXFLAGS='-O3'
     make install
+    cd ..
 
 This installs the boinc libraries and include files into the parent directory to the git source (change the --prefix argument to install into a different directory). It's preferable not to install into the same directory as the source. To specify the location of the include files, use the -I argument on the compile line, to specify the location of the libraries, use the -L argument.
 
@@ -41,6 +44,7 @@ To build the OpenIFS model:
 
 And to build OpenIFS on an ARM architecture machine:
 
+    cd build
     g++ openifs.cpp CPDN_control_code.cpp -D_ARM -I../boinc-install/include -L../boinc-install/lib -lboinc_api -lboinc -lboinc_zip -static -pthread -lstdc++ -lm -std=c++11 -o oifs_43r3_1.00_aarch64-poky-linux
 
 To compile the OpenIFS code on a Mac machine:
@@ -51,6 +55,7 @@ And that we have obtained the RapidXml header.
 
 Build the BOINC libraries using Xcode. Then build the OpenIFS control code:
 
+    cd build
     clang++ openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -pthread -std=c++11 -o oifs_43r3_1.00_x86_64-apple-darwin
 
 This will create an executable that is the app imported into the BOINC environment alongside the OpenIFS executable. Now to run this the OpenIFS ancillary files along with the OpenIFS executable will need to be alongside, the command to run this in standalone mode is (40r1):
