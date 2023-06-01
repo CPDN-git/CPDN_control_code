@@ -7,6 +7,31 @@
 
 #include "CPDN_control_code.h"
 
+// Initialise BOINC and set the options
+int initialise_boinc(std::string wu_name, std::string project_dir, std::string version) {
+    boinc_init();
+    boinc_parse_init_data_file();
+
+    // Get BOINC user preferences
+    APP_INIT_DATA dataBOINC;
+    boinc_get_init_data(dataBOINC);
+    
+    wu_name = dataBOINC.wu_name;
+    project_dir = dataBOINC.project_dir;
+    version = std::to_string(dataBOINC.app_version);
+    
+    // Set BOINC optional values
+    BOINC_OPTIONS options;
+    boinc_options_defaults(options);
+    options.main_program = true;
+    options.multi_process = true;
+    options.check_heartbeat = true;
+    options.handle_process_control = true;  // the control code will handle all suspend/quit/resume
+    options.direct_process_action = false;  // the control won't get suspended/killed by BOINC
+    options.send_status_msgs = false;
+    return boinc_init_options(&options);
+}
+
 
 const char* strip_path(const char* path) {
     int jj;
