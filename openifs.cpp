@@ -9,9 +9,10 @@
 
 int main(int argc, char** argv) {
     std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;
-    std::string project_path, wu_name, version, tmpstr1, tmpstr2, tmpstr3;
+    std::string project_path, tmpstr1, tmpstr2, tmpstr3;
     std::string ifs_line="", iter="0", ifs_word="", second_part, upload_file_name, last_line="";
     std::string upfile(""), resolved_name, upload_file, result_base_name;
+    std::string wu_name="", project_dir="", version="";
     int upload_interval, timestep_interval, ICM_file_interval, retval=0, i, j;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
     char *pathvar=NULL;
@@ -33,23 +34,10 @@ int main(int argc, char** argv) {
     boinc_init();
     boinc_parse_init_data_file();
 
-    // Get BOINC user preferences
-    APP_INIT_DATA dataBOINC;
-    boinc_get_init_data(dataBOINC);
-
-    // Set BOINC optional values
-    BOINC_OPTIONS options;
-    boinc_options_defaults(options);
-    options.main_program = true;
-    options.multi_process = true;
-    options.check_heartbeat = true;
-    options.handle_process_control = true;  // the control code will handle all suspend/quit/resume
-    options.direct_process_action = false;  // the control won't get suspended/killed by BOINC
-    options.send_status_msgs = false;
-
-    retval = boinc_init_options(&options);
+    // Initialise BOINC
+    retval = initialise_boinc(wu_name, project_dir, version);
     if (retval) {
-       cerr << "..BOINC init options failed" << '\n';
+       cerr << "..BOINC initialisation failed" << "\n";
        return retval;
     }
 
@@ -72,9 +60,8 @@ int main(int argc, char** argv) {
     std::string fclen = argv[6];      // number of simulation days
     std::string app_name = argv[7];   // CPDN app name
     std::string nthreads = argv[8];   // number of OPENMP threads
-	
+
     OIFS_EXPID = exptid;
-    wu_name = dataBOINC.wu_name;
 
     double num_days = atof(fclen.c_str()); // number of simulation days
     int num_days_trunc = (int) num_days; // number of simulation days truncated to an integer
@@ -91,11 +78,10 @@ int main(int argc, char** argv) {
     if (!boinc_is_standalone()) {
 
       // Get the project path
-      project_path = dataBOINC.project_dir + std::string("/");
+      project_path = project_dir + std::string("/");
       cerr << "Project directory is: " << project_path << '\n';
 	    
       // Get the app version and re-parse to add a dot
-      version = std::to_string(dataBOINC.app_version);
       if (version.length()==2) {
          version = version.insert(0,".");
          //cerr << "version: " << version << '\n';
