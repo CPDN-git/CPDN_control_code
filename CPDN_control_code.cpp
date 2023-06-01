@@ -136,7 +136,7 @@ int check_boinc_status(long handleProcess, int process_status) {
 }
 
 
-long launch_process(const std::string slot_path, const char* strCmd, const char* exptid, const std::string app_name) {
+long launch_process_oifs(const std::string slot_path, const char* strCmd, const char* exptid, const std::string app_name) {
     int retval = 0;
     long handleProcess;
 
@@ -420,6 +420,24 @@ std::string get_second_part(string last_iter, string exptid) {
    }
 
    return second_part;
+}
+
+
+int move_result_file(std::string slot_path, std::string temp_path, std::string first_part, std::string second_part) {
+    int retval = 0;
+
+    // Move result file to the temporary folder in the project directory
+    if(file_exists(slot_path + std::string("/") + first_part + second_part)) {
+       cerr << "Moving to projects directory: " << (slot_path+std::string("/") + first_part + second_part) << "\n";
+       retval = boinc_copy((slot_path + std::string("/") + first_part + second_part).c_str() , \
+                           (temp_path + std::string("/") + first_part + second_part).c_str());
+
+       // If result file has been successfully copied over, remove it from slots directory
+       if (!retval) {
+          std::remove((slot_path + std::string("/") + first_part + second_part).c_str());
+       }
+    }
+    return retval;
 }
 
 
