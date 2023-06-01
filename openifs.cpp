@@ -10,7 +10,7 @@
 int main(int argc, char** argv) {
     std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;
     std::string project_path, tmpstr1, tmpstr2, tmpstr3;
-    std::string ifs_line="", iter="0", ifs_word="", second_part, upload_file_name, last_line="";
+    std::string ifs_line="", iter="0", ifs_word="", second_part, first_part, upload_file_name, last_line="";
     std::string upfile(""), resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="";
     int upload_interval, timestep_interval, ICM_file_interval, retval=0, i, j;
@@ -604,7 +604,7 @@ int main(int argc, char** argv) {
 
     // Start the OpenIFS job
     std::string strCmd = slot_path + std::string("/oifs_43r3_model.exe");
-    handleProcess = launch_process(slot_path, strCmd.c_str(), exptid.c_str(), app_name);
+    handleProcess = launch_process_oifs(slot_path, strCmd.c_str(), exptid.c_str(), app_name);
     if (handleProcess > 0) process_status = 0;
 
     boinc_end_critical_section();
@@ -658,50 +658,29 @@ int main(int argc, char** argv) {
              second_part = get_second_part(last_iter, exptid);
 
              // Move the ICMGG result file to the temporary folder in the project directory
-             if(file_exists(slot_path + std::string("/ICMGG") + second_part)) {
-                cerr << "Moving to projects directory: " << (slot_path + std::string("/ICMGG") + second_part) << '\n';
-                retval = boinc_copy((slot_path + std::string("/ICMGG") + second_part).c_str() , \
-                                    (temp_path + std::string("/ICMGG") + second_part).c_str());
-                if (retval) {
-                   cerr << "..Copying ICMGG result file to the temp folder in the projects directory failed" << std::endl;
-                   return retval;
-                }
-                // If result file has been successfully copied over, remove it from slots directory
-                else {
-                   std::remove((slot_path + std::string("/ICMGG") + second_part).c_str());
-                }
+             first_part = "ICMGG";
+             retval = move_result_file(slot_path, temp_path, first_part, second_part);
+             if (retval) {
+                cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
+                return retval;
              }
-
+    
              // Move the ICMSH result file to the temporary folder in the project directory
-             if(file_exists(slot_path+std::string("/ICMSH") + second_part)) {
-                cerr << "Moving to projects directory: " << (slot_path + std::string("/ICMSH") + second_part) << '\n';
-                retval = boinc_copy((slot_path + std::string("/ICMSH") + second_part).c_str() , \
-                                    (temp_path + std::string("/ICMSH") + second_part).c_str());
-                if (retval) {
-                   cerr << "..Copying ICMSH result file to the temp folder in the projects directory failed" << std::endl;
-                   return retval;
-                }
-                // If result file has been successfully copied over, remove it from slots directory
-                else {
-                   std::remove((slot_path + std::string("/ICMSH") + second_part).c_str());
-                }
+             first_part = "ICMSH";
+             retval = move_result_file(slot_path, temp_path, first_part, second_part);
+             if (retval) {
+                cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
+                return retval;
              }
 
-             // Move the ICMUA result file to the temporary folder in the project directory (this is for 43r3 and above only)
-             if(file_exists(slot_path+std::string("/ICMUA") + second_part)) {
-                cerr << "Moving to projects directory: " << (slot_path + std::string("/ICMUA") + second_part) << '\n';
-                retval = boinc_copy((slot_path+std::string("/ICMUA") + second_part).c_str() , \
-                                    (temp_path+std::string("/ICMUA") + second_part).c_str());
-                if (retval) {
-                   cerr << "..Copying ICMUA result file to the temp folder in the projects directory failed" << std::endl;
-                   return retval;
-                }
-                // If result file has been successfully copied over, remove it from slots directory
-                else {
-                   std::remove((slot_path+std::string("/ICMUA") + second_part).c_str());
-                }
+             // Move the ICMUA result file to the temporary folder in the project directory
+             first_part = "ICMUA";
+             retval = move_result_file(slot_path, temp_path, first_part, second_part);
+             if (retval) {
+                cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
+                return retval;
              }
-		  
+
              // Convert iteration number to seconds
              current_iter = (std::stoi(last_iter)) * timestep_interval;
 
@@ -918,51 +897,30 @@ int main(int argc, char** argv) {
     second_part = get_second_part(last_iter, exptid);
 
     // Move the ICMGG result file to the temporary folder in the project directory
-    if(file_exists(slot_path+std::string("/ICMGG") + second_part)) {
-       cerr << "Moving to projects directory: " << (slot_path+std::string("/ICMGG") + second_part) << '\n';
-       retval = boinc_copy((slot_path + std::string("/ICMGG") + second_part).c_str() , \
-                           (temp_path + std::string("/ICMGG") + second_part).c_str());
-       if (retval) {
-          cerr << "..Copying ICMGG result file to the temp folder in the projects directory failed" << std::endl;
-          return retval;
-       }
-       // If result file has been successfully copied over, remove it from slots directory
-       else {
-          std::remove((slot_path + std::string("/ICMGG") + second_part).c_str());
-       }
+    first_part = "ICMGG";
+    retval = move_result_file(slot_path, temp_path, first_part, second_part);
+    if (retval) {
+       cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
+       return retval;
     }
 
     // Move the ICMSH result file to the temporary folder in the project directory
-    if(file_exists(slot_path+std::string("/ICMSH") + second_part)) {
-       cerr << "Moving to projects directory: " << (slot_path+std::string("/ICMSH") + second_part) << '\n';
-       retval = boinc_copy((slot_path + std::string("/ICMSH") + second_part).c_str() , \
-                           (temp_path + std::string("/ICMSH") + second_part).c_str());
-       if (retval) {
-          cerr << "..Copying ICMSH result file to the temp folder in the projects directory failed" << std::endl;
-          return retval;
-       }
-       // If result file has been successfully copied over, remove it from slots directory
-       else {
-          std::remove((slot_path+std::string("/ICMSH")+second_part).c_str());
-       }
+    first_part = "ICMSH";
+    retval = move_result_file(slot_path, temp_path, first_part, second_part);
+    if (retval) {
+       cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
+       return retval;
     }
 
-    // Move the ICMUA result file to the temporary folder in the project directory (this is for 43r3 and above only)
-    if(file_exists(slot_path + std::string("/ICMUA") + second_part)) {
-       cerr << "Moving to projects directory: " << (slot_path+std::string("/ICMUA") + second_part) << '\n';
-       retval = boinc_copy((slot_path + std::string("/ICMUA") + second_part).c_str() , \
-                           (temp_path + std::string("/ICMUA") + second_part).c_str());
-       if (retval) {
-          cerr << "..Copying ICMUA result file to the temp folder in the projects directory failed" << std::endl;
-	  return retval;
-       }
-       // If result file has been successfully copied over, remove it from slots directory
-       else {
-          std::remove((slot_path + std::string("/ICMUA") + second_part).c_str());
-       }
+    // Move the ICMUA result file to the temporary folder in the project directory
+    first_part = "ICMUA";
+    retval = move_result_file(slot_path, temp_path, first_part, second_part);
+    if (retval) {
+       cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
+       return retval;
     }
-    
-	    
+
+
     boinc_begin_critical_section();
 
     // Create the final results zip file
