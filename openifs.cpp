@@ -15,6 +15,9 @@ int main(int argc, char** argv) {
     std::string wu_name="", project_dir="", version="";
     int upload_interval, timestep_interval, ICM_file_interval, retval=0, i, j;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
+    int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter;
+    int last_upload; // The time of the last upload file (in seconds)
+    std::string last_iter = "0";
     char *pathvar=NULL;
     long handleProcess;
     double tv_sec, tv_usec, fraction_done, current_cpu_time=0, total_nsteps = 0;
@@ -29,10 +32,6 @@ int main(int argc, char** argv) {
     // Set defaults for input arguments
     std::string OIFS_EXPID;           // model experiment id, must match string in filenames
     std::string namelist="fort.4";    // namelist file, this name is fixed
-
-    // Initialise BOINC
-    boinc_init();
-    boinc_parse_init_data_file();
 
     // Initialise BOINC
     retval = initialise_boinc(wu_name, project_dir, version);
@@ -490,10 +489,6 @@ int main(int argc, char** argv) {
        if (setrlimit(RLIMIT_STACK, &stack_limits) != 0) cerr << "..Setting the stack limit to unlimited failed" << std::endl;
     #endif
 
-    int last_cpu_time, restart_cpu_time = 0, upload_file_number, last_upload, model_completed, restart_iter;
-    std::string last_iter = "0";
-
-    // last_upload is the time of the last upload file (in seconds)
 
     // Define the name and location of the progress file
     std::string progress_file = slot_path+std::string("/progress_file_")+wuid+std::string(".xml");
