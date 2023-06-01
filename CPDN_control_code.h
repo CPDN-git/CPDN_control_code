@@ -30,6 +30,7 @@
 #include "rapidxml.hpp"
 #include <algorithm>
 
+int initialise_boinc(std::string, std::string, std::string);
 const char* strip_path(const char* path);
 int check_child_status(long, int);
 int check_boinc_status(long, int);
