@@ -182,27 +182,24 @@ int main(int argc, char** argv) {
 
 
     // Process the ancillary files:
-    // Get the name of the 'jf_' filename from a link within the ANCIL_FILE
-    std::string ancil_target = get_tag(slot_path + std::string("/wrf_ancil_") + unique_member_id + std::string("_") + start_date +\
-                      std::string("_") + fclen + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip"));
-    // Copy the ancils to working directory
-    std::string ancil_destination = slot_path + std::string("/wrf_ancil_") + unique_member_id + std::string("_") + start_date +\
+    std::string ancil_zip = slot_path + std::string("/wrf_ancil_") + unique_member_id + std::string("_") + start_date +\
                       std::string("_") + fclen + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
-    fprintf(stderr,"Copying ancils from: %s to: %s\n",ancil_target.c_str(),ancil_destination.c_str());
+    // Get the name of the 'jf_' filename from a link within the ANCIL_FILE
+    std::string ancil_target = get_tag(ancil_zip);
+    // Copy the ancils to working directory
+    std::string ancil_destination = ancil_zip;
+    cerr << "Copying the ancils from: " << ancil_target << " to: " << ancil_destination << "\n";
     retval = boinc_copy(ancil_target.c_str(),ancil_destination.c_str());
     if (retval) {
-       fprintf(stderr,"..Copying the ancils to the working directory failed\n");
+       cerr << "..Copying the ancils to the working directory failed" << "\n";
        return retval;
     }
 
     // Unzip the ancils zip file
-    std::string ancil_zip = slot_path + std::string("/wrf_ancil_") + unique_member_id + std::string("_") + start_date +\
-                      std::string("_") + fclen + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
-    fprintf(stderr,"Unzipping the ancils zip file: %s\n",ancil_zip.c_str());
-    fflush(stderr);
+    cerr << "Unzipping the ancils zip file: " << ancil_zip << "\n";
     retval = boinc_zip(UNZIP_IT,ancil_zip.c_str(),slot_path);
     if (retval) {
-       fprintf(stderr,"..Unzipping the ancils file failed\n");
+       cerr << "..Unzipping the ancils file failed" << "\n";
        return retval;
     }
     // Remove the zip file
