@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
     if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for temp folder for results failed" << "\n";
 
     // Move and unzip the app file
-    retval = move_and_unzip_app_file(std::string, std::string, std::string, std::string);
+    retval = move_and_unzip_app_file(app_name, version, project_path, slot_path);
     if (retval) {
        cerr << "..move_and_unzip_app_file failed" << "\n";
        return retval;
