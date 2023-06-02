@@ -33,6 +33,48 @@ int initialise_boinc(std::string wu_name, std::string project_dir, std::string v
 }
 
 
+// Move and unzip the app file
+int move_and_unzip_app_file(std::string app_name, std::string version, std::string project_path, std::string slot_path) {
+    int retval = 0;
+
+    // macOS
+    #if defined (__APPLE__)
+       std::string app_file = app_name + std::string("_app_") + version + std::string("_x86_64-apple-darwin.zip");
+    // ARM
+    #elif defined (_ARM) 
+       std::string app_file = app_name + std::string("_app_") + version + std::string("_aarch64-poky-linux.zip");
+    // Linux
+    #else
+       std::string app_file = app_name + std::string("_app_") + version + std::string("_x86_64-pc-linux-gnu.zip");
+    #endif
+
+    // Copy the app file to the working directory
+    std::string app_source = project_path + app_file;
+    std::string app_destination = slot_path + std::string("/") + app_file;
+    cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
+    retval = boinc_copy(app_source.c_str(), app_destination.c_str());
+    if (retval) {
+       cerr << "..Copying the app file to the working directory failed: error " << retval << "\n";
+       return retval;
+    }
+
+    // Unzip the app zip file
+    std::string app_zip = slot_path + std::string("/") + app_file;
+    cerr << "Unzipping the app zip file: " << app_zip << "\n";
+    retval = boinc_zip(UNZIP_IT, app_zip.c_str(), slot_path);
+
+    if (retval) {
+       cerr << "..Unzipping the app file failed" << "\n";
+       return retval;
+    }
+    // Remove the zip file
+    else {
+       std::remove(app_zip.c_str());       
+    }
+    return retval;
+}
+
+
 const char* strip_path(const char* path) {
     int jj;
     for (jj = (int) strlen(path);
