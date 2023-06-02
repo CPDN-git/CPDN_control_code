@@ -122,39 +122,12 @@ int main(int argc, char** argv) {
     cerr << "Location of temp folder: " << temp_path << '\n';
     if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for temp folder for results failed" << std::endl;
 
-    // macOS
-    #if defined (__APPLE__)
-       std::string app_file = app_name + std::string("_app_") + version + std::string("_x86_64-apple-darwin.zip");
-    // ARM
-    #elif defined (_ARM) 
-       std::string app_file = app_name + std::string("_app_") + version + std::string("_aarch64-poky-linux.zip");
-    // Linux
-    #else
-       std::string app_file = app_name + std::string("_app_") + version + std::string("_x86_64-pc-linux-gnu.zip");
-    #endif
 
-    // Copy the app file to the working directory
-    std::string app_source = project_path + app_file;
-    std::string app_destination = slot_path + std::string("/") + app_file;
-    cerr << "Copying: " << app_source << " to: " << app_destination << '\n';
-    retval = boinc_copy(app_source.c_str(), app_destination.c_str());
+    // Move and unzip app file
+    retval = move_and_unzip_app_file(app_name, version, project_path, slot_path);
     if (retval) {
-       cerr << "..Copying the app file to the working directory failed: error " << retval << std::endl;
-       return retval;
-    }
-
-    // Unzip the app zip file
-    std::string app_zip = slot_path + std::string("/") + app_file;
-    cerr << "Unzipping the app zip file: " << app_zip << '\n';
-    retval = boinc_zip(UNZIP_IT, app_zip.c_str(), slot_path);
-
-    if (retval) {
-       cerr << "..Unzipping the app file failed" << std::endl;
-       return retval;
-    }
-    // Remove the zip file
-    else {
-       std::remove(app_zip.c_str());       
+      cerr << "..move_and_unzip_app_file failed" << "\n";
+      return retval;
     }
 
 	
