@@ -398,6 +398,7 @@ if __name__ == "__main__":
             ic_ancils = workunit.getElementsByTagName('ic_ancil')
             for ic_ancil in ic_ancils:
               ic_ancil_zip_in = str(ic_ancil.getElementsByTagName('ic_ancil_zip')[0].childNodes[0].nodeValue)
+            print(ic_ancil_location+str(ic_ancil_zip_in))
 
             # Test whether the ic_ancil_zip is present
             try:
