@@ -13,6 +13,11 @@ if __name__ == "__main__":
     from xml.dom import minidom
     from shutil import copyfile
 
+    # This script is run from the command line using: ./openifs_wu_submit.py
+    # If a different oifs app then add --app_name=APP_NAME option
+    # If a submission test then add --submission_test
+    # This script will process any submission files contained in the incoming directory
+
     #-----------------Parse command line-----------------
     
     # use argparse to read in the options from the shell command line
