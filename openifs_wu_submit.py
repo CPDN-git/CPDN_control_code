@@ -1256,7 +1256,7 @@ if __name__ == "__main__":
           # Copy the sent XML into the batch folder and gzip
           if not(options.submission_test):
             f_in = open(project_dir+"oifs_workgen/sent_xmls/sent-"+input_xmlfile)
-            f_out = gzip.open(download_dir+'batch_'+batch_prefix+str(batchid)+'/batch_'+batch_prefix+str(batchid)+'_workunit_submission.xml.gz','wb')
+            f_out = gzip.open(download_dir+'batch_'+batch_prefix+str(batchid)+'/batch_'+batch_prefix+str(batchid)+'_workunit_submission.xml.gz','wt')
             f_out.writelines(f_in)
             f_out.close()
             f_in.close()
