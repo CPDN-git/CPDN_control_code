@@ -19,17 +19,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # app_name is either oifs_43r3, oifs_43r3_arm, oifs_43r3_bl or oifs_43r3_ps
     parser.add_argument("--app_name",help="application name",default="oifs_43r3")
-    # submission_test is either true of false
-    parser.add_argument("--submission_test",help="submission script test",default="false")
+    # If submission test add --submission_test to the submission line, if not, do not include on submission line
+    parser.add_argument("--submission_test",help="submission script test",action='store_true')
     options = parser.parse_args()
     if (options.submission_test):
       print("Running as a test\n")
     if options.app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps'):
       raise ValueError('Incorrect app_name')
     print("Application name: "+options.app_name)
-    if options.submission_test not in ('true','false'):
-      raise ValueError('Submission script test must be either true or false')
-    #print("Submission script test: "+options.submission_test
 
     #----------------------------------------------------
     
