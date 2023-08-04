@@ -666,7 +666,7 @@ if __name__ == "__main__":
               if not(options.submission_test):
                 OUTPUT=open(project_dir+result_template,"w")
                 # Create the result_template
-                print >> OUTPUT, output_string
+                OUTPUT.write(output_string)
                 OUTPUT.close()
               else:
                 print("result template = "+output_string)
@@ -838,7 +838,7 @@ if __name__ == "__main__":
             if not(options.submission_test):
               OUTPUT=open(project_dir+"templates/"+str(options.app_name)+"_in_"+str(wuid),"w")
               # Make the input_template
-              print >> OUTPUT, input_string
+              OUTPUT.write(input_string)
               OUTPUT.close()
             else:
               print("input template = "+input_string)
