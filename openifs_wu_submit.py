@@ -29,7 +29,7 @@ if __name__ == "__main__":
     options = parser.parse_args()
     if (options.submission_test):
       print("Running as a test\n")
-    if options.app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps'):
+    if options.app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps','oifs_43r3_c95,'oifs_43r3_l255'):
       raise ValueError('Incorrect app_name')
     print("Application name: "+options.app_name)
 
