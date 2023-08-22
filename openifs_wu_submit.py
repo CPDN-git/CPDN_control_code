@@ -642,6 +642,10 @@ if __name__ == "__main__":
               #print("upload_handler: "+upload_handler)
               #print("result_template: "+project_dir+result_template)
 
+            # Check if result template present and if zero size
+            if (os.path.exists(project_dir+result_template)) and (os.path.getsize(project_dir+result_template) == 0):
+               raise ValueError('Result template exists but is of zero size')
+
             # If result template does not exist, then create a new template
             if not (os.path.exists(project_dir+result_template)) or (options.submission_test):
               output_string="<output_template>\n"
