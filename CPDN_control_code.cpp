@@ -478,6 +478,10 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
        if (!retval) {
           std::remove((slot_path + std::string("/") + first_part + second_part).c_str());
        }
+    // If result file not present throw an error
+    } else {
+        cerr << "Result file not present: " << slot_path + std::string("/") + first_part + second_part << "\n";
+        retval = 1;
     }
     return retval;
 }
