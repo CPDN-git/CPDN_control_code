@@ -22,14 +22,14 @@ if __name__ == "__main__":
     
     # use argparse to read in the options from the shell command line
     parser = argparse.ArgumentParser()
-    # app_name is either oifs_43r3, oifs_43r3_arm, oifs_43r3_bl or oifs_43r3_ps
+    # app_name is either oifs_43r3, oifs_43r3_arm, oifs_43r3_bl, oifs_43r3_ps, oifs_43r3_c95, oifs_43r3_l255 or oifs_43r3_c159
     parser.add_argument("--app_name",help="application name",default="oifs_43r3")
     # If submission test add --submission_test to the submission line, if not, do not include on submission line
     parser.add_argument("--submission_test",help="submission script test",action='store_true')
     options = parser.parse_args()
     if (options.submission_test):
       print("Running as a test\n")
-    if options.app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps','oifs_43r3_c95,'oifs_43r3_l255'):
+    if options.app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps','oifs_43r3_c95','oifs_43r3_l255','oifs_43r3_c159'):
       raise ValueError('Incorrect app_name')
     print("Application name: "+options.app_name)
 
