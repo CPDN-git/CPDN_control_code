@@ -267,7 +267,6 @@ if __name__ == "__main__":
             horiz_resolution = str(model_config.getElementsByTagName('horiz_resolution')[0].childNodes[0].nodeValue)
             vert_resolution = str(model_config.getElementsByTagName('vert_resolution')[0].childNodes[0].nodeValue)
             grid_type = str(model_config.getElementsByTagName('grid_type')[0].childNodes[0].nodeValue)
-            timestep = str(model_config.getElementsByTagName('timestep')[0].childNodes[0].nodeValue)
             timestep_units = str(model_config.getElementsByTagName('timestep_units')[0].childNodes[0].nodeValue)
             upload_frequency = str(model_config.getElementsByTagName('upload_frequency')[0].childNodes[0].nodeValue)
             namelist_template = str(model_config.getElementsByTagName('namelist_template_global')[0].childNodes[0].nodeValue)
@@ -276,7 +275,6 @@ if __name__ == "__main__":
             #print("horiz_resolution: "+horiz_resolution)
             #print("vert_resolution: "+vert_resolution)
             #print("grid_type: "+grid_type)
-            #print("timestep: "+timestep)
             #print("timestep_units: "+timestep_units)
             #print("upload_frequency: "+upload_frequency)
             print("namelist_template: "+namelist_template)
@@ -557,6 +555,22 @@ if __name__ == "__main__":
               gribfield_size = 130.0
               restart_size   = 4.0
 
+            # Open namelist template file
+            if not(options.submission_test):
+              namelist_template_dir = project_dir+'oifs_workgen/namelist_template_files/'
+            else:
+              namelist_template_dir = './config/'
+
+            # Extract the timestep value from the namelist template
+            with open(namelist_template_dir+namelist_template, 'r') as namelist_file :
+              for line in namelist_file:
+                if 'UTSTEP' in line:
+                   # Take value and whitespace and comma
+                   timestep = int(float(((line.split('=',1)[-1]).strip()).strip(',')))
+                   print (timestep)
+            # Close the namelist template file
+            namelist_file.close()
+              
             # Calculate the number of timesteps from the number of days of the simulation
             if fclen_units == 'days':
               num_timesteps = (int(fclen) * 86400)/int(timestep)
