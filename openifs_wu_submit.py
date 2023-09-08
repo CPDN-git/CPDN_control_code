@@ -717,6 +717,7 @@ if __name__ == "__main__":
                 line = line.replace('_GRID_TYPE',grid_type)
                 line = line.replace('_NUM_TIMESTEPS',str(num_timesteps))
                 line = line.replace('_TIMESTEP',timestep)
+                line = line.replace('_UPLOAD_NUMBER',number_of_uploads)
                 line = line.replace('_UPLOAD_INTERVAL',str(upload_interval))
                 line = line.replace('_ENSEMBLE_MEMBER_NUMBER',str(ensemble_member_number))
                 line = line.replace('_NUM_HOURS',str(num_hours))
