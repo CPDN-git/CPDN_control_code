@@ -14,7 +14,6 @@ if __name__ == "__main__":
     from shutil import copyfile
 
     # This script is run from the command line using: ./openifs_wu_submit.py
-    # If a different oifs app then add --app_name=APP_NAME option
     # If a submission test then add --submission_test
     # This script will process any submission files contained in the incoming directory
 
@@ -22,16 +21,11 @@ if __name__ == "__main__":
     
     # use argparse to read in the options from the shell command line
     parser = argparse.ArgumentParser()
-    # app_name is either oifs_43r3, oifs_43r3_arm, oifs_43r3_bl, oifs_43r3_ps, oifs_43r3_c95, oifs_43r3_l255 or oifs_43r3_c159
-    parser.add_argument("--app_name",help="application name",default="oifs_43r3")
     # If submission test add --submission_test to the submission line, if not, do not include on submission line
     parser.add_argument("--submission_test",help="submission script test",action='store_true')
     options = parser.parse_args()
     if (options.submission_test):
       print("Running as a test\n")
-    if options.app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps','oifs_43r3_c95','oifs_43r3_l255','oifs_43r3_c159'):
-      raise ValueError('Incorrect app_name')
-    print("Application name: "+options.app_name)
 
     #----------------------------------------------------
     
@@ -94,30 +88,7 @@ if __name__ == "__main__":
       project_url = ''
       database_port = ''
         
-    #------From database read appid, last workunitid and last batchid------
-
-    # If submission_test is not true, query the database
-    if not(options.submission_test):
-      # Open cursor and connection to primary_db
-      db = MySQLdb.connect(db_host,db_user,db_passwd,primary_db,port=database_port)
-      cursor = db.cursor()
-
-      # Find the appid
-      query = """select id from app where name = '%s'""" % (options.app_name)
-      cursor.execute(query)
-      appid = cursor.fetchone()[0]
-      print("appid: "+str(appid))
-
-      # Find the last workunit id
-      query = 'select max(id) from workunit'
-      cursor.execute(query)
-      last_wuid = cursor.fetchone()
-
-      # Close cursor and connection to primary_db
-      cursor.close()
-      db.close()
-    else:
-      appid = 1
+    #------From database read last workunitid and last batchid------
 
     # Catch the case of no workunits in the database
     if (options.submission_test) or last_wuid[0] == None:
@@ -264,6 +235,7 @@ if __name__ == "__main__":
 
           model_configs = xmldoc2.getElementsByTagName('model_config')
           for model_config in model_configs:
+            app_name = str(model_config.getElementsByTagName('app_name')[0].childNodes[0].nodeValue)
             horiz_resolution = str(model_config.getElementsByTagName('horiz_resolution')[0].childNodes[0].nodeValue)
             vert_resolution = str(model_config.getElementsByTagName('vert_resolution')[0].childNodes[0].nodeValue)
             grid_type = str(model_config.getElementsByTagName('grid_type')[0].childNodes[0].nodeValue)
@@ -284,6 +256,34 @@ if __name__ == "__main__":
           first_start_year = 9999
           last_start_year = 0
 
+          # app_name is either oifs_43r3, oifs_43r3_arm, oifs_43r3_bl, oifs_43r3_ps, oifs_43r3_c95, oifs_43r3_l255 or oifs_43r3_c159
+          if app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps','oifs_43r3_c95','oifs_43r3_l255','oifs_43r3_c159'):
+            raise ValueError('Incorrect app_name')
+          print("Application name: "+app_name)
+            
+          # If submission_test is not true, query the database
+          if not(options.submission_test):
+            # Open cursor and connection to primary_db
+            db = MySQLdb.connect(db_host,db_user,db_passwd,primary_db,port=database_port)
+            cursor = db.cursor()
+
+            # Find the appid
+            query = """select id from app where name = '%s'""" % (app_name)
+            cursor.execute(query)
+            appid = cursor.fetchone()[0]
+            print("appid: "+str(appid))
+
+            # Find the last workunit id
+            query = 'select max(id) from workunit'
+            cursor.execute(query)
+            last_wuid = cursor.fetchone()
+
+            # Close cursor and connection to primary_db
+            cursor.close()
+            db.close()
+          else:
+            appid = 1
+
           # Iterate over the workunits in the xmlfile
           workunits = batch.getElementsByTagName('workunit')
           for workunit in workunits:
@@ -301,7 +301,7 @@ if __name__ == "__main__":
             parameters = workunit.getElementsByTagName('parameters')
 
             # If baroclinic wave simulation
-            if options.app_name == 'oifs_43r3_bl':
+            if app_name == 'oifs_43r3_bl':
               for parameter in parameters:
                  zn = str(parameter.getElementsByTagName('zn')[0].childNodes[0].nodeValue)
                  zb = str(parameter.getElementsByTagName('zb')[0].childNodes[0].nodeValue)
@@ -312,7 +312,7 @@ if __name__ == "__main__":
                  zchar = str(parameter.getElementsByTagName('zchar')[0].childNodes[0].nodeValue)
 
             # If perturbed surface
-            if options.app_name == 'oifs_43r3_ps':
+            if app_name == 'oifs_43r3_ps':
               for parameter in parameters:
                  zuncerta = str(parameter.getElementsByTagName('zuncerta')[0].childNodes[0].nodeValue)
                  zuncertb = str(parameter.getElementsByTagName('zuncertb')[0].childNodes[0].nodeValue)
@@ -600,7 +600,7 @@ if __name__ == "__main__":
                 raise ValueError('The number of time steps does not divide equally by the upload frequency')
 
               # Set the name of the workunit (days)
-              workunit_name = str(options.app_name)+'_'+str(unique_member_id)+'_'+str(start_date)+'_'+str(num_days)+'_'+batch_prefix+str(batchid)+'_'+str(wuid)
+              workunit_name = str(app_name)+'_'+str(unique_member_id)+'_'+str(start_date)+'_'+str(num_days)+'_'+batch_prefix+str(batchid)+'_'+str(wuid)
 
             elif fclen_units == 'hours':
               num_timesteps = (int(fclen) * 3600)/int(timestep)
@@ -618,7 +618,7 @@ if __name__ == "__main__":
                 upload_interval = num_timesteps / int(fclen)
 
               # Set the name of the workunit (hours)
-              workunit_name = str(options.app_name)+'_'+str(unique_member_id)+'_'+str(start_date)+'_0_'+batch_prefix+str(batchid)+'_'+str(wuid)
+              workunit_name = str(app_name)+'_'+str(unique_member_id)+'_'+str(start_date)+'_0_'+batch_prefix+str(batchid)+'_'+str(wuid)
 
             # Compute disk_bound assuming worse case where none of the trickles can be uploaded until run is complete
             # i.e. estimate total size of model output assuming 1 output per model day.
@@ -722,7 +722,7 @@ if __name__ == "__main__":
                 line = line.replace('_ENSEMBLE_MEMBER_NUMBER',str(ensemble_member_number))
                 line = line.replace('_NUM_HOURS',str(num_hours))
                 # If baroclinic wave simulation
-                if options.app_name == 'oifs_43r3_bl':
+                if app_name == 'oifs_43r3_bl':
                   line = line.replace('_ZN',zn)
                   line = line.replace('_ZB',zb)
                   line = line.replace('_ZT0',zt0)
@@ -731,7 +731,7 @@ if __name__ == "__main__":
                   line = line.replace('_ZGAMMA',zgamma)
                   line = line.replace('_ZCHAR',zchar)
                 # If perturbed surface
-                if options.app_name == 'oifs_43r3_ps':
+                if app_name == 'oifs_43r3_ps':
                   line = line.replace('_ZUNCERTA',zuncerta)
                   line = line.replace('_ZUNCERTB',zuncertb)
                   line = line.replace('_ZUNCERTC',zuncertc)
@@ -843,7 +843,7 @@ if __name__ == "__main__":
               "     <file_number>3</file_number>\n" +\
               "     <open_name>"+str(climate_data_zip)+"</open_name>\n" +\
               "   </file_ref>\n" +\
-              "   <command_line> "+str(start_date)+" "+str(exptid)+" "+str(unique_member_id)+" "+batch_prefix+str(batchid)+" "+str(wuid)+" "+str(num_days)+" "+str(options.app_name)+" "+str(nthreads)+"</command_line>\n" +\
+              "   <command_line> "+str(start_date)+" "+str(exptid)+" "+str(unique_member_id)+" "+batch_prefix+str(batchid)+" "+str(wuid)+" "+str(num_days)+" "+str(app_name)+" "+str(nthreads)+"</command_line>\n" +\
               "   <rsc_fpops_est>"+fpops_est+"</rsc_fpops_est>\n" +\
               "   <rsc_fpops_bound>"+fpops_est+"0</rsc_fpops_bound>\n" +\
               "   <rsc_memory_bound>"+memory_bound+"</rsc_memory_bound>\n" +\
@@ -953,8 +953,8 @@ if __name__ == "__main__":
             #----------------------Create the workunit in the BOINC database-----------------------
             
             # Run the create_work script to create the workunit
-            args = ["./bin/create_work","-appname",str(options.app_name),"-wu_name",str(workunit_name),"-wu_template",\
-                    "templates/"+str(options.app_name)+"_in_"+str(wuid),"-result_template",result_template,\
+            args = ["./bin/create_work","-appname",str(app_name),"-wu_name",str(workunit_name),"-wu_template",\
+                    "templates/"+str(app_name)+"_in_"+str(wuid),"-result_template",result_template,\
                     "-remote_file",str(workunit_url),str(workunit_zip_size),str(workunit_zip_cksum),\
                     "-remote_file",str(ic_ancil_url),str(ic_ancil_zip_size),str(ic_ancil_zip_cksum),\
                     "-remote_file",str(ifsdata_url),str(ifsdata_zip_size),str(ifsdata_zip_cksum),\
@@ -1126,7 +1126,7 @@ if __name__ == "__main__":
 
 
             # If baroclinic wave simulation enter values for parameters into parameter table
-            if options.app_name == 'oifs_43r3_bl':
+            if app_name == 'oifs_43r3_bl':
 
                # Enter the zn details of the submitted workunit into the parameter table
                query = """insert into parameter(paramtypeid,charvalue,submodelid,workunitid) \
@@ -1199,7 +1199,7 @@ if __name__ == "__main__":
                  print(query)
 
             # If perturbed surface enter values for parameters into parameter table
-            if options.app_name == 'oifs_43r3_ps':
+            if app_name == 'oifs_43r3_ps':
 
                # Enter the zuncerta details of the submitted workunit into the parameter table
                query = """insert into parameter(paramtypeid,charvalue,submodelid,workunitid) \
