@@ -480,7 +480,7 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
        }
     // If result file not present throw an error
     } else {
-        cerr << "Result file not present: " << slot_path + std::string("/") + first_part + second_part << "\n";
+        cerr << "..Result file not present: " << slot_path + std::string("/") + first_part + second_part << "\n";
         retval = 1;
     }
     return retval;
@@ -496,7 +496,7 @@ bool check_stoi(std::string& cin) {
     int step;
 
     if (std::any_of(cin.begin(), cin.end(), ::isalpha)) {
-        cerr << "Invalid characters in stoi string: " << cin << "\n";
+        cerr << "..Invalid characters in stoi string: " << cin << "\n";
         return false;
     }
 
@@ -508,11 +508,11 @@ bool check_stoi(std::string& cin) {
         return true;
     }
     catch (const std::invalid_argument &excep) {
-        cerr << "Invalid input argument for stoi : " << excep.what() << "\n";
+        cerr << "..Invalid input argument for stoi : " << excep.what() << "\n";
         return false;
     }
     catch (const std::out_of_range &excep) {
-        cerr << "Out of range value for stoi : " << excep.what() << "\n";
+        cerr << "..Out of range value for stoi : " << excep.what() << "\n";
         return false;
     }
 }
@@ -563,7 +563,7 @@ bool oifs_get_stat(std::ifstream& ifs_stat, std::string& logline) {
     static streamoff   p = 0;             // stream offset position
 
     if ( !ifs_stat.is_open() ) {
-        cerr << "oifs_get_stat: error, ifs.stat file is not open" << endl;
+        cerr << "..oifs_get_stat: error, ifs.stat file is not open" << endl;
         p = 0;
         current_line = "";
         return false;
@@ -592,7 +592,7 @@ bool oifs_valid_step(std::string& step, int nsteps) {
 
    // make sure step is valid integer
    if (!check_stoi(step)) {
-      cerr << "oifs_valid_step: Invalid characters in stoi string, unable to convert step to int: " << step << '\n';
+      cerr << "..oifs_valid_step: Invalid characters in stoi string, unable to convert step to int: " << step << '\n';
       return false;
    } else {
       // check step is in valid range: 0 -> total no. of steps
