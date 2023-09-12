@@ -160,6 +160,8 @@ int main(int argc, char** argv) {
     }
 
 	
+    //------------------------------------------Process the namelist-----------------------------------------
+	
     // Parse the fort.4 namelist for the filenames and variables
     std::string namelist_file = slot_path + std::string("/") + namelist;
     std::string namelist_line="", delimiter="=";
@@ -253,6 +255,9 @@ int main(int argc, char** argv) {
        }
     }
     namelist_filestream.close();
+
+    //-------------------------------------------------------------------------------------------------------
+
 
     // restart frequency might be in units of hrs, convert to model steps
     if ( restart_interval < 0 )   restart_interval = abs(restart_interval)*3600 / timestep_interval;
@@ -355,7 +360,8 @@ int main(int argc, char** argv) {
     }
 
 	
-    // Set the environmental variables:
+    //------------------------------------Set the environmental variables------------------------------------
+
     // Set the OIFS_DUMMY_ACTION environmental variable, this controls what OpenIFS does if it goes into a dummy subroutine
     // Possible values are: 'quiet', 'verbose' or 'abort'
     std::string OIFS_var("OIFS_DUMMY_ACTION=abort");
@@ -448,6 +454,7 @@ int main(int argc, char** argv) {
     pathvar = getenv("OMP_STACKSIZE");
     //cerr << "The OMP_STACKSIZE environmental variable is: " << pathvar << '\n';
 
+    //-------------------------------------------------------------------------------------------------------
 
     // Set the core dump size to 0
     struct rlimit core_limits;
@@ -591,7 +598,8 @@ int main(int argc, char** argv) {
     // process_status = 5 child process not found by waitpid()
 
 
-    // Main loop:	
+    //----------------------------------------Main loop------------------------------------------------------
+	
     // Periodically check the process status and the BOINC client status
     std::string stat_lastline = "";
 
@@ -825,6 +833,8 @@ int main(int argc, char** argv) {
       process_status = check_child_status(handleProcess,process_status);
     }
 
+    //-------------------------------------------------------------------------------------------------------	
+
 
     // Time delay to ensure model files are all flushed to disk
     sleep_until(system_clock::now() + seconds(60));
@@ -890,8 +900,8 @@ int main(int argc, char** argv) {
 
     boinc_begin_critical_section();
 
-    // Create the final results zip file
-
+    //-----------------------------Create the final results zip file-----------------------------------------
+	
     zfl.clear();
     std::string node_file = slot_path + std::string("/NODE.001_01");
     zfl.push_back(node_file);
@@ -983,7 +993,10 @@ int main(int argc, char** argv) {
         process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);     
     }
 
-    // Now task has finished, remove the temp folder
+    //-------------------------------------------------------------------------------------------------------
+
+
+    // Now that the task has finished, remove the temp folder
     std::remove(temp_path.c_str());
 
     sleep_until(system_clock::now() + seconds(120));
