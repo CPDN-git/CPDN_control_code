@@ -88,14 +88,7 @@ if __name__ == "__main__":
       project_url = ''
       database_port = ''
         
-    #------From database read last workunitid and last batchid------
-
-    # Catch the case of no workunits in the database
-    if (options.submission_test) or last_wuid[0] == None:
-      wuid = 0
-    else:
-      wuid = last_wuid[0]
-    print("Last workunit id: "+str(wuid))
+    #------------------From database read the last batchid------------------
 
     # If submission_test is not true, query the database
     if not(options.submission_test):
@@ -278,7 +271,7 @@ if __name__ == "__main__":
             cursor.execute(query)
             last_wuid = cursor.fetchone()
 
-            # Close cursor and connection to primary_db
+            # Close cursor and connection to the primary_db
             cursor.close()
             db.close()
           else:
@@ -870,7 +863,7 @@ if __name__ == "__main__":
               "</input_template>"
 
             if not(options.submission_test):
-              OUTPUT=open(project_dir+"templates/"+str(options.app_name)+"_in_"+str(wuid),"w")
+              OUTPUT=open(project_dir+"templates/"+str(app_name)+"_in_"+str(wuid),"w")
               # Make the input_template
               OUTPUT.write(input_string)
               OUTPUT.close()
