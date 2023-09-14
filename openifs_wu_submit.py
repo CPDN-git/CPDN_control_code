@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # This script will process any submission files contained in the incoming directory
 
     #-----------------Parse command line-----------------
-    
+
     # use argparse to read in the options from the shell command line
     parser = argparse.ArgumentParser()
     # If submission test add --submission_test to the submission line, if not, do not include on submission line
@@ -28,7 +28,7 @@ if __name__ == "__main__":
       print("Running as a test\n")
 
     #----------------------------------------------------
-    
+
     # Check if a lockfile is present from an ongoing submission
     lockfile='/tmp/lockfile_workgen'
     print("Waiting for lock...\n")
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     flops_factor = 12800000000000
 
     #-----------------Parse the project config xml file-----------------
-    
+
     #xmldoc3 = minidom.parse(project_dir+'../../config.xml')
     xmldoc3 = minidom.parse('../../config.xml')
     configs = xmldoc3.getElementsByTagName('config')
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         os.mkdir(project_dir+"temp_openifs_submission_files")
 
     #------------------Read the submission and config XMLs--------------------
-        
+
     # Iterate over the xmlfile in the input directory
     for input_xmlfile in os.listdir(input_directory):
       if input_xmlfile.endswith(".xml"):
@@ -214,6 +214,10 @@ if __name__ == "__main__":
             query = """select id from cpdn_project where name ='%s'""" %(project_name)
             cursor.execute(query)
             projectid = cursor.fetchone()[0]
+
+            # Close cursor and connection to the secondary_db
+            cursor.close()
+            db.close()
           else:
             projectid = 0
 
@@ -252,15 +256,11 @@ if __name__ == "__main__":
             print("namelist_template: "+namelist_template)
             print("wam_namelist_template: "+wam_namelist_template)
 
-          first_wuid = wuid + 1
-          first_start_year = 9999
-          last_start_year = 0
-
           # app_name is either oifs_43r3, oifs_43r3_arm, oifs_43r3_bl, oifs_43r3_ps, oifs_43r3_c95, oifs_43r3_l255 or oifs_43r3_c159
           if app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps','oifs_43r3_c95','oifs_43r3_l255','oifs_43r3_c159'):
             raise ValueError('Incorrect app_name')
           print("Application name: "+app_name)
-            
+
           # If submission_test is not true, query the database
           if not(options.submission_test):
             # Open cursor and connection to primary_db
@@ -284,6 +284,18 @@ if __name__ == "__main__":
           else:
             appid = 1
 
+          # Catch the case of no workunits in the database
+          if (options.submission_test) or last_wuid[0] == None:
+            wuid = 0
+          else:
+            wuid = last_wuid[0]
+          print("Last workunit id: "+str(wuid))
+
+          first_wuid = wuid + 1
+          first_start_year = 9999
+          last_start_year = 0
+
+            
           # Iterate over the workunits in the xmlfile
           workunits = batch.getElementsByTagName('workunit')
           for workunit in workunits:
@@ -388,7 +400,7 @@ if __name__ == "__main__":
                start_date = start_date + str(start_hour).zfill(2)
 
             #----------------------------Construct the ancillary files----------------------------
-            
+
             # Construct ic_ancil_location
             if not(options.submission_test):
               ic_ancil_location = ancil_file_location+"ic_ancil/"+str(exptid)+"/"+str(start_date)+"/"+str(analysis_member_number)+"/"
@@ -500,8 +512,8 @@ if __name__ == "__main__":
               p = subprocess.Popen(args)
               p.wait()
 
-            #--------------------------Calculate model parameters required for submission----------------------------                
-                
+            #--------------------------Calculate model parameters required for submission----------------------------
+
             # GC: Set the memory bound & estimated output instance filesizes
             # These are taken from measurements by G.Carver and listed at:
             #  https://docs.google.com/document/d/1AxLzZ6-m2owRscf_9SCv2TwRAcMl1pzbxFfbm6qeSL4/edit?usp=sharing
@@ -570,7 +582,7 @@ if __name__ == "__main__":
                    print (timestep)
             # Close the namelist template file
             namelist_file.close()
-              
+
             # Calculate the number of timesteps from the number of days of the simulation
             if fclen_units == 'days':
               num_timesteps = (int(fclen) * 86400)/int(timestep)
@@ -645,9 +657,9 @@ if __name__ == "__main__":
             fpops_bound = str(flops_factor * int(float(num_days)) * 10)
             #print("fpops_est: "+fpops_est)
             #print("fpops_bound: "+fpops_bound)
-            
+
             #----------------------Construct XML for entry into workunit table----------------------
-            
+
             upload_infos = batch.getElementsByTagName('upload_info')
             for upload_info in upload_infos:
               upload_handler = str(upload_info.getElementsByTagName('upload_handler')[0].childNodes[0].nodeValue)
@@ -696,7 +708,7 @@ if __name__ == "__main__":
             server_cgi = upload_handler[:-19]
 
             #-------------------------Construct namelist files----------------------------
-            
+
             if not(options.submission_test):
               namelist_template_dir = project_dir+'oifs_workgen/namelist_template_files/'
             else:
@@ -811,7 +823,7 @@ if __name__ == "__main__":
                 print("The following file is not present in the download files: "+ifsdata_zip)
 
             #----------------------Construct the XML for entry into the result table-------------------    
-                
+
             # Construct the input template
             input_string="<input_template>\n" +\
               "<file_info>\n" +\
@@ -866,7 +878,7 @@ if __name__ == "__main__":
               print("input template = "+input_string)
 
             #------------------------Set file URLs and get file sizes-------------------------
-            
+
             # Change back to the project directory
             if not(options.submission_test):
               os.chdir(project_dir)
@@ -951,7 +963,7 @@ if __name__ == "__main__":
             print("climate_data_zip_size = "+str(climate_data_zip_size))
 
             #----------------------Create the workunit in the BOINC database-----------------------
-            
+
             # Run the create_work script to create the workunit
             args = ["./bin/create_work","-appname",str(app_name),"-wu_name",str(workunit_name),"-wu_template",\
                     "templates/"+str(app_name)+"_in_"+str(wuid),"-result_template",result_template,\
@@ -967,7 +979,7 @@ if __name__ == "__main__":
               print(args)
 
             #------------Enter workunit details into the cpdn_workunit and parameter tables------------
-            
+
             # Calculate the run_years 
             if fclen_units == 'days':
               run_years = 0.00274 * int(fclen)
@@ -979,6 +991,9 @@ if __name__ == "__main__":
                                                  values(%s,%s,'%s','%s',%s,%s,%s)""" \
                                                  %(wuid,batchid,unique_member_id,workunit_name,start_year,run_years,appid)
             if not(options.submission_test):
+              # Re-open cursor and connection to secondary_db
+              db = MySQLdb.connect(db_host,db_user,db_passwd,secondary_db,port=database_port)
+              cursor = db.cursor()
               cursor.execute(query)
               db.commit()
             else:
@@ -1284,7 +1299,7 @@ if __name__ == "__main__":
             f_in.close()
 
           #---------------Enter into the cpdn_batch table the details of the submitted batch---------------
-            
+
           # If a new batch then enter the details of this new batch into the cpdn_batch table
           if not(xml_batchid.isdigit()):
             query = """insert into cpdn_batch(id,name,description,first_start_year,appid,server_cgi,owner,ul_files,tech_info,\
