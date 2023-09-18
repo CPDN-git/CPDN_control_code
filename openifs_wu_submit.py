@@ -238,6 +238,7 @@ if __name__ == "__main__":
             grid_type = str(model_config.getElementsByTagName('grid_type')[0].childNodes[0].nodeValue)
             timestep_units = str(model_config.getElementsByTagName('timestep_units')[0].childNodes[0].nodeValue)
             upload_frequency = str(model_config.getElementsByTagName('upload_frequency')[0].childNodes[0].nodeValue)
+            trickle_upload_frequency = str(model_config.getElementsByTagName('trickle_upload_frequency')[0].childNodes[0].nodeValue)
             namelist_template = str(model_config.getElementsByTagName('namelist_template_global')[0].childNodes[0].nodeValue)
             wam_namelist_template = str(model_config.getElementsByTagName('wam_template_global')[0].childNodes[0].nodeValue)
 
@@ -246,6 +247,7 @@ if __name__ == "__main__":
             #print("grid_type: "+grid_type)
             #print("timestep_units: "+timestep_units)
             #print("upload_frequency: "+upload_frequency)
+            #print("trickle_upload_frequency: "+trickle_upload_frequency)
             print("namelist_template: "+namelist_template)
             print("wam_namelist_template: "+wam_namelist_template)
 
