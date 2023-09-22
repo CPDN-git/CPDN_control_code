@@ -632,3 +632,61 @@ int print_last_lines(string filename, int maxlines) {
 
    return count;
 }
+
+
+bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::string& cstep_value)
+{
+    // Read the rcf_file if it exists and extract the CTIME and CSTEP variables
+    
+    int count;
+    std::string delimiter = "\"";
+    size_t pos = 0;
+    std::string rcf_file_line;
+
+    // Extract the values of CSTEP and CTIME from the rcf file
+    while ( std::getline( rcf_file, rcf_file_line )) {
+
+       if (rcf_file_line.find("CSTEP") != std::string::npos ) {
+          count = 0;
+          // From the CSTEP string take the second field delimited by speechmarks
+          while ((pos = rcf_file_line.find(delimiter)) != std::string::npos) {
+             count = count + 1;
+             if (count == 2) { 
+                cstep_value = rcf_file_line.substr(0,pos);
+                // Remove whitespace
+                cstep_value.erase( std::remove_if( cstep_value.begin(), \
+                                   cstep_value.end(), ::isspace ), cstep_value.end() );
+             }
+             rcf_file_line.erase(0, pos + delimiter.length());
+          }
+       }
+
+       if (rcf_file_line.find("CTIME") != std::string::npos ) {
+          count = 0;
+          // From the CTIME string take the second field delimited by speechmarks
+          while ((pos = rcf_file_line.find(delimiter)) != std::string::npos) {
+             count = count + 1;
+             if (count == 2) { 
+                ctime_value = rcf_file_line.substr(0,pos);
+                // Remove whitespace
+                ctime_value.erase( std::remove_if( ctime_value.begin(), \
+                                   ctime_value.end(), ::isspace ), ctime_value.end() );
+             }
+             rcf_file_line.erase(0, pos + delimiter.length());
+          }
+       }
+
+    }
+    //cerr << "rcf file CSTEP: " << cstep_value << '\n';
+    //cerr << "rcf file CTIME: " << ctime_value << '\n';
+
+    if (cstep_value == "") {
+       cerr << "CSTEP value not present in rcf file" << '\n';
+       return false;
+    } else if (ctime_value == "") {
+       cerr << "CTIME value not present in rcf file" << '\n';
+       return false;
+    } else {
+       return true;
+    }
+}
