@@ -638,43 +638,18 @@ bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::strin
 {
     // Read the rcf_file if it exists and extract the CTIME and CSTEP variables
     
-    int count;
     std::string delimiter = "\"";
-    size_t pos = 0;
     std::string rcf_file_line;
+    int position = 2;
 
     // Extract the values of CSTEP and CTIME from the rcf file
     while ( std::getline( rcf_file, rcf_file_line )) {
 
-       if (rcf_file_line.find("CSTEP") != std::string::npos ) {
-          count = 0;
-          // From the CSTEP string take the second field delimited by speechmarks
-          while ((pos = rcf_file_line.find(delimiter)) != std::string::npos) {
-             count = count + 1;
-             if (count == 2) { 
-                cstep_value = rcf_file_line.substr(0,pos);
-                // Remove whitespace
-                cstep_value.erase( std::remove_if( cstep_value.begin(), \
-                                   cstep_value.end(), ::isspace ), cstep_value.end() );
-             }
-             rcf_file_line.erase(0, pos + delimiter.length());
-          }
-       }
+       // Check for CSTEP, if present return value
+       read_delimited_line(rcf_file_line, delimiter, "CSTEP", position, cstep_value);
 
-       if (rcf_file_line.find("CTIME") != std::string::npos ) {
-          count = 0;
-          // From the CTIME string take the second field delimited by speechmarks
-          while ((pos = rcf_file_line.find(delimiter)) != std::string::npos) {
-             count = count + 1;
-             if (count == 2) { 
-                ctime_value = rcf_file_line.substr(0,pos);
-                // Remove whitespace
-                ctime_value.erase( std::remove_if( ctime_value.begin(), \
-                                   ctime_value.end(), ::isspace ), ctime_value.end() );
-             }
-             rcf_file_line.erase(0, pos + delimiter.length());
-          }
-       }
+       // Check for CTIME, if present return value
+       read_delimited_line(rcf_file_line, delimiter, "CTIME", position, ctime_value);
 
     }
     //cerr << "rcf file CSTEP: " << cstep_value << '\n';
@@ -688,5 +663,34 @@ bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::strin
        return false;
     } else {
        return true;
+    }
+}
+
+
+bool read_delimited_line(std::string& file_line, std::string delimiter, std::string string_to_find, int position, std::string& returned_value)
+{
+    // Extracts a value from a delimited position on a line of a file
+
+    size_t pos = 0;
+    int count = 0;
+
+    if (file_line.find(string_to_find) != std::string::npos ) {
+       // From the file line take the field specified by the position
+       while ((pos = file_line.find(delimiter)) != std::string::npos) {
+          count = count + 1;
+          if (count == position) {  
+             returned_value = file_line.substr(0,pos);
+             // Remove whitespace
+             returned_value.erase( std::remove_if( returned_value.begin(), \
+                                   returned_value.end(), ::isspace ), returned_value.end() );
+          }
+          file_line.erase(0, pos + delimiter.length());
+       }
+    }
+
+    if ( returned_value != "" ) {
+       return true;
+    } else {
+       return false;
     }
 }
