@@ -130,8 +130,8 @@ int main(int argc, char** argv) {
       return retval;
     }
 
-	
-    // Process the Namelist/workunit file:
+
+    //------------------------------------------Process the namelist-----------------------------------------
     std::string namelist_zip = slot_path + std::string("/") + app_name + std::string("_") + unique_member_id + std::string("_") + start_date +\
                       std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
 		
@@ -159,8 +159,6 @@ int main(int argc, char** argv) {
        std::remove(namelist_zip.c_str());
     }
 
-	
-    //------------------------------------------Process the namelist-----------------------------------------
 	
     // Parse the fort.4 namelist for the filenames and variables
     std::string namelist_file = slot_path + std::string("/") + namelist;
