@@ -298,66 +298,71 @@ int main(int argc, char** argv) {
     // Process the ifsdata_file:
     // Make the ifsdata directory
     std::string ifsdata_folder = slot_path + std::string("/ifsdata");
-    if (mkdir(ifsdata_folder.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for ifsdata folder failed" << '\n';
+    // Check if ifsdata folder does not already exists or is empty
+    if ( !file_exists(ifsdata_folder) || file_is_empty(ifsdata_folder) ) {
+      if (mkdir(ifsdata_folder.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for ifsdata folder failed" << '\n';
 
-    // Get the name of the 'jf_' filename from a link within the ifsdata_file
-    std::string ifsdata_source = get_tag(slot_path + std::string("/") + ifsdata_file + std::string(".zip"));
+      // Get the name of the 'jf_' filename from a link within the ifsdata_file
+      std::string ifsdata_source = get_tag(slot_path + std::string("/") + ifsdata_file + std::string(".zip"));
 
-    // Copy the ifsdata_file to the working directory
-    std::string ifsdata_destination = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
-    cerr << "Copying the ifsdata_file from: " << ifsdata_source << " to: " << ifsdata_destination << '\n';
-    retval = boinc_copy(ifsdata_source.c_str(), ifsdata_destination.c_str());
-    if (retval) {
-       cerr << "..Copying the ifsdata file to the working directory failed" << std::endl;
-       return retval;
+      // Copy the ifsdata_file to the working directory
+      std::string ifsdata_destination = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
+      cerr << "Copying the ifsdata_file from: " << ifsdata_source << " to: " << ifsdata_destination << '\n';
+      retval = boinc_copy(ifsdata_source.c_str(), ifsdata_destination.c_str());
+      if (retval) {
+         cerr << "..Copying the ifsdata file to the working directory failed" << std::endl;
+         return retval;
+      }
+
+      // Unzip the ifsdata_file zip file
+      std::string ifsdata_zip = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
+      cerr << "Unzipping the ifsdata_zip file: " << ifsdata_zip << '\n';
+      retval = boinc_zip(UNZIP_IT, ifsdata_zip.c_str(), ifsdata_folder + std::string("/"));
+      if (retval) {
+         cerr << "..Unzipping the ifsdata_zip file failed" << std::endl;
+         return retval;
+      }
+      // Remove the zip file
+      else {
+         std::remove(ifsdata_zip.c_str());
+      }
     }
-
-    // Unzip the ifsdata_file zip file
-    std::string ifsdata_zip = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
-    cerr << "Unzipping the ifsdata_zip file: " << ifsdata_zip << '\n';
-    retval = boinc_zip(UNZIP_IT, ifsdata_zip.c_str(), ifsdata_folder + std::string("/"));
-    if (retval) {
-       cerr << "..Unzipping the ifsdata_zip file failed" << std::endl;
-       return retval;
-    }
-    // Remove the zip file
-    else {
-       std::remove(ifsdata_zip.c_str());
-    }
-
 
     // Process the climate_data_file:
     // Make the climate data directory
     std::string climate_data_path = slot_path + std::string("/") + horiz_resolution + grid_type;
-    if (mkdir(climate_data_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) \
+    // Check if climate_data folder does not already exists or is empty
+    if ( !file_exists(climate_data_path) || file_is_empty(climate_data_path) ) {
+      if (mkdir(climate_data_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) \
                        cerr << "..mkdir for the climate data folder failed" << std::endl;
 
-    // Get the name of the 'jf_' filename from a link within the climate_data_file
-    std::string climate_data_source = get_tag(slot_path + std::string("/") + climate_data_file + std::string(".zip"));
+      // Get the name of the 'jf_' filename from a link within the climate_data_file
+      std::string climate_data_source = get_tag(slot_path + std::string("/") + climate_data_file + std::string(".zip"));
 
-    // Copy the climate data file to working directory
-    std::string climate_data_destination = climate_data_path + std::string("/") + climate_data_file + std::string(".zip");
-    cerr << "Copying the climate data file from: " << climate_data_source << " to: " << climate_data_destination << '\n';
-    retval = boinc_copy(climate_data_source.c_str(), climate_data_destination.c_str());
-    if (retval) {
-       cerr << "..Copying the climate data file to the working directory failed" << std::endl;
-       return retval;
-    }	
+      // Copy the climate data file to working directory
+      std::string climate_data_destination = climate_data_path + std::string("/") + climate_data_file + std::string(".zip");
+      cerr << "Copying the climate data file from: " << climate_data_source << " to: " << climate_data_destination << '\n';
+      retval = boinc_copy(climate_data_source.c_str(), climate_data_destination.c_str());
+      if (retval) {
+         cerr << "..Copying the climate data file to the working directory failed" << std::endl;
+         return retval;
+      }	
 
-    // Unzip the climate data zip file
-    std::string climate_zip = climate_data_destination;
-    cerr << "Unzipping the climate data zip file: " << climate_zip << '\n';
-    retval = boinc_zip(UNZIP_IT, climate_zip.c_str(), climate_data_path);
-    if (retval) {
-       cerr << "..Unzipping the climate data file failed" << std::endl;
-       return retval;
+      // Unzip the climate data zip file
+      std::string climate_zip = climate_data_destination;
+      cerr << "Unzipping the climate data zip file: " << climate_zip << '\n';
+      retval = boinc_zip(UNZIP_IT, climate_zip.c_str(), climate_data_path);
+      if (retval) {
+         cerr << "..Unzipping the climate data file failed" << std::endl;
+         return retval;
+      }
+      // Remove the zip file
+      else {
+         std::remove(climate_zip.c_str());
+      }
     }
-    // Remove the zip file
-    else {
-       std::remove(climate_zip.c_str());
-    }
 
-	
+
     //------------------------------------Set the environmental variables------------------------------------
 
     // Set the OIFS_DUMMY_ACTION environmental variable, this controls what OpenIFS does if it goes into a dummy subroutine
