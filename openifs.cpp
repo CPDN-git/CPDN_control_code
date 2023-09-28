@@ -607,7 +607,7 @@ int main(int argc, char** argv) {
     std::string stat_lastline = "";
 
     while (process_status == 0 && model_completed == 0) {
-       sleep_until(system_clock::now() + seconds(1));
+       sleep_until(system_clock::now() + seconds(1)); // Time gap of 1 second to reduce overhead of control code
 
        count++;
 
