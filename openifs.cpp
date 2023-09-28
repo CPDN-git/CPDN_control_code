@@ -473,21 +473,66 @@ int main(int argc, char** argv) {
     #endif
 
 
-    // Define the name and location of the progress file
-    std::string progress_file = slot_path+std::string("/progress_file_")+wuid+std::string(".xml");
-	
+    // Define the name and location of the progress file and the rcf file
+    std::string progress_file = slot_path + std::string("/progress_file_") + wuid + std::string(".xml");
+    std::string rcf_file = slot_path + std::string("/rcf");
+
     // Model progress is held in the progress file
     // First check if a file is not already present from an unscheduled shutdown
     cerr << "Checking for progress XML file: " << progress_file << '\n';
 
-    if ( file_exists(progress_file) && !file_is_empty(progress_file) ) {
+    // Handle the cases of the various states of the rcf file and progress file
+    if ( !file_exists(progress_file) && !file_exists(rcf_file) ) {
+       // If both progress file and rcf file do not exist, then model has not run, then set the initial values of run
+       last_cpu_time = 0;
+       upload_file_number = 0;
+       last_iter = "0";
+       last_upload = 0;
+       model_completed = 0;
+    } else if ( file_exists(progress_file) && file_is_empty(progress_file) ) {
+       // If progress file exists and is empty, an error has occurred, then kill model run
+       cerr << "..progress XML file exists, but is empty => problem with model, quitting run" << '\n';
+       return 1;
+    } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
+       // If progress file exists and rcf file does not exist, an error has occurred, then kill model run
+       cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
+       return 1;
+    } else if ( !file_exists(progress_file) && file_exists(rcf_file) ) {
+       // If rcf file exists and progress file does not exist, an error has occurred, then kill model run
+       cerr << "..rcf file exists, but progress XML file does not exist => problem with model, quitting run" << '\n';
+       return 1;
+    } else if ( (file_exists(progress_file) && !file_is_empty(progress_file)) && file_exists(rcf_file) ) {
+       // If progress file exists and is not empty and rcf file exists, then read rcf file and progress file
+       std::ifstream rcf_file_stream;
+       std::string ctime_value = "", cstep_value = "";
+
+       // Read the rcf file
+       if( file_exists( rcf_file ) ) {
+         if( !(rcf_file_stream.is_open()) ) {
+            rcf_file_stream.open( rcf_file );
+         }
+         if( rcf_file_stream.is_open() ) {
+            if (read_rcf_file(rcf_file_stream, ctime_value, cstep_value)) {
+               cerr << "Read the rcf file" << '\n';
+               //cerr << "rcf file CSTEP: " << cstep_value << '\n';
+               //cerr << "rcf file CTIME: " << ctime_value << '\n';
+            } else {
+               // Reading the rcf file failed, then kill model run
+               cerr << "..Reading the rcf file failed" << '\n';
+	       return 1;
+            }
+         }
+       }
+       rcf_file_stream.close();
+	    
+       // Read the progress file
        std::ifstream progress_file_in(progress_file);
        std::stringstream progress_file_buffer;
        xml_document<> doc;
 
-       // If present parse file and extract values
+       // Parse progress file and extract values
        progress_file_in.open(progress_file);
-       cerr << "Opened progress file ok : " << progress_file << '\n';
+       cerr << "Opened progress file: " << progress_file << '\n';
        progress_file_buffer << progress_file_in.rdbuf();
        progress_file_in.close();
 	    
@@ -511,6 +556,12 @@ int main(int argc, char** argv) {
        last_upload = std::stoi(last_upload_node->value());
        model_completed = std::stoi(model_completed_node->value());
 
+       // Check if the CSTEP variable from rcf is greater than the last_iter, if so then quit model run
+       if ( stoi(cstep_value) > stoi(last_iter) ) {
+          cerr << "CSTEP variable from rcf is greater than last_iter from progress file, error has occurred, quitting model run" << '\n';
+          return 1;
+       }
+
        // Adjust last_iter to the step of the previous model restart dump step.
        // This is always a multiple of the restart frequency
 
@@ -519,14 +570,6 @@ int main(int argc, char** argv) {
        restart_iter = stoi(last_iter);
        restart_iter = restart_iter - ((restart_iter % restart_interval) - 1);   // -1 because the model will continue from restart_iter.
        last_iter = to_string(restart_iter); 
-    }
-    else {
-       // Set the initial values for start of model run
-       last_cpu_time = 0;
-       upload_file_number = 0;
-       last_iter = "0";
-       last_upload = 0;
-       model_completed = 0;
     }
 
     // Update progress file with current values
