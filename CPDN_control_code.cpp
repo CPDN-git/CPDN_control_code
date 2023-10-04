@@ -292,7 +292,6 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
     cerr << "Writing to progress file: " << progress_file << "\n";
 
     // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
-    progress_file_out.open(progress_file);
     progress_file_out <<"<?xml version=\"1.0\" encoding=\"utf-8\"?>"<< '\n';
     progress_file_out <<"<running_values>"<< '\n';
     progress_file_out <<"  <last_cpu_time>"<<std::to_string(last_cpu_time)<<"</last_cpu_time>"<< '\n';
