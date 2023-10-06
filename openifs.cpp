@@ -9,11 +9,11 @@
 
 int main(int argc, char** argv) {
     std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;
-    std::string project_path, tmpstr1, tmpstr2, tmpstr3;
+    std::string project_path, tmpstr1, tmpstr2, tmpstr3, tmpstr4;
     std::string ifs_line="", iter="0", ifs_word="", second_part, first_part, upload_file_name, last_line="";
     std::string resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="";
-    int upload_interval, timestep_interval, ICM_file_interval, retval=0, i, j;
+    int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
     int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter;
     int last_upload; // The time of the last upload file (in seconds)
@@ -224,31 +224,38 @@ int main(int argc, char** argv) {
           upload_interval=std::stoi(tmpstr1);
           cerr << "upload_interval: " << upload_interval << '\n';
        }
-       else if (nss.str().find("UTSTEP") != std::string::npos) {
+       else if (nss.str().find("TRICKLE_UPLOAD_FREQUENCY") != std::string::npos) {
           tmpstr2 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
-	  tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),','), tmpstr2.end());
-          tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),' '), tmpstr2.end());
-          timestep_interval = std::stoi(tmpstr2);
+          tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),' '), tmpstr1.end());
+          trickle_upload_frequency=std::stoi(tmpstr2);
+          cerr << "trickle_upload_frequency: " << trickle_upload_frequency << '\n';
+       }
+       else if (nss.str().find("UTSTEP") != std::string::npos) {
+          tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          // Remove any whitespace
+	  tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
+          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
+          timestep_interval = std::stoi(tmpstr3);
           cerr << "utstep: " << timestep_interval << '\n';
        }
        else if (nss.str().find("!NFRPOS") != std::string::npos) {
-          tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          tmpstr4 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace and commas
-          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
-          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
-          ICM_file_interval = std::stoi(tmpstr3);
+          tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),','), tmpstr4.end());
+          tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),' '), tmpstr4.end());
+          ICM_file_interval = std::stoi(tmpstr4);
           cerr << "nfrpos: " << ICM_file_interval << '\n';
        }
        else if (nss.str().find("NFRRES") != std::string::npos) {     // frequency of model output: +ve steps, -ve in hours.
-          tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          tmpstr5 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace and commas
-          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
-          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
-          if ( check_stoi(tmpstr3) ) {
-            restart_interval = stoi(tmpstr3);
+          tmpstr5.erase(std::remove(tmpstr5.begin(), tmpstr5.end(),','), tmpstr5.end());
+          tmpstr5.erase(std::remove(tmpstr5.begin(), tmpstr5.end(),' '), tmpstr5.end());
+          if ( check_stoi(tmpstr5) ) {
+            restart_interval = stoi(tmpstr5);
           } else {
-            cerr << "..Warning, unable to read restart interval, setting to zero, got string: " << tmpstr3 << std::endl;
+            cerr << "..Warning, unable to read restart interval, setting to zero, got string: " << tmpstr5 << std::endl;
             restart_interval = 0;
           }
        }
