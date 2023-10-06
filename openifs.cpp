@@ -299,7 +299,7 @@ int main(int argc, char** argv) {
     // Make the ifsdata directory
     std::string ifsdata_folder = slot_path + std::string("/ifsdata");
     // Check if ifsdata folder does not already exists or is empty
-    if ( !file_exists(ifsdata_folder) || file_is_empty(ifsdata_folder) ) {
+    if ( !file_exists(ifsdata_folder) ) {
       if (mkdir(ifsdata_folder.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for ifsdata folder failed" << '\n';
 
       // Get the name of the 'jf_' filename from a link within the ifsdata_file
@@ -332,7 +332,7 @@ int main(int argc, char** argv) {
     // Make the climate data directory
     std::string climate_data_path = slot_path + std::string("/") + horiz_resolution + grid_type;
     // Check if climate_data folder does not already exists or is empty
-    if ( !file_exists(climate_data_path) || file_is_empty(climate_data_path) ) {
+    if ( !file_exists(climate_data_path) ) {
       if (mkdir(climate_data_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) \
                        cerr << "..mkdir for the climate data folder failed" << std::endl;
 
