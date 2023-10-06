@@ -728,6 +728,7 @@ if __name__ == "__main__":
                 line = line.replace('_UPLOAD_INTERVAL',str(upload_interval))
                 line = line.replace('_ENSEMBLE_MEMBER_NUMBER',str(ensemble_member_number))
                 line = line.replace('_NUM_HOURS',str(num_hours))
+                line = line.replace('_TRICKLE_UPLOAD_FREQUENCY',str(trickle_upload_frequency))
                 # If baroclinic wave simulation
                 if app_name == 'oifs_43r3_bl':
                   line = line.replace('_ZN',zn)
