@@ -120,8 +120,9 @@ int main(int argc, char** argv) {
     // BOINC measures the disk usage on the slots directory so we must move all results out of this folder
     std::string temp_path = project_path + app_name + std::string("_") + wuid;
     cerr << "Location of temp folder: " << temp_path << '\n';
-    if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for temp folder for results failed" << std::endl;
-
+    if ( !file_exists(temp_path) ) {
+      if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for temp folder for results failed" << std::endl;
+    }
 
     // Move and unzip app file
     retval = move_and_unzip_app_file(app_name, version, project_path, slot_path);
