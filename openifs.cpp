@@ -558,7 +558,7 @@ int main(int argc, char** argv) {
 
        // Check if the CSTEP variable from rcf is greater than the last_iter, if so then quit model run
        if ( stoi(cstep_value) > stoi(last_iter) ) {
-          cerr << "CSTEP variable from rcf is greater than last_iter from progress file, error has occurred, quitting model run" << '\n';
+          cerr << "..CSTEP variable from rcf is greater than last_iter from progress file, error has occurred, quitting model run" << '\n';
           return 1;
        }
 
