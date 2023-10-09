@@ -9,7 +9,7 @@
 
 int main(int argc, char** argv) {
     std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;
-    std::string project_path, tmpstr1, tmpstr2, tmpstr3, tmpstr4;
+    std::string project_path, tmpstr1, tmpstr2, tmpstr3, tmpstr4, tmpstr5;
     std::string ifs_line="", iter="0", ifs_word="", second_part, first_part, upload_file_name, last_line="";
     std::string resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="";
