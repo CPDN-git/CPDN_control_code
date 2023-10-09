@@ -838,7 +838,7 @@ int main(int argc, char** argv) {
                    last_upload = current_iter;
 		
                    trickle_upload_count++;
-                   if (trickle_upload_count == 10) {
+                   if (trickle_upload_count == trickle_upload_frequency) {
                       // Produce trickle
                       process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);
                       trickle_upload_count = 0;
