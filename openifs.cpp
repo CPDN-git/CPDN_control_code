@@ -227,7 +227,7 @@ int main(int argc, char** argv) {
        else if (nss.str().find("TRICKLE_UPLOAD_FREQUENCY") != std::string::npos) {
           tmpstr2 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
-          tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),' '), tmpstr1.end());
+          tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),' '), tmpstr2.end());
           trickle_upload_frequency=std::stoi(tmpstr2);
           cerr << "trickle_upload_frequency: " << trickle_upload_frequency << '\n';
        }
