@@ -236,7 +236,6 @@ if __name__ == "__main__":
             horiz_resolution = str(model_config.getElementsByTagName('horiz_resolution')[0].childNodes[0].nodeValue)
             vert_resolution = str(model_config.getElementsByTagName('vert_resolution')[0].childNodes[0].nodeValue)
             grid_type = str(model_config.getElementsByTagName('grid_type')[0].childNodes[0].nodeValue)
-            timestep_units = str(model_config.getElementsByTagName('timestep_units')[0].childNodes[0].nodeValue)
             upload_frequency = str(model_config.getElementsByTagName('upload_frequency')[0].childNodes[0].nodeValue)
             trickle_upload_frequency = str(model_config.getElementsByTagName('trickle_upload_frequency')[0].childNodes[0].nodeValue)
             namelist_template = str(model_config.getElementsByTagName('namelist_template_global')[0].childNodes[0].nodeValue)
