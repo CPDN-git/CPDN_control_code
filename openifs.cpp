@@ -61,6 +61,7 @@ int main(int argc, char** argv) {
     std::string nthreads = argv[8];   // number of OPENMP threads
 
     OIFS_EXPID = exptid;
+    wu_name = dataBOINC.wu_name;
 
     double num_days = atof(fclen.c_str()); // number of simulation days
     int num_days_trunc = (int) num_days; // number of simulation days truncated to an integer
@@ -81,6 +82,7 @@ int main(int argc, char** argv) {
       cerr << "Project directory is: " << project_path << '\n';
 	    
       // Get the app version and re-parse to add a dot
+      version = std::to_string(dataBOINC.app_version);
       if (version.length()==2) {
          version = version.insert(0,".");
          //cerr << "version: " << version << '\n';
