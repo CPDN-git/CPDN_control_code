@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     cerr << "(argv7) app_name: " << argv[7] << '\n';
     cerr << "(argv8) nthreads: " << argv[8] << std::endl;
 
-    // Read the exptid, batchid, version, wuid from the command line
+    // Read the exptid, umid, batchid, wuid, fclen, app_name, number of threads from the command line
     std::string start_date = argv[1]; // simulation start date
     std::string exptid = argv[2];     // OpenIFS experiment id
     std::string unique_member_id = argv[3];  // umid
