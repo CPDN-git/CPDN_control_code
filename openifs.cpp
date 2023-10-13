@@ -40,6 +40,11 @@ int main(int argc, char** argv) {
        return retval;
     }
 
+
+    cerr << "wu_name: " << wu_name << '\n';
+    cerr << "project_dir: " << project_dir << '\n';
+    cerr << "version: " << version << '\n';
+
     cerr << "(argv0) " << argv[0] << '\n';
     cerr << "(argv1) start_date: " << argv[1] << '\n';
     cerr << "(argv2) exptid: " << argv[2] << '\n';
