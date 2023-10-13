@@ -20,9 +20,9 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     project_dir = dataBOINC.project_dir;
     version = std::to_string(dataBOINC.app_version);
 
-    cerr << "wu_name: " << wu_name << '\n';
-    cerr << "project_dir: " << project_dir << '\n';
-    cerr << "version: " << version << '\n';
+    //cerr << "wu_name: " << wu_name << '\n';
+    //cerr << "project_dir: " << project_dir << '\n';
+    //cerr << "version: " << version << '\n';
 
     // Set BOINC optional values
     BOINC_OPTIONS options;
