@@ -8,7 +8,7 @@
 #include "CPDN_control_code.h"
 
 // Initialise BOINC and set the options
-int initialise_boinc(std::string wu_name, std::string project_dir, std::string version) {
+int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version) {
     boinc_init();
     boinc_parse_init_data_file();
 
