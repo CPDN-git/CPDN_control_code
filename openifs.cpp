@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     std::string wu_name="", project_dir="", version="";
     int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
-    int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter;
+    int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter, standalone=0;
     int last_upload; // The time of the last upload file (in seconds)
     std::string last_iter = "0";
     char *pathvar=NULL;
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     std::string namelist="fort.4";    // namelist file, this name is fixed
 
     // Initialise BOINC
-    retval = initialise_boinc(wu_name, project_dir, version);
+    retval = initialise_boinc(wu_name, project_dir, version, standalone);
     if (retval) {
        cerr << "..BOINC initialisation failed" << "\n";
        return retval;
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
       cerr << "Working directory is: "<< slot_path << '\n';      
     }
 
-    if (!boinc_is_standalone()) {
+    if (!standalone) {
 
       // Get the project path
       project_path = project_dir + std::string("/");
@@ -608,7 +608,7 @@ int main(int argc, char** argv) {
     // Get result_base_name to construct upload file names using 
     // the first upload as an example and then stripping off '_0.zip'
 
-    if (!boinc_is_standalone()) {
+    if (!standalone) {
        retval = boinc_resolve_filename_s("upload_file_0.zip", resolved_name);
        if (retval) {
           cerr << "..boinc_resolve_filename failed" << std::endl;
@@ -771,7 +771,7 @@ int main(int argc, char** argv) {
                 }
 
                 // If running under a BOINC client
-                if (!boinc_is_standalone()) {
+                if (!standalone) {
 
                    if (zfl.size() > 0){
 
@@ -873,7 +873,7 @@ int main(int argc, char** argv) {
       //fprintf(stderr,"fraction done: %.6f\n", fraction_done);
      
 
-      if (!boinc_is_standalone()) {
+      if (!standalone) {
 	     // If the current iteration is at a restart iteration     
 	     if (!(std::stoi(iter)%restart_interval)) restart_cpu_time = current_cpu_time;
 	      
@@ -986,7 +986,7 @@ int main(int argc, char** argv) {
     }
 
     // If running under a BOINC client
-    if (!boinc_is_standalone()) {
+    if (!standalone) {
        if (zfl.size() > 0){
 
           // Create the zipped upload file from the list of files added to zfl
