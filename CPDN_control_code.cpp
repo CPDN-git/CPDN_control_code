@@ -8,7 +8,7 @@
 #include "CPDN_control_code.h"
 
 // Initialise BOINC and set the options
-int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version) {
+int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {
     boinc_init();
     boinc_parse_init_data_file();
 
@@ -33,6 +33,10 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     options.handle_process_control = true;  // the control code will handle all suspend/quit/resume
     options.direct_process_action = false;  // the control won't get suspended/killed by BOINC
     options.send_status_msgs = false;
+
+    // Check whether BOINC is running in standalone mode
+    standalone = boinc_is_standalone();
+    
     return boinc_init_options(&options);
 }
 
@@ -315,7 +319,7 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
 
 
 // Produce the trickle and either upload to the project server or as a physical file
-void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep) {
+void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) {
     std::string trickle, trickle_location;
     int rsize;
 
@@ -332,7 +336,7 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
     cerr << "Contents of trickle: " << trickle << "\n";
       
     // Upload the trickle if not in standalone mode
-    if (!boinc_is_standalone()) {
+    if (!standalone) {
        std::string variety("orig");
        cerr << "Uploading trickle at timestep: " << timestep << "\n";
        boinc_send_trickle_up(variety.data(), const_cast<char*> (trickle.c_str()));
