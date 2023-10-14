@@ -807,7 +807,7 @@ int main(int argc, char** argv) {
                       trickle_upload_count++;
                       if (trickle_upload_count == 10) {
                         // Produce trickle
-                        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);
+                        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
                         trickle_upload_count = 0;
                       }
                    }
@@ -845,7 +845,7 @@ int main(int argc, char** argv) {
                    trickle_upload_count++;
                    if (trickle_upload_count == trickle_upload_frequency) {
                       // Produce trickle
-                      process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);
+                      process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
                       trickle_upload_count = 0;
                    }
 
@@ -1019,7 +1019,7 @@ int main(int argc, char** argv) {
           }
 	       
 	  // Produce trickle
-          process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);
+          process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
        }
        boinc_end_critical_section();
     }
@@ -1049,7 +1049,7 @@ int main(int argc, char** argv) {
           }
         }
 	// Produce trickle
-        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);     
+        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);     
     }
 
     //-------------------------------------------------------------------------------------------------------
