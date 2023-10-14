@@ -38,7 +38,7 @@ int check_boinc_status(long, int);
 long launch_process_oifs(const std::string, const char*, const char*, const std::string);
 long launch_process_wrf(const std::string, const char*);
 std::string get_tag(const std::string &str);
-void process_trickle(double, const std::string, const std::string, const std::string, int);
+void process_trickle(double, const std::string, const std::string, const std::string, int, int);
 bool file_exists(const std::string &str);
 bool file_is_empty(std::string &str);
 double cpu_time(long);
@@ -50,7 +50,7 @@ bool oifs_parse_stat(std::string&, std::string&, int);
 bool oifs_get_stat(std::ifstream&, std::string&);
 bool oifs_valid_step(std::string&,int);
 int  print_last_lines(std::string filename, int nlines);
-void update_progress_file(std::string, int, int, std::string, int, int, int);
+void update_progress_file(std::string, int, int, std::string, int, int);
 bool read_rcf_file(std::ifstream&, std::string&, std::string&);
 bool read_delimited_line(std::string&, std::string, std::string, int, std::string&);
 
