@@ -30,7 +30,7 @@
 #include "rapidxml.hpp"
 #include <algorithm>
 
-int initialise_boinc(std::string&, std::string&, std::string&);
+int initialise_boinc(std::string&, std::string&, std::string&, int&);
 int move_and_unzip_app_file(std::string, std::string, std::string, std::string);
 const char* strip_path(const char* path);
 int check_child_status(long, int);
