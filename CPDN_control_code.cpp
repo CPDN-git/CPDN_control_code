@@ -61,7 +61,7 @@ int call_boinc_copy(std::string source, std::string destination) {
     return boinc_copy(source.c_str(), destination.c_str());
 }
 
-int call_boinc_resolve_filename_s(std::string logical_file_name, std::string& resolved_name);
+int call_boinc_resolve_filename_s(std::string logical_file_name, std::string& resolved_name) {
     return boinc_resolve_filename_s(logical_file_name.c_str(), resolved_name);
 }
 
