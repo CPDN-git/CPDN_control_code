@@ -53,8 +53,8 @@ int call_boinc_unzip(std::string zip_to_unzip, std::string path) {
     return boinc_zip(UNZIP_IT, zip_to_unzip.c_str(), path);
 }
 
-int call_boinc_zip(std::string file_to_zip, ZipFileList zfl) {
-    return boinc_zip(ZIP_IT, file_to_zip, &zfl);
+int call_boinc_zip(std::string file_to_zip, const ZipFileList* zfl) {
+    return boinc_zip(ZIP_IT, file_to_zip, zfl);
 }
 
 int call_boinc_copy(std::string source, std::string destination) {
