@@ -56,7 +56,7 @@ bool read_delimited_line(std::string&, std::string, std::string, int, std::strin
 void call_boinc_begin_critical_section();
 void call_boinc_end_critical_section();
 int call_boinc_unzip(std::string, std::string path);
-int call_boinc_zip(std::string, ZipFileList);
+int call_boinc_zip(std::string, const ZipFileList*);
 int call_boinc_copy(std::string, std::string);
 int call_boinc_resolve_filename_s(std::string, std::string&);
 void call_boinc_upload_file(std::string);
