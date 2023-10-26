@@ -30,7 +30,7 @@
 #include "rapidxml.hpp"
 #include <algorithm>
 
-int initialise_boinc(std::string, std::string, std::string);
+int initialise_boinc(std::string&, std::string&, std::string&, int&);
 int move_and_unzip_app_file(std::string, std::string, std::string, std::string);
 const char* strip_path(const char* path);
 int check_child_status(long, int);
@@ -38,7 +38,7 @@ int check_boinc_status(long, int);
 long launch_process_oifs(const std::string, const char*, const char*, const std::string);
 long launch_process_wrf(const std::string, const char*);
 std::string get_tag(const std::string &str);
-void process_trickle(double, const std::string, const std::string, const std::string, int);
+void process_trickle(double, const std::string, const std::string, const std::string, int, int);
 bool file_exists(const std::string &str);
 bool file_is_empty(std::string &str);
 double cpu_time(long);
@@ -51,6 +51,19 @@ bool oifs_get_stat(std::ifstream&, std::string&);
 bool oifs_valid_step(std::string&,int);
 int  print_last_lines(std::string filename, int nlines);
 void update_progress_file(std::string, int, int, std::string, int, int);
+bool read_rcf_file(std::ifstream&, std::string&, std::string&);
+bool read_delimited_line(std::string&, std::string, std::string, int, std::string&);
+void call_boinc_begin_critical_section();
+void call_boinc_end_critical_section();
+int call_boinc_unzip(std::string, std::string path);
+int call_boinc_zip(std::string, const ZipFileList*);
+int call_boinc_copy(std::string, std::string);
+int call_boinc_resolve_filename_s(std::string, std::string&);
+void call_boinc_upload_file(std::string);
+int call_boinc_upload_status(std::string);
+void call_boinc_report_app_status(double, int, double);
+void call_boinc_fraction_done(double);
+void call_boinc_finish(int);
 
 using namespace std;
 using namespace std::chrono;

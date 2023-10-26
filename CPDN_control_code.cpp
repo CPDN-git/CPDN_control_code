@@ -8,7 +8,7 @@
 #include "CPDN_control_code.h"
 
 // Initialise BOINC and set the options
-int initialise_boinc(std::string wu_name, std::string project_dir, std::string version) {
+int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {
     boinc_init();
     boinc_parse_init_data_file();
 
@@ -19,7 +19,11 @@ int initialise_boinc(std::string wu_name, std::string project_dir, std::string v
     wu_name = dataBOINC.wu_name;
     project_dir = dataBOINC.project_dir;
     version = std::to_string(dataBOINC.app_version);
-    
+
+    //cerr << "wu_name: " << wu_name << '\n';
+    //cerr << "project_dir: " << project_dir << '\n';
+    //cerr << "version: " << version << '\n';
+
     // Set BOINC optional values
     BOINC_OPTIONS options;
     boinc_options_defaults(options);
@@ -29,8 +33,58 @@ int initialise_boinc(std::string wu_name, std::string project_dir, std::string v
     options.handle_process_control = true;  // the control code will handle all suspend/quit/resume
     options.direct_process_action = false;  // the control won't get suspended/killed by BOINC
     options.send_status_msgs = false;
+
+    // Check whether BOINC is running in standalone mode
+    standalone = boinc_is_standalone();
+    
     return boinc_init_options(&options);
 }
+
+// Wrappers for BOINC APIs calls, calls to APIs need to be in the same scope as the call to boinc_init()
+void call_boinc_begin_critical_section() {
+    boinc_begin_critical_section();
+}
+
+void call_boinc_end_critical_section() {
+    boinc_begin_critical_section();
+}
+
+int call_boinc_unzip(std::string zip_to_unzip, std::string path) {
+    return boinc_zip(UNZIP_IT, zip_to_unzip.c_str(), path);
+}
+
+int call_boinc_zip(std::string file_to_zip, const ZipFileList* zfl) {
+    return boinc_zip(ZIP_IT, file_to_zip, zfl);
+}
+
+int call_boinc_copy(std::string source, std::string destination) {
+    return boinc_copy(source.c_str(), destination.c_str());
+}
+
+int call_boinc_resolve_filename_s(std::string logical_file_name, std::string& resolved_name) {
+    return boinc_resolve_filename_s(logical_file_name.c_str(), resolved_name);
+}
+
+void call_boinc_upload_file(std::string upload_file_name) {
+    boinc_upload_file(upload_file_name);
+}
+
+int call_boinc_upload_status(std::string upload_file_name) {
+    return boinc_upload_status(upload_file_name);
+}
+
+void call_boinc_report_app_status(double current_cpu_time, int restart_cpu_time, double fraction_done) {
+    boinc_report_app_status(current_cpu_time,restart_cpu_time,fraction_done);
+}
+
+void call_boinc_fraction_done(double fraction_done) {
+    boinc_fraction_done(fraction_done);
+}
+
+void call_boinc_finish(int status) {
+    boinc_finish(status);
+}
+
 
 
 // Move and unzip the app file
@@ -292,7 +346,6 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
     cerr << "Writing to progress file: " << progress_file << "\n";
 
     // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
-    progress_file_out.open(progress_file);
     progress_file_out <<"<?xml version=\"1.0\" encoding=\"utf-8\"?>"<< '\n';
     progress_file_out <<"<running_values>"<< '\n';
     progress_file_out <<"  <last_cpu_time>"<<std::to_string(last_cpu_time)<<"</last_cpu_time>"<< '\n';
@@ -312,7 +365,7 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
 
 
 // Produce the trickle and either upload to the project server or as a physical file
-void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep) {
+void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) {
     std::string trickle, trickle_location;
     int rsize;
 
@@ -329,7 +382,7 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
     cerr << "Contents of trickle: " << trickle << "\n";
       
     // Upload the trickle if not in standalone mode
-    if (!boinc_is_standalone()) {
+    if (!standalone) {
        std::string variety("orig");
        cerr << "Uploading trickle at timestep: " << timestep << "\n";
        boinc_send_trickle_up(variety.data(), const_cast<char*> (trickle.c_str()));
@@ -631,4 +684,66 @@ int print_last_lines(string filename, int maxlines) {
    }
 
    return count;
+}
+
+
+bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::string& cstep_value)
+{
+    // Read the rcf_file if it exists and extract the CTIME and CSTEP variables
+    
+    std::string delimiter = "\"";
+    std::string rcf_file_line;
+    int position = 2;
+
+    // Extract the values of CSTEP and CTIME from the rcf file
+    while ( std::getline( rcf_file, rcf_file_line )) {
+
+       // Check for CSTEP, if present return value
+       read_delimited_line(rcf_file_line, delimiter, "CSTEP", position, cstep_value);
+
+       // Check for CTIME, if present return value
+       read_delimited_line(rcf_file_line, delimiter, "CTIME", position, ctime_value);
+
+    }
+    //cerr << "rcf file CSTEP: " << cstep_value << '\n';
+    //cerr << "rcf file CTIME: " << ctime_value << '\n';
+
+    if (cstep_value == "") {
+       cerr << "CSTEP value not present in rcf file" << '\n';
+       return false;
+    } else if (ctime_value == "") {
+       cerr << "CTIME value not present in rcf file" << '\n';
+       return false;
+    } else {
+       return true;
+    }
+}
+
+
+bool read_delimited_line(std::string& file_line, std::string delimiter, std::string string_to_find, int position, std::string& returned_value)
+{
+    // Extracts a value from a delimited position on a line of a file
+
+    size_t pos = 0;
+    int count = 0;
+
+    if (file_line.find(string_to_find) != std::string::npos ) {
+       // From the file line take the field specified by the position
+       while ((pos = file_line.find(delimiter)) != std::string::npos) {
+          count = count + 1;
+          if (count == position) {  
+             returned_value = file_line.substr(0,pos);
+             // Remove whitespace
+             returned_value.erase( std::remove_if( returned_value.begin(), \
+                                   returned_value.end(), ::isspace ), returned_value.end() );
+          }
+          file_line.erase(0, pos + delimiter.length());
+       }
+    }
+
+    if ( returned_value != "" ) {
+       return true;
+    } else {
+       return false;
+    }
 }

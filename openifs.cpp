@@ -9,13 +9,13 @@
 
 int main(int argc, char** argv) {
     std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;
-    std::string project_path, tmpstr1, tmpstr2, tmpstr3;
+    std::string project_path, tmpstr1, tmpstr2, tmpstr3, tmpstr4, tmpstr5;
     std::string ifs_line="", iter="0", ifs_word="", second_part, first_part, upload_file_name, last_line="";
     std::string resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="";
-    int upload_interval, timestep_interval, ICM_file_interval, retval=0, i, j;
+    int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
-    int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter;
+    int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter, standalone=0;
     int last_upload; // The time of the last upload file (in seconds)
     std::string last_iter = "0";
     char *pathvar=NULL;
@@ -34,11 +34,16 @@ int main(int argc, char** argv) {
     std::string namelist="fort.4";    // namelist file, this name is fixed
 
     // Initialise BOINC
-    retval = initialise_boinc(wu_name, project_dir, version);
+    retval = initialise_boinc(wu_name, project_dir, version, standalone);
     if (retval) {
        cerr << "..BOINC initialisation failed" << "\n";
        return retval;
     }
+
+
+    cerr << "wu_name: " << wu_name << '\n';
+    cerr << "project_dir: " << project_dir << '\n';
+    cerr << "version: " << version << '\n';
 
     cerr << "(argv0) " << argv[0] << '\n';
     cerr << "(argv1) start_date: " << argv[1] << '\n';
@@ -50,7 +55,7 @@ int main(int argc, char** argv) {
     cerr << "(argv7) app_name: " << argv[7] << '\n';
     cerr << "(argv8) nthreads: " << argv[8] << std::endl;
 
-    // Read the exptid, batchid, version, wuid from the command line
+    // Read the exptid, umid, batchid, wuid, fclen, app_name, number of threads from the command line
     std::string start_date = argv[1]; // simulation start date
     std::string exptid = argv[2];     // OpenIFS experiment id
     std::string unique_member_id = argv[3];  // umid
@@ -74,7 +79,7 @@ int main(int argc, char** argv) {
       cerr << "Working directory is: "<< slot_path << '\n';      
     }
 
-    if (!boinc_is_standalone()) {
+    if (!standalone) {
 
       // Get the project path
       project_path = project_dir + std::string("/");
@@ -120,8 +125,9 @@ int main(int argc, char** argv) {
     // BOINC measures the disk usage on the slots directory so we must move all results out of this folder
     std::string temp_path = project_path + app_name + std::string("_") + wuid;
     cerr << "Location of temp folder: " << temp_path << '\n';
-    if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for temp folder for results failed" << std::endl;
-
+    if ( !file_exists(temp_path) ) {
+      if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for temp folder for results failed" << std::endl;
+    }
 
     // Move and unzip app file
     retval = move_and_unzip_app_file(app_name, version, project_path, slot_path);
@@ -130,8 +136,8 @@ int main(int argc, char** argv) {
       return retval;
     }
 
-	
-    // Process the Namelist/workunit file:
+
+    //------------------------------------------Process the namelist-----------------------------------------
     std::string namelist_zip = slot_path + std::string("/") + app_name + std::string("_") + unique_member_id + std::string("_") + start_date +\
                       std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
 		
@@ -141,7 +147,7 @@ int main(int argc, char** argv) {
     // Copy the namelist files to the working directory
     std::string wu_destination = namelist_zip;
     cerr << "Copying the namelist files from: " << wu_source << " to: " << wu_destination << '\n';
-    retval = boinc_copy(wu_source.c_str(), wu_destination.c_str());
+    retval = call_boinc_copy(wu_source, wu_destination);
     if (retval) {
        cerr << "..Copying the namelist files to the working directory failed" << std::endl;
        return retval;
@@ -149,7 +155,7 @@ int main(int argc, char** argv) {
 
     // Unzip the namelist zip file
     cerr << "Unzipping the namelist zip file: " << namelist_zip << '\n';
-    retval = boinc_zip(UNZIP_IT, namelist_zip.c_str(), slot_path);
+    retval = call_boinc_unzip(namelist_zip, slot_path);
     if (retval) {
        cerr << "..Unzipping the namelist file failed" << std::endl;
        return retval;
@@ -159,8 +165,6 @@ int main(int argc, char** argv) {
        std::remove(namelist_zip.c_str());
     }
 
-	
-    //------------------------------------------Process the namelist-----------------------------------------
 	
     // Parse the fort.4 namelist for the filenames and variables
     std::string namelist_file = slot_path + std::string("/") + namelist;
@@ -225,31 +229,38 @@ int main(int argc, char** argv) {
           upload_interval=std::stoi(tmpstr1);
           cerr << "upload_interval: " << upload_interval << '\n';
        }
-       else if (nss.str().find("UTSTEP") != std::string::npos) {
+       else if (nss.str().find("TRICKLE_UPLOAD_FREQUENCY") != std::string::npos) {
           tmpstr2 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
-	  tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),','), tmpstr2.end());
           tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),' '), tmpstr2.end());
-          timestep_interval = std::stoi(tmpstr2);
+          trickle_upload_frequency=std::stoi(tmpstr2);
+          cerr << "trickle_upload_frequency: " << trickle_upload_frequency << '\n';
+       }
+       else if (nss.str().find("UTSTEP") != std::string::npos) {
+          tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          // Remove any whitespace
+	  tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
+          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
+          timestep_interval = std::stoi(tmpstr3);
           cerr << "utstep: " << timestep_interval << '\n';
        }
        else if (nss.str().find("!NFRPOS") != std::string::npos) {
-          tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          tmpstr4 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace and commas
-          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
-          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
-          ICM_file_interval = std::stoi(tmpstr3);
+          tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),','), tmpstr4.end());
+          tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),' '), tmpstr4.end());
+          ICM_file_interval = std::stoi(tmpstr4);
           cerr << "nfrpos: " << ICM_file_interval << '\n';
        }
        else if (nss.str().find("NFRRES") != std::string::npos) {     // frequency of model output: +ve steps, -ve in hours.
-          tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          tmpstr5 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace and commas
-          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
-          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
-          if ( check_stoi(tmpstr3) ) {
-            restart_interval = stoi(tmpstr3);
+          tmpstr5.erase(std::remove(tmpstr5.begin(), tmpstr5.end(),','), tmpstr5.end());
+          tmpstr5.erase(std::remove(tmpstr5.begin(), tmpstr5.end(),' '), tmpstr5.end());
+          if ( check_stoi(tmpstr5) ) {
+            restart_interval = stoi(tmpstr5);
           } else {
-            cerr << "..Warning, unable to read restart interval, setting to zero, got string: " << tmpstr3 << std::endl;
+            cerr << "..Warning, unable to read restart interval, setting to zero, got string: " << tmpstr5 << std::endl;
             restart_interval = 0;
           }
        }
@@ -278,7 +289,7 @@ int main(int argc, char** argv) {
     // Copy the IC ancils to working directory
     std::string ic_ancil_destination = ic_ancil_zip;
     cerr << "Copying IC ancils from: " << ic_ancil_source << " to: " << ic_ancil_destination << '\n';
-    retval = boinc_copy(ic_ancil_source.c_str(), ic_ancil_destination.c_str());
+    retval = call_boinc_copy(ic_ancil_source, ic_ancil_destination);
     if (retval) {
        cerr << "..Copying the IC ancils to the working directory failed" << std::endl;
        return retval;
@@ -286,7 +297,7 @@ int main(int argc, char** argv) {
 
     // Unzip the IC ancils zip file
     cerr << "Unzipping the IC ancils zip file: " << ic_ancil_zip << '\n';
-    retval = boinc_zip(UNZIP_IT, ic_ancil_zip.c_str(), slot_path);
+    retval = call_boinc_unzip(ic_ancil_zip, slot_path);
     if (retval) {
        cerr << "..Unzipping the IC ancils file failed" << std::endl;
        return retval;
@@ -300,66 +311,71 @@ int main(int argc, char** argv) {
     // Process the ifsdata_file:
     // Make the ifsdata directory
     std::string ifsdata_folder = slot_path + std::string("/ifsdata");
-    if (mkdir(ifsdata_folder.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for ifsdata folder failed" << '\n';
+    // Check if ifsdata folder does not already exists or is empty
+    if ( !file_exists(ifsdata_folder) ) {
+      if (mkdir(ifsdata_folder.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for ifsdata folder failed" << '\n';
 
-    // Get the name of the 'jf_' filename from a link within the ifsdata_file
-    std::string ifsdata_source = get_tag(slot_path + std::string("/") + ifsdata_file + std::string(".zip"));
+      // Get the name of the 'jf_' filename from a link within the ifsdata_file
+      std::string ifsdata_source = get_tag(slot_path + std::string("/") + ifsdata_file + std::string(".zip"));
 
-    // Copy the ifsdata_file to the working directory
-    std::string ifsdata_destination = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
-    cerr << "Copying the ifsdata_file from: " << ifsdata_source << " to: " << ifsdata_destination << '\n';
-    retval = boinc_copy(ifsdata_source.c_str(), ifsdata_destination.c_str());
-    if (retval) {
-       cerr << "..Copying the ifsdata file to the working directory failed" << std::endl;
-       return retval;
+      // Copy the ifsdata_file to the working directory
+      std::string ifsdata_destination = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
+      cerr << "Copying the ifsdata_file from: " << ifsdata_source << " to: " << ifsdata_destination << '\n';
+      retval = call_boinc_copy(ifsdata_source, ifsdata_destination);
+      if (retval) {
+         cerr << "..Copying the ifsdata file to the working directory failed" << std::endl;
+         return retval;
+      }
+
+      // Unzip the ifsdata_file zip file
+      std::string ifsdata_zip = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
+      cerr << "Unzipping the ifsdata_zip file: " << ifsdata_zip << '\n';
+      retval = call_boinc_unzip(ifsdata_zip, ifsdata_folder + std::string("/"));
+      if (retval) {
+         cerr << "..Unzipping the ifsdata_zip file failed" << std::endl;
+         return retval;
+      }
+      // Remove the zip file
+      else {
+         std::remove(ifsdata_zip.c_str());
+      }
     }
-
-    // Unzip the ifsdata_file zip file
-    std::string ifsdata_zip = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
-    cerr << "Unzipping the ifsdata_zip file: " << ifsdata_zip << '\n';
-    retval = boinc_zip(UNZIP_IT, ifsdata_zip.c_str(), ifsdata_folder + std::string("/"));
-    if (retval) {
-       cerr << "..Unzipping the ifsdata_zip file failed" << std::endl;
-       return retval;
-    }
-    // Remove the zip file
-    else {
-       std::remove(ifsdata_zip.c_str());
-    }
-
 
     // Process the climate_data_file:
     // Make the climate data directory
     std::string climate_data_path = slot_path + std::string("/") + horiz_resolution + grid_type;
-    if (mkdir(climate_data_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) \
+    // Check if climate_data folder does not already exists or is empty
+    if ( !file_exists(climate_data_path) ) {
+      if (mkdir(climate_data_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) \
                        cerr << "..mkdir for the climate data folder failed" << std::endl;
 
-    // Get the name of the 'jf_' filename from a link within the climate_data_file
-    std::string climate_data_source = get_tag(slot_path + std::string("/") + climate_data_file + std::string(".zip"));
+      // Get the name of the 'jf_' filename from a link within the climate_data_file
+      std::string climate_data_source = get_tag(slot_path + std::string("/") + climate_data_file + std::string(".zip"));
 
-    // Copy the climate data file to working directory
-    std::string climate_data_destination = climate_data_path + std::string("/") + climate_data_file + std::string(".zip");
-    cerr << "Copying the climate data file from: " << climate_data_source << " to: " << climate_data_destination << '\n';
-    retval = boinc_copy(climate_data_source.c_str(), climate_data_destination.c_str());
-    if (retval) {
-       cerr << "..Copying the climate data file to the working directory failed" << std::endl;
-       return retval;
-    }	
+      // Copy the climate data file to working directory
+      std::string climate_data_destination = climate_data_path + std::string("/") + climate_data_file + std::string(".zip");
+      cerr << "Copying the climate data file from: " << climate_data_source << " to: " << climate_data_destination << '\n';
+      retval = call_boinc_copy(climate_data_source, climate_data_destination);
+      if (retval) {
+         cerr << "..Copying the climate data file to the working directory failed" << std::endl;
+         return retval;
+      }	
 
-    // Unzip the climate data zip file
-    std::string climate_zip = climate_data_destination;
-    cerr << "Unzipping the climate data zip file: " << climate_zip << '\n';
-    retval = boinc_zip(UNZIP_IT, climate_zip.c_str(), climate_data_path);
-    if (retval) {
-       cerr << "..Unzipping the climate data file failed" << std::endl;
-       return retval;
+      // Unzip the climate data zip file
+      std::string climate_zip = climate_data_destination;
+      cerr << "Unzipping the climate data zip file: " << climate_zip << '\n';
+      retval = call_boinc_unzip(climate_zip, climate_data_path);
+      if (retval) {
+         cerr << "..Unzipping the climate data file failed" << std::endl;
+         return retval;
+      }
+      // Remove the zip file
+      else {
+         std::remove(climate_zip.c_str());
+      }
     }
-    // Remove the zip file
-    else {
-       std::remove(climate_zip.c_str());
-    }
 
-	
+
     //------------------------------------Set the environmental variables------------------------------------
 
     // Set the OIFS_DUMMY_ACTION environmental variable, this controls what OpenIFS does if it goes into a dummy subroutine
@@ -470,21 +486,66 @@ int main(int argc, char** argv) {
     #endif
 
 
-    // Define the name and location of the progress file
-    std::string progress_file = slot_path+std::string("/progress_file_")+wuid+std::string(".xml");
-	
+    // Define the name and location of the progress file and the rcf file
+    std::string progress_file = slot_path + std::string("/progress_file_") + wuid + std::string(".xml");
+    std::string rcf_file = slot_path + std::string("/rcf");
+
     // Model progress is held in the progress file
     // First check if a file is not already present from an unscheduled shutdown
     cerr << "Checking for progress XML file: " << progress_file << '\n';
 
-    if ( file_exists(progress_file) && !file_is_empty(progress_file) ) {
+    // Handle the cases of the various states of the rcf file and progress file
+    if ( !file_exists(progress_file) && !file_exists(rcf_file) ) {
+       // If both progress file and rcf file do not exist, then model has not run, then set the initial values of run
+       last_cpu_time = 0;
+       upload_file_number = 0;
+       last_iter = "0";
+       last_upload = 0;
+       model_completed = 0;
+    } else if ( file_exists(progress_file) && file_is_empty(progress_file) ) {
+       // If progress file exists and is empty, an error has occurred, then kill model run
+       cerr << "..progress XML file exists, but is empty => problem with model, quitting run" << '\n';
+       return 1;
+    } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
+       // If progress file exists and rcf file does not exist, an error has occurred, then kill model run
+       cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
+       return 1;
+    } else if ( !file_exists(progress_file) && file_exists(rcf_file) ) {
+       // If rcf file exists and progress file does not exist, an error has occurred, then kill model run
+       cerr << "..rcf file exists, but progress XML file does not exist => problem with model, quitting run" << '\n';
+       return 1;
+    } else if ( (file_exists(progress_file) && !file_is_empty(progress_file)) && file_exists(rcf_file) ) {
+       // If progress file exists and is not empty and rcf file exists, then read rcf file and progress file
+       std::ifstream rcf_file_stream;
+       std::string ctime_value = "", cstep_value = "";
+
+       // Read the rcf file
+       if( file_exists( rcf_file ) ) {
+         if( !(rcf_file_stream.is_open()) ) {
+            rcf_file_stream.open( rcf_file );
+         }
+         if( rcf_file_stream.is_open() ) {
+            if (read_rcf_file(rcf_file_stream, ctime_value, cstep_value)) {
+               cerr << "Read the rcf file" << '\n';
+               //cerr << "rcf file CSTEP: " << cstep_value << '\n';
+               //cerr << "rcf file CTIME: " << ctime_value << '\n';
+            } else {
+               // Reading the rcf file failed, then kill model run
+               cerr << "..Reading the rcf file failed" << '\n';
+	       return 1;
+            }
+         }
+       }
+       rcf_file_stream.close();
+	    
+       // Read the progress file
        std::ifstream progress_file_in(progress_file);
        std::stringstream progress_file_buffer;
        xml_document<> doc;
 
-       // If present parse file and extract values
+       // Parse progress file and extract values
        progress_file_in.open(progress_file);
-       cerr << "Opened progress file ok : " << progress_file << '\n';
+       cerr << "Opened progress file: " << progress_file << '\n';
        progress_file_buffer << progress_file_in.rdbuf();
        progress_file_in.close();
 	    
@@ -508,6 +569,12 @@ int main(int argc, char** argv) {
        last_upload = std::stoi(last_upload_node->value());
        model_completed = std::stoi(model_completed_node->value());
 
+       // Check if the CSTEP variable from rcf is greater than the last_iter, if so then quit model run
+       if ( stoi(cstep_value) > stoi(last_iter) ) {
+          cerr << "..CSTEP variable from rcf is greater than last_iter from progress file, error has occurred, quitting model run" << '\n';
+          return 1;
+       }
+
        // Adjust last_iter to the step of the previous model restart dump step.
        // This is always a multiple of the restart frequency
 
@@ -516,14 +583,6 @@ int main(int argc, char** argv) {
        restart_iter = stoi(last_iter);
        restart_iter = restart_iter - ((restart_iter % restart_interval) - 1);   // -1 because the model will continue from restart_iter.
        last_iter = to_string(restart_iter); 
-    }
-    else {
-       // Set the initial values for start of model run
-       last_cpu_time = 0;
-       upload_file_number = 0;
-       last_iter = "0";
-       last_upload = 0;
-       model_completed = 0;
     }
 
     // Update progress file with current values
@@ -549,8 +608,8 @@ int main(int argc, char** argv) {
     // Get result_base_name to construct upload file names using 
     // the first upload as an example and then stripping off '_0.zip'
 
-    if (!boinc_is_standalone()) {
-       retval = boinc_resolve_filename_s("upload_file_0.zip", resolved_name);
+    if (!standalone) {
+       retval = call_boinc_resolve_filename_s("upload_file_0.zip", resolved_name);
        if (retval) {
           cerr << "..boinc_resolve_filename failed" << std::endl;
 	  return 1;
@@ -587,7 +646,7 @@ int main(int argc, char** argv) {
     handleProcess = launch_process_oifs(slot_path, strCmd.c_str(), exptid.c_str(), app_name);
     if (handleProcess > 0) process_status = 0;
 
-    boinc_end_critical_section();
+    call_boinc_end_critical_section();
 
 
     // process_status = 0 running
@@ -604,7 +663,7 @@ int main(int argc, char** argv) {
     std::string stat_lastline = "";
 
     while (process_status == 0 && model_completed == 0) {
-       sleep_until(system_clock::now() + seconds(1));
+       sleep_until(system_clock::now() + seconds(1)); // Time gap of 1 second to reduce overhead of control code
 
        count++;
 
@@ -675,7 +734,7 @@ int main(int argc, char** argv) {
                 // Create an intermediate results zip file using BOINC zip
                 zfl.clear();
 
-                boinc_begin_critical_section();
+                call_boinc_begin_critical_section();
 
                 // Cycle through all the steps from the last upload to the current upload
                 for (i = (last_upload / timestep_interval); i < (current_iter / timestep_interval); i++) {
@@ -712,7 +771,7 @@ int main(int argc, char** argv) {
                 }
 
                 // If running under a BOINC client
-                if (!boinc_is_standalone()) {
+                if (!standalone) {
 
                    if (zfl.size() > 0){
 
@@ -720,11 +779,11 @@ int main(int argc, char** argv) {
                       upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
                       cerr << "Zipping up the intermediate file: " << upload_file << '\n';
-                      retval = boinc_zip(ZIP_IT, upload_file, &zfl);  // n.b. pass std::string to avoid copy-on-call
+                      retval = call_boinc_zip(upload_file, &zfl);  // n.b. pass std::string to avoid copy-on-call
 
                       if (retval) {
                          cerr << "..Zipping up the intermediate file failed" << std::endl;
-                         boinc_end_critical_section();
+                         call_boinc_end_critical_section();
                          return retval;
                       }
                       else {
@@ -739,8 +798,8 @@ int main(int argc, char** argv) {
                       upload_file_name = std::string("upload_file_") + std::to_string(upload_file_number) + std::string(".zip");
                       cerr << "Uploading the intermediate file: " << upload_file_name << '\n';
                       sleep_until(system_clock::now() + seconds(20));
-                      boinc_upload_file(upload_file_name);
-                      retval = boinc_upload_status(upload_file_name);
+                      call_boinc_upload_file(upload_file_name);
+                      retval = call_boinc_upload_status(upload_file_name);
                       if (!retval) {
                          cerr << "Finished the upload of the intermediate file: " << upload_file_name << '\n';
                       }
@@ -748,7 +807,7 @@ int main(int argc, char** argv) {
                       trickle_upload_count++;
                       if (trickle_upload_count == 10) {
                         // Produce trickle
-                        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);
+                        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
                         trickle_upload_count = 0;
                       }
                    }
@@ -766,11 +825,11 @@ int main(int argc, char** argv) {
                    upload_file = project_path + upload_file_name;
 
                    if (zfl.size() > 0){
-                      retval = boinc_zip(ZIP_IT,upload_file,&zfl);
+                      retval = call_boinc_zip(upload_file, &zfl);
 
                       if (retval) {
                          cerr << "..Creating the zipped upload file failed" << std::endl;
-                         boinc_end_critical_section();
+                         call_boinc_end_critical_section();
                          return retval;
                       }
                       else {
@@ -784,14 +843,14 @@ int main(int argc, char** argv) {
                    last_upload = current_iter;
 		
                    trickle_upload_count++;
-                   if (trickle_upload_count == 10) {
+                   if (trickle_upload_count == trickle_upload_frequency) {
                       // Produce trickle
-                      process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);
+                      process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
                       trickle_upload_count = 0;
                    }
 
                 }
-                boinc_end_critical_section();
+                call_boinc_end_critical_section();
                 upload_file_number++;
              }
           }
@@ -814,16 +873,16 @@ int main(int argc, char** argv) {
       //fprintf(stderr,"fraction done: %.6f\n", fraction_done);
      
 
-      if (!boinc_is_standalone()) {
+      if (!standalone) {
 	     // If the current iteration is at a restart iteration     
 	     if (!(std::stoi(iter)%restart_interval)) restart_cpu_time = current_cpu_time;
 	      
          // Provide the current cpu_time to the BOINC server (note: this is deprecated in BOINC)
-         boinc_report_app_status(current_cpu_time,restart_cpu_time,fraction_done);
+         call_boinc_report_app_status(current_cpu_time, restart_cpu_time, fraction_done);
 
          // Provide the fraction done to the BOINC client, 
          // this is necessary for the percentage bar on the client
-         boinc_fraction_done(fraction_done);
+         call_boinc_fraction_done(fraction_done);
 	  
          // Check the status of the client if not in standalone mode     
          process_status = check_boinc_status(handleProcess,process_status);
@@ -898,7 +957,7 @@ int main(int argc, char** argv) {
     }
 
 
-    boinc_begin_critical_section();
+    call_boinc_begin_critical_section();
 
     //-----------------------------Create the final results zip file-----------------------------------------
 	
@@ -927,18 +986,18 @@ int main(int argc, char** argv) {
     }
 
     // If running under a BOINC client
-    if (!boinc_is_standalone()) {
+    if (!standalone) {
        if (zfl.size() > 0){
 
           // Create the zipped upload file from the list of files added to zfl
           upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
           cerr << "Zipping up the final file: " << upload_file << '\n';
-          retval = boinc_zip(ZIP_IT, upload_file, &zfl);
+          retval = call_boinc_zip(upload_file, &zfl);
 
           if (retval) {
              cerr << "..Zipping up the final file failed" << std::endl;
-             boinc_end_critical_section();
+             call_boinc_end_critical_section();
              return retval;
           }
           else {
@@ -953,16 +1012,16 @@ int main(int argc, char** argv) {
           upload_file_name = std::string("upload_file_") + std::to_string(upload_file_number) + std::string(".zip");
           cerr << "Uploading the final file: " << upload_file_name << '\n';
           sleep_until(system_clock::now() + seconds(20));
-          boinc_upload_file(upload_file_name);
-          retval = boinc_upload_status(upload_file_name);
+          call_boinc_upload_file(upload_file_name);
+          retval = call_boinc_upload_status(upload_file_name);
           if (!retval) {
              cerr << "Finished the upload of the final file" << '\n';
           }
 	       
 	  // Produce trickle
-          process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);
+          process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
        }
-       boinc_end_critical_section();
+       call_boinc_end_critical_section();
     }
     // Else running in standalone
     else {
@@ -975,10 +1034,10 @@ int main(int argc, char** argv) {
        upload_file = project_path + upload_file_name;
 
        if (zfl.size() > 0){
-          retval = boinc_zip(ZIP_IT,upload_file,&zfl);
+          retval = call_boinc_zip(upload_file, &zfl);
           if (retval) {
              cerr << "..Creating the zipped upload file failed" << std::endl;
-             boinc_end_critical_section();
+             call_boinc_end_critical_section();
              return retval;
           }
           else {
@@ -990,7 +1049,7 @@ int main(int argc, char** argv) {
           }
         }
 	// Produce trickle
-        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter);     
+        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);     
     }
 
     //-------------------------------------------------------------------------------------------------------
@@ -1003,20 +1062,20 @@ int main(int argc, char** argv) {
 
     // if finished normally
     if (process_status == 1){
-      boinc_end_critical_section();
-      boinc_finish(0);
+      call_boinc_end_critical_section();
+      call_boinc_finish(0);
       cerr << "Task finished" << std::endl;
       return 0;
     }
     else if (process_status == 2){
-      boinc_end_critical_section();
-      boinc_finish(0);
+      call_boinc_end_critical_section();
+      call_boinc_finish(0);
       cerr << "Task finished" << std::endl;
       return 0;
     }
     else {
-      boinc_end_critical_section();
-      boinc_finish(1);
+      call_boinc_end_critical_section();
+      call_boinc_finish(1);
       cerr << "Task finished" << std::endl;
       return 1;
     }	
