@@ -539,35 +539,7 @@ int main(int argc, char** argv) {
        rcf_file_stream.close();
 	    
        // Read the progress file
-       std::ifstream progress_file_in(progress_file);
-       std::stringstream progress_file_buffer;
-       xml_document<> doc;
-
-       // Parse progress file and extract values
-       progress_file_in.open(progress_file);
-       cerr << "Opened progress file: " << progress_file << '\n';
-       progress_file_buffer << progress_file_in.rdbuf();
-       progress_file_in.close();
-	    
-       // Parse XML progress file
-       // RapidXML needs careful memory management. Use string to preserve memory for later xml_node calls.
-       // Passing &progress_file_buffer.str()[0] caused new str on heap & memory error.
-       std::string prog_contents = progress_file_buffer.str();       // could use vector<char> here
-
-       doc.parse<0>(&prog_contents[0]);
-       xml_node<> *root_node = doc.first_node("running_values");
-       xml_node<> *last_cpu_time_node = root_node->first_node("last_cpu_time");
-       xml_node<> *upload_file_number_node = root_node->first_node("upload_file_number");
-       xml_node<> *last_iter_node = root_node->first_node("last_iter");
-       xml_node<> *last_upload_node = root_node->first_node("last_upload");
-       xml_node<> *model_completed_node = root_node->first_node("model_completed");
-
-       // Set the values from the XML
-       last_cpu_time = std::stoi(last_cpu_time_node->value());
-       upload_file_number = std::stoi(upload_file_number_node->value());
-       last_iter = last_iter_node->value();
-       last_upload = std::stoi(last_upload_node->value());
-       model_completed = std::stoi(model_completed_node->value());
+       read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
        // Check if the CSTEP variable from rcf is greater than the last_iter, if so then quit model run
        if ( stoi(cstep_value) > stoi(last_iter) ) {
