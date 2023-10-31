@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
       cerr << "(argv9) app_version: " << argv[9] << '\n'; 
     }
 
-    boinc_begin_critical_section();
+    call_boinc_begin_critical_section();
 
     // Create temporary folder for moving the results to and uploading the results from
     // BOINC measures the disk usage on the slots directory so we must move all results out of this folder
