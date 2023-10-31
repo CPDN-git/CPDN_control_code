@@ -50,6 +50,7 @@ bool oifs_parse_stat(std::string&, std::string&, int);
 bool oifs_get_stat(std::ifstream&, std::string&);
 bool oifs_valid_step(std::string&,int);
 int  print_last_lines(std::string filename, int nlines);
+void read_progress_file(std::string, int&, int&, int&, int&, int&);
 void update_progress_file(std::string, int, int, std::string, int, int);
 bool read_rcf_file(std::ifstream&, std::string&, std::string&);
 bool read_delimited_line(std::string&, std::string, std::string, int, std::string&);
