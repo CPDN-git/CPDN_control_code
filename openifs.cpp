@@ -490,9 +490,8 @@ int main(int argc, char** argv) {
     std::string progress_file = slot_path + std::string("/progress_file_") + wuid + std::string(".xml");
     std::string rcf_file = slot_path + std::string("/rcf");
 
-    // Model progress is held in the progress file
-    // First check if a file is not already present from an unscheduled shutdown
-    cerr << "Checking for progress XML file: " << progress_file << '\n';
+    // Check whether the rcf file and the progress file (contains model progress) are not already present from an unscheduled shutdown
+    cerr << "Checking for rcf file and progress XML file: " << progress_file << '\n';
 
     // Handle the cases of the various states of the rcf file and progress file
     if ( !file_exists(progress_file) && !file_exists(rcf_file) ) {
@@ -507,9 +506,14 @@ int main(int argc, char** argv) {
        cerr << "..progress XML file exists, but is empty => problem with model, quitting run" << '\n';
        return 1;
     } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
-       // If progress file exists and rcf file does not exist, an error has occurred, then kill model run
-       cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
-       return 1;
+       // Read contents of progress file
+       read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
+       // Check if last_iter is not less than the restart interval and model is at the beginning and rcf has yet to be produced
+       if !(last_iter < restart_interval) {
+          // Otherwise if progress file exists and rcf file does not exist, an error has occurred, then kill model run
+          cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
+          return 1;
+       }
     } else if ( !file_exists(progress_file) && file_exists(rcf_file) ) {
        // If rcf file exists and progress file does not exist, an error has occurred, then kill model run
        cerr << "..rcf file exists, but progress XML file does not exist => problem with model, quitting run" << '\n';
