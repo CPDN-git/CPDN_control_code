@@ -171,10 +171,10 @@ int main(int argc, char** argv) {
     std::string namelist_line="", delimiter="=";
     std::ifstream namelist_filestream;
 
-   // Check for the existence of the namelist
-   if( !file_exists(namelist_file) ) {
-      cerr << "..The namelist file does not exist: " << namelist_file << std::endl;
-      return 1;        // should terminate, the model won't run.
+    // Check for the existence of the namelist
+    if( !file_exists(namelist_file) ) {
+       cerr << "..The namelist file does not exist: " << namelist_file << std::endl;
+       return 1;        // should terminate, the model won't run.
     }
 
     // Open the namelist file
@@ -508,8 +508,8 @@ int main(int argc, char** argv) {
     } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
        // Read contents of progress file
        read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
-       // Check if last_iter is not less than the restart interval and model is at the beginning and rcf has yet to be produced
-       if !(last_iter < restart_interval) {
+       // If last_iter less than the restart interval, then model is at beginning and rcf has yet to be produced then continue
+       if (last_iter >= restart_interval) {
           // Otherwise if progress file exists and rcf file does not exist, an error has occurred, then kill model run
           cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
           return 1;
