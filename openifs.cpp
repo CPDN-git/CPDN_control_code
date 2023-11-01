@@ -508,11 +508,18 @@ int main(int argc, char** argv) {
     } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
        // Read contents of progress file
        read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
-       // If last_iter less than the restart interval, then model is at beginning and rcf has yet to be produced then continue, otherwise:
+       // If last_iter less than the restart interval, then model is at beginning and rcf has yet to be produced then continue
        if (std::stoi(last_iter) >= restart_interval) {
           // Otherwise if progress file exists and rcf file does not exist, an error has occurred, then kill model run
           cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
           return 1;
+       } else {
+          // Else model restarts from the beginning
+          last_cpu_time = 0;
+          upload_file_number = 0;
+          last_iter = "0";
+          last_upload = 0;
+          model_completed = 0;
        }
     } else if ( !file_exists(progress_file) && file_exists(rcf_file) ) {
        // If rcf file exists and progress file does not exist, an error has occurred, then kill model run
@@ -850,8 +857,8 @@ int main(int argc, char** argv) {
      
 
       if (!standalone) {
-	     // If the current iteration is at a restart iteration     
-	     if (!(std::stoi(iter)%restart_interval)) restart_cpu_time = current_cpu_time;
+         // If the current iteration is at a restart iteration     
+         if (!(std::stoi(iter)%restart_interval)) restart_cpu_time = current_cpu_time;
 	      
          // Provide the current cpu_time to the BOINC server (note: this is deprecated in BOINC)
          call_boinc_report_app_status(current_cpu_time, restart_cpu_time, fraction_done);
