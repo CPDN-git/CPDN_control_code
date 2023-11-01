@@ -508,8 +508,8 @@ int main(int argc, char** argv) {
     } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
        // Read contents of progress file
        read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
-       // If last_iter less than the restart interval, then model is at beginning and rcf has yet to be produced then continue
-       if (last_iter >= restart_interval) {
+       // If last_iter less than the restart interval, then model is at beginning and rcf has yet to be produced then continue, otherwise:
+       if (std::stoi(last_iter) >= restart_interval) {
           // Otherwise if progress file exists and rcf file does not exist, an error has occurred, then kill model run
           cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
           return 1;
