@@ -339,7 +339,7 @@ std::string get_tag(const std::string &filename) {
 
 
 // Read the progress file
-void read_progress_file(std::string progress_file, int& last_cpu_time, int& upload_file_number, int& last_iter, int& last_upload, int& model_completed) {
+void read_progress_file(std::string progress_file, int& last_cpu_time, int& upload_file_number, std::string& last_iter, int& last_upload, int& model_completed) {
 
     std::ifstream progress_file_in(progress_file);
     std::stringstream progress_file_buffer;
