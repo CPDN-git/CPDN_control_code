@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
     DIR *dirp=NULL;
     ZipFileList zfl;
     std::ifstream ifs_stat_file;
-	
+
 
     // Set defaults for input arguments
     std::string OIFS_EXPID;           // model experiment id, must match string in filenames
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
 
     double num_days = atof(fclen.c_str()); // number of simulation days
     int num_days_trunc = (int) num_days; // number of simulation days truncated to an integer
-	
+
     // Get the slots path (the current working path)
     std::string slot_path = std::filesystem::current_path();
     if (slot_path.empty()) {
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
       // Get the project path
       project_path = project_dir + std::string("/");
       cerr << "Project directory is: " << project_path << '\n';
-	    
+
       // Get the app version and re-parse to add a dot
       if (version.length()==2) {
          version = version.insert(0,".");
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
          cerr << "..Error with the length of app_version, length is: " << version.length() << '\n';
          return 1;
       }
-	    
+
       cerr << "app name: " << app_name << '\n';
       cerr << "version: " << version << '\n';
     }
@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
       // Set the project path
       project_path = slot_path + std::string("/../projects/");
       cerr << "Project directory is: " << project_path << '\n';
-	    
+
       // In standalone get the app version from the command line
       version = argv[9];
       cerr << "app name: " << app_name << '\n'; 
@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
     //------------------------------------------Process the namelist-----------------------------------------
     std::string namelist_zip = slot_path + std::string("/") + app_name + std::string("_") + unique_member_id + std::string("_") + start_date +\
                       std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
-		
+
     // Get the name of the 'jf_' filename from a link within the namelist file
     std::string wu_source = get_tag(namelist_zip);
 
@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
        std::remove(namelist_zip.c_str());
     }
 
-	
+
     // Parse the fort.4 namelist for the filenames and variables
     std::string namelist_file = slot_path + std::string("/") + namelist;
     std::string namelist_line="", delimiter="=";
@@ -280,7 +280,7 @@ int main(int argc, char** argv) {
 
     // Process the ic_ancil_file:
     std::string ic_ancil_zip = slot_path + std::string("/") + ic_ancil_file + std::string(".zip");
-	
+
     // For transfer downloading, BOINC renames download files to jf_HEXADECIMAL-NUMBER, these files
     // need to be renamed back to the original name
     // Get the name of the 'jf_' filename from a link within the ic_ancil_file
@@ -432,7 +432,7 @@ int main(int argc, char** argv) {
     }
     pathvar = getenv("DR_HOOK_STACKCHECK");
     //cerr << "The DR_HOOK_STACKCHECK environmental variable is: " << pathvar << '\n';
-	
+
     // Set the EC_MEMINFO environment variable, only applies to OpenIFS 43r3.
     // Disable EC_MEMINFO to remove the useless EC_MEMINFO messages to the stdout file to reduce filesize.
     std::string EC_MEMINFO("EC_MEMINFO=0");
@@ -548,7 +548,7 @@ int main(int argc, char** argv) {
          }
        }
        rcf_file_stream.close();
-	    
+
        // Read the progress file
        read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
@@ -622,7 +622,7 @@ int main(int argc, char** argv) {
        }
        pclose(pipe);
     }	
-	
+
 
     // Start the OpenIFS job
     std::string strCmd = slot_path + std::string("/oifs_43r3_model.exe");
@@ -641,7 +641,7 @@ int main(int argc, char** argv) {
 
 
     //----------------------------------------Main loop------------------------------------------------------
-	
+
     // Periodically check the process status and the BOINC client status
     std::string stat_lastline = "";
 
@@ -652,7 +652,7 @@ int main(int argc, char** argv) {
 
        // Check every 10 seconds whether an upload point has been reached
        if(count==10) {
-         
+
           iter = last_iter;
           if( file_exists(slot_path + std::string("/ifs.stat")) ) {
 
@@ -687,7 +687,7 @@ int main(int argc, char** argv) {
                 cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
                 return retval;
              }
-    
+
              // Move the ICMSH result file to the temporary folder in the project directory
              first_part = "ICMSH";
              retval = move_result_file(slot_path, temp_path, first_part, second_part);
@@ -743,7 +743,7 @@ int main(int argc, char** argv) {
                       // Delete the file that has been added to the zip
                       // std::remove((temp_path+std::string("/ICMSH")+second_part).c_str());
                    }
-		
+
                    // Add ICMUA result files to zip to be uploaded
                    if(file_exists(temp_path + std::string("/ICMUA") + second_part)) {
                       cerr << "Adding to the zip: " << (temp_path + std::string("/ICMUA")+second_part) << '\n';
@@ -776,7 +776,7 @@ int main(int argc, char** argv) {
                             std::remove(zfl[j].c_str());
                          }
                       }
-                   
+
                       // Upload the file. In BOINC the upload file is the logical name, not the physical name
                       upload_file_name = std::string("upload_file_") + std::to_string(upload_file_number) + std::string(".zip");
                       cerr << "Uploading the intermediate file: " << upload_file_name << '\n';
@@ -786,7 +786,7 @@ int main(int argc, char** argv) {
                       if (!retval) {
                          cerr << "Finished the upload of the intermediate file: " << upload_file_name << '\n';
                       }
-		      
+
                       trickle_upload_count++;
                       if (trickle_upload_count == 10) {
                         // Produce trickle
@@ -824,7 +824,7 @@ int main(int argc, char** argv) {
                       }
                    }
                    last_upload = current_iter;
-		
+
                    trickle_upload_count++;
                    if (trickle_upload_count == trickle_upload_frequency) {
                       // Produce trickle
@@ -839,38 +839,38 @@ int main(int argc, char** argv) {
           }
           last_iter = iter;
           count = 0;
-          
+
           // Update progress file with current values
           update_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
        }
-	    
+
        // Calculate current_cpu_time, only update if cpu_time returns a value
        if (cpu_time(handleProcess)) {
           current_cpu_time = last_cpu_time + cpu_time(handleProcess);
           //fprintf(stderr,"current_cpu_time: %1.5f\n",current_cpu_time);
        }
-	       
+
 
       // Calculate the fraction done
       fraction_done = model_frac_done( atof(iter.c_str()), total_nsteps, atoi(nthreads.c_str()) );
       //fprintf(stderr,"fraction done: %.6f\n", fraction_done);
-     
+
 
       if (!standalone) {
          // If the current iteration is at a restart iteration     
          if (!(std::stoi(iter)%restart_interval)) restart_cpu_time = current_cpu_time;
-	      
+
          // Provide the current cpu_time to the BOINC server (note: this is deprecated in BOINC)
          call_boinc_report_app_status(current_cpu_time, restart_cpu_time, fraction_done);
 
          // Provide the fraction done to the BOINC client, 
          // this is necessary for the percentage bar on the client
          call_boinc_fraction_done(fraction_done);
-	  
+
          // Check the status of the client if not in standalone mode     
          process_status = check_boinc_status(handleProcess,process_status);
       }
-	
+
       // Check the status of the child process    
       process_status = check_child_status(handleProcess,process_status);
     }
@@ -906,8 +906,8 @@ int main(int argc, char** argv) {
        cerr << "..Failed, model did not start" << std::endl;
        return 1;	    
     }
-	
-	
+
+
     // Update model_completed
     model_completed = 1;
 
@@ -943,7 +943,7 @@ int main(int argc, char** argv) {
     call_boinc_begin_critical_section();
 
     //-----------------------------Create the final results zip file-----------------------------------------
-	
+
     zfl.clear();
     std::string node_file = slot_path + std::string("/NODE.001_01");
     zfl.push_back(node_file);
@@ -1000,7 +1000,7 @@ int main(int argc, char** argv) {
           if (!retval) {
              cerr << "Finished the upload of the final file" << '\n';
           }
-	       
+
 	  // Produce trickle
           process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
        }
