@@ -364,7 +364,7 @@ void read_progress_file(std::string progress_file, int& last_cpu_time, int& uplo
     xml_node<> *last_upload_node = root_node->first_node("last_upload");
     xml_node<> *model_completed_node = root_node->first_node("model_completed");
 
-    // Set the values from the XML
+    // Read the values from the XML
     last_cpu_time = std::stoi(last_cpu_time_node->value());
     upload_file_number = std::stoi(upload_file_number_node->value());
     last_iter = last_iter_node->value();
@@ -391,11 +391,11 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
     progress_file_out <<"</running_values>"<< std::endl;
     progress_file_out.close();
 
-    cerr << "last_cpu_time: " << last_cpu_time << "\n";
-    cerr << "upload_file_number: " << upload_file_number << "\n";
-    cerr << "last_iter: " << last_iter << "\n";
-    cerr << "last_upload: " << last_upload << "\n";
-    cerr << "model_completed: " << model_completed << "\n";
+    //cerr << "last_cpu_time: " << last_cpu_time << "\n";
+    //cerr << "upload_file_number: " << upload_file_number << "\n";
+    //cerr << "last_iter: " << last_iter << "\n";
+    //cerr << "last_upload: " << last_upload << "\n";
+    //cerr << "model_completed: " << model_completed << "\n";
 }
 
 
