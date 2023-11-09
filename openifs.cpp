@@ -621,11 +621,24 @@ int main(int argc, char** argv) {
           return 1;
        }
        pclose(pipe);
-    }	
+    }
 
 
     // Start the OpenIFS job
+    // Set the strCmd parameter
     std::string strCmd = slot_path + std::string("/oifs_43r3_model.exe");
+    if( file_exists( slot_path + std::string("/oifs_43r3_model.exe") ) ) {
+       // Launch single process executable
+       std::string strCmd = slot_path + std::string("/oifs_43r3_model.exe");
+    } else if( file_exists( slot_path + std::string("/oifs_43r3_omp_master.exe") ) ) {
+       // Launch multi process executable
+       std::string strCmd = slot_path + std::string("/oifs_43r3_omp_master.exe");
+    } else {
+       // If no executable, then throw an error
+       cerr << "..No executable present, ending model run" << std::endl;
+       return 1;
+    }
+
     handleProcess = launch_process_oifs(slot_path, strCmd.c_str(), exptid.c_str(), app_name);
     if (handleProcess > 0) process_status = 0;
 
