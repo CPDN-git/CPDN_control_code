@@ -503,6 +503,8 @@ int main(int argc, char** argv) {
        model_completed = 0;
     } else if ( file_exists(progress_file) && file_is_empty(progress_file) ) {
        // If progress file exists and is empty, an error has occurred, then kill model run
+       print_last_lines("NODE.001_01", 70);
+       print_last_lines("ifs.stat",8);
        cerr << "..progress XML file exists, but is empty => problem with model, quitting run" << '\n';
        return 1;
     } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
@@ -511,6 +513,8 @@ int main(int argc, char** argv) {
        // If last_iter less than the restart interval, then model is at beginning and rcf has yet to be produced then continue
        if (std::stoi(last_iter) >= restart_interval) {
           // Otherwise if progress file exists and rcf file does not exist, an error has occurred, then kill model run
+          print_last_lines("NODE.001_01", 70);
+          print_last_lines("ifs.stat",8);
           cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
           return 1;
        } else {
@@ -523,6 +527,8 @@ int main(int argc, char** argv) {
        }
     } else if ( !file_exists(progress_file) && file_exists(rcf_file) ) {
        // If rcf file exists and progress file does not exist, an error has occurred, then kill model run
+       print_last_lines("NODE.001_01", 70);
+       print_last_lines("ifs.stat",8);
        cerr << "..rcf file exists, but progress XML file does not exist => problem with model, quitting run" << '\n';
        return 1;
     } else if ( (file_exists(progress_file) && !file_is_empty(progress_file)) && file_exists(rcf_file) ) {
@@ -542,6 +548,8 @@ int main(int argc, char** argv) {
                //cerr << "rcf file CTIME: " << ctime_value << '\n';
             } else {
                // Reading the rcf file failed, then kill model run
+               print_last_lines("NODE.001_01", 70);
+               print_last_lines("ifs.stat",8);
                cerr << "..Reading the rcf file failed" << '\n';
 	       return 1;
             }
