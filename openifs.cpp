@@ -569,7 +569,7 @@ int main(int argc, char** argv) {
     }
 
     // Update progress file with current values
-    update_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
+    update_progress_file(progress_file, current_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
     fraction_done = 0;
     trickle_upload_count = 0;
@@ -841,7 +841,7 @@ int main(int argc, char** argv) {
           count = 0;
 
           // Update progress file with current values
-          update_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
+          update_progress_file(progress_file, current_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
        }
 
        // Calculate current_cpu_time, only update if cpu_time returns a value
