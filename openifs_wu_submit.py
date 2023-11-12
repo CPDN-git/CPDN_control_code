@@ -251,7 +251,7 @@ if __name__ == "__main__":
             print("wam_namelist_template: "+wam_namelist_template)
 
           # app_name is either oifs_43r3, oifs_43r3_arm, oifs_43r3_bl, oifs_43r3_ps, oifs_43r3_c95, oifs_43r3_l255 or oifs_43r3_c159
-          if app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps','oifs_43r3_c95','oifs_43r3_l255','oifs_43r3_c159'):
+          if app_name not in ('oifs_43r3','oifs_43r3_arm','oifs_43r3_bl','oifs_43r3_ps','oifs_43r3_c95','oifs_43r3_l255','oifs_43r3_c159','oifs_43r3_omp'):
             raise ValueError('Incorrect app_name')
           print("Application name: "+app_name)
 
