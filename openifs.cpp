@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
     DIR *dirp=NULL;
     ZipFileList zfl;
     std::ifstream ifs_stat_file;
-	
+
 
     // Set defaults for input arguments
     std::string OIFS_EXPID;           // model experiment id, must match string in filenames
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
 
     double num_days = atof(fclen.c_str()); // number of simulation days
     int num_days_trunc = (int) num_days; // number of simulation days truncated to an integer
-	
+
     // Get the slots path (the current working path)
     std::string slot_path = std::filesystem::current_path();
     if (slot_path.empty()) {
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
       // Get the project path
       project_path = project_dir + std::string("/");
       cerr << "Project directory is: " << project_path << '\n';
-	    
+
       // Get the app version and re-parse to add a dot
       if (version.length()==2) {
          version = version.insert(0,".");
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
          cerr << "..Error with the length of app_version, length is: " << version.length() << '\n';
          return 1;
       }
-	    
+
       cerr << "app name: " << app_name << '\n';
       cerr << "version: " << version << '\n';
     }
@@ -112,14 +112,14 @@ int main(int argc, char** argv) {
       // Set the project path
       project_path = slot_path + std::string("/../projects/");
       cerr << "Project directory is: " << project_path << '\n';
-	    
+
       // In standalone get the app version from the command line
       version = argv[9];
       cerr << "app name: " << app_name << '\n'; 
       cerr << "(argv9) app_version: " << argv[9] << '\n'; 
     }
 
-    boinc_begin_critical_section();
+    call_boinc_begin_critical_section();
 
     // Create temporary folder for moving the results to and uploading the results from
     // BOINC measures the disk usage on the slots directory so we must move all results out of this folder
@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
     //------------------------------------------Process the namelist-----------------------------------------
     std::string namelist_zip = slot_path + std::string("/") + app_name + std::string("_") + unique_member_id + std::string("_") + start_date +\
                       std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
-		
+
     // Get the name of the 'jf_' filename from a link within the namelist file
     std::string wu_source = get_tag(namelist_zip);
 
@@ -165,16 +165,16 @@ int main(int argc, char** argv) {
        std::remove(namelist_zip.c_str());
     }
 
-	
+
     // Parse the fort.4 namelist for the filenames and variables
     std::string namelist_file = slot_path + std::string("/") + namelist;
     std::string namelist_line="", delimiter="=";
     std::ifstream namelist_filestream;
 
-   // Check for the existence of the namelist
-   if( !file_exists(namelist_file) ) {
-      cerr << "..The namelist file does not exist: " << namelist_file << std::endl;
-      return 1;        // should terminate, the model won't run.
+    // Check for the existence of the namelist
+    if( !file_exists(namelist_file) ) {
+       cerr << "..The namelist file does not exist: " << namelist_file << std::endl;
+       return 1;        // should terminate, the model won't run.
     }
 
     // Open the namelist file
@@ -280,7 +280,7 @@ int main(int argc, char** argv) {
 
     // Process the ic_ancil_file:
     std::string ic_ancil_zip = slot_path + std::string("/") + ic_ancil_file + std::string(".zip");
-	
+
     // For transfer downloading, BOINC renames download files to jf_HEXADECIMAL-NUMBER, these files
     // need to be renamed back to the original name
     // Get the name of the 'jf_' filename from a link within the ic_ancil_file
@@ -432,7 +432,7 @@ int main(int argc, char** argv) {
     }
     pathvar = getenv("DR_HOOK_STACKCHECK");
     //cerr << "The DR_HOOK_STACKCHECK environmental variable is: " << pathvar << '\n';
-	
+
     // Set the EC_MEMINFO environment variable, only applies to OpenIFS 43r3.
     // Disable EC_MEMINFO to remove the useless EC_MEMINFO messages to the stdout file to reduce filesize.
     std::string EC_MEMINFO("EC_MEMINFO=0");
@@ -490,9 +490,8 @@ int main(int argc, char** argv) {
     std::string progress_file = slot_path + std::string("/progress_file_") + wuid + std::string(".xml");
     std::string rcf_file = slot_path + std::string("/rcf");
 
-    // Model progress is held in the progress file
-    // First check if a file is not already present from an unscheduled shutdown
-    cerr << "Checking for progress XML file: " << progress_file << '\n';
+    // Check whether the rcf file and the progress file (contains model progress) are not already present from an unscheduled shutdown
+    cerr << "Checking for rcf file and progress XML file: " << progress_file << '\n';
 
     // Handle the cases of the various states of the rcf file and progress file
     if ( !file_exists(progress_file) && !file_exists(rcf_file) ) {
@@ -504,14 +503,32 @@ int main(int argc, char** argv) {
        model_completed = 0;
     } else if ( file_exists(progress_file) && file_is_empty(progress_file) ) {
        // If progress file exists and is empty, an error has occurred, then kill model run
+       print_last_lines("NODE.001_01", 70);
+       print_last_lines("ifs.stat",8);
        cerr << "..progress XML file exists, but is empty => problem with model, quitting run" << '\n';
        return 1;
     } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
-       // If progress file exists and rcf file does not exist, an error has occurred, then kill model run
-       cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
-       return 1;
+       // Read contents of progress file
+       read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
+       // If last_iter less than the restart interval, then model is at beginning and rcf has yet to be produced then continue
+       if (std::stoi(last_iter) >= restart_interval) {
+          // Otherwise if progress file exists and rcf file does not exist, an error has occurred, then kill model run
+          print_last_lines("NODE.001_01", 70);
+          print_last_lines("ifs.stat",8);
+          cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
+          return 1;
+       } else {
+          // Else model restarts from the beginning
+          last_cpu_time = 0;
+          upload_file_number = 0;
+          last_iter = "0";
+          last_upload = 0;
+          model_completed = 0;
+       }
     } else if ( !file_exists(progress_file) && file_exists(rcf_file) ) {
        // If rcf file exists and progress file does not exist, an error has occurred, then kill model run
+       print_last_lines("NODE.001_01", 70);
+       print_last_lines("ifs.stat",8);
        cerr << "..rcf file exists, but progress XML file does not exist => problem with model, quitting run" << '\n';
        return 1;
     } else if ( (file_exists(progress_file) && !file_is_empty(progress_file)) && file_exists(rcf_file) ) {
@@ -531,43 +548,17 @@ int main(int argc, char** argv) {
                //cerr << "rcf file CTIME: " << ctime_value << '\n';
             } else {
                // Reading the rcf file failed, then kill model run
+               print_last_lines("NODE.001_01", 70);
+               print_last_lines("ifs.stat",8);
                cerr << "..Reading the rcf file failed" << '\n';
 	       return 1;
             }
          }
        }
        rcf_file_stream.close();
-	    
+
        // Read the progress file
-       std::ifstream progress_file_in(progress_file);
-       std::stringstream progress_file_buffer;
-       xml_document<> doc;
-
-       // Parse progress file and extract values
-       progress_file_in.open(progress_file);
-       cerr << "Opened progress file: " << progress_file << '\n';
-       progress_file_buffer << progress_file_in.rdbuf();
-       progress_file_in.close();
-	    
-       // Parse XML progress file
-       // RapidXML needs careful memory management. Use string to preserve memory for later xml_node calls.
-       // Passing &progress_file_buffer.str()[0] caused new str on heap & memory error.
-       std::string prog_contents = progress_file_buffer.str();       // could use vector<char> here
-
-       doc.parse<0>(&prog_contents[0]);
-       xml_node<> *root_node = doc.first_node("running_values");
-       xml_node<> *last_cpu_time_node = root_node->first_node("last_cpu_time");
-       xml_node<> *upload_file_number_node = root_node->first_node("upload_file_number");
-       xml_node<> *last_iter_node = root_node->first_node("last_iter");
-       xml_node<> *last_upload_node = root_node->first_node("last_upload");
-       xml_node<> *model_completed_node = root_node->first_node("model_completed");
-
-       // Set the values from the XML
-       last_cpu_time = std::stoi(last_cpu_time_node->value());
-       upload_file_number = std::stoi(upload_file_number_node->value());
-       last_iter = last_iter_node->value();
-       last_upload = std::stoi(last_upload_node->value());
-       model_completed = std::stoi(model_completed_node->value());
+       read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
        // Check if the CSTEP variable from rcf is greater than the last_iter, if so then quit model run
        if ( stoi(cstep_value) > stoi(last_iter) ) {
@@ -586,7 +577,7 @@ int main(int argc, char** argv) {
     }
 
     // Update progress file with current values
-    update_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
+    update_progress_file(progress_file, current_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
     fraction_done = 0;
     trickle_upload_count = 0;
@@ -638,11 +629,24 @@ int main(int argc, char** argv) {
           return 1;
        }
        pclose(pipe);
-    }	
-	
+    }
+
 
     // Start the OpenIFS job
+    // Set the strCmd parameter
     std::string strCmd = slot_path + std::string("/oifs_43r3_model.exe");
+    if( file_exists( slot_path + std::string("/oifs_43r3_model.exe") ) ) {
+       // Launch single process executable
+       std::string strCmd = slot_path + std::string("/oifs_43r3_model.exe");
+    } else if( file_exists( slot_path + std::string("/oifs_43r3_omp_master.exe") ) ) {
+       // Launch multi process executable
+       std::string strCmd = slot_path + std::string("/oifs_43r3_omp_master.exe");
+    } else {
+       // If no executable, then throw an error
+       cerr << "..No executable present, ending model run" << std::endl;
+       return 1;
+    }
+
     handleProcess = launch_process_oifs(slot_path, strCmd.c_str(), exptid.c_str(), app_name);
     if (handleProcess > 0) process_status = 0;
 
@@ -658,7 +662,7 @@ int main(int argc, char** argv) {
 
 
     //----------------------------------------Main loop------------------------------------------------------
-	
+
     // Periodically check the process status and the BOINC client status
     std::string stat_lastline = "";
 
@@ -669,7 +673,7 @@ int main(int argc, char** argv) {
 
        // Check every 10 seconds whether an upload point has been reached
        if(count==10) {
-         
+
           iter = last_iter;
           if( file_exists(slot_path + std::string("/ifs.stat")) ) {
 
@@ -704,7 +708,7 @@ int main(int argc, char** argv) {
                 cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
                 return retval;
              }
-    
+
              // Move the ICMSH result file to the temporary folder in the project directory
              first_part = "ICMSH";
              retval = move_result_file(slot_path, temp_path, first_part, second_part);
@@ -760,7 +764,7 @@ int main(int argc, char** argv) {
                       // Delete the file that has been added to the zip
                       // std::remove((temp_path+std::string("/ICMSH")+second_part).c_str());
                    }
-		
+
                    // Add ICMUA result files to zip to be uploaded
                    if(file_exists(temp_path + std::string("/ICMUA") + second_part)) {
                       cerr << "Adding to the zip: " << (temp_path + std::string("/ICMUA")+second_part) << '\n';
@@ -793,7 +797,7 @@ int main(int argc, char** argv) {
                             std::remove(zfl[j].c_str());
                          }
                       }
-                   
+
                       // Upload the file. In BOINC the upload file is the logical name, not the physical name
                       upload_file_name = std::string("upload_file_") + std::to_string(upload_file_number) + std::string(".zip");
                       cerr << "Uploading the intermediate file: " << upload_file_name << '\n';
@@ -803,7 +807,7 @@ int main(int argc, char** argv) {
                       if (!retval) {
                          cerr << "Finished the upload of the intermediate file: " << upload_file_name << '\n';
                       }
-		      
+
                       trickle_upload_count++;
                       if (trickle_upload_count == 10) {
                         // Produce trickle
@@ -841,7 +845,7 @@ int main(int argc, char** argv) {
                       }
                    }
                    last_upload = current_iter;
-		
+
                    trickle_upload_count++;
                    if (trickle_upload_count == trickle_upload_frequency) {
                       // Produce trickle
@@ -856,38 +860,38 @@ int main(int argc, char** argv) {
           }
           last_iter = iter;
           count = 0;
-          
+
           // Update progress file with current values
-          update_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
+          update_progress_file(progress_file, current_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
        }
-	    
+
        // Calculate current_cpu_time, only update if cpu_time returns a value
        if (cpu_time(handleProcess)) {
           current_cpu_time = last_cpu_time + cpu_time(handleProcess);
           //fprintf(stderr,"current_cpu_time: %1.5f\n",current_cpu_time);
        }
-	       
+
 
       // Calculate the fraction done
       fraction_done = model_frac_done( atof(iter.c_str()), total_nsteps, atoi(nthreads.c_str()) );
       //fprintf(stderr,"fraction done: %.6f\n", fraction_done);
-     
+
 
       if (!standalone) {
-	     // If the current iteration is at a restart iteration     
-	     if (!(std::stoi(iter)%restart_interval)) restart_cpu_time = current_cpu_time;
-	      
+         // If the current iteration is at a restart iteration     
+         if (!(std::stoi(iter)%restart_interval)) restart_cpu_time = current_cpu_time;
+
          // Provide the current cpu_time to the BOINC server (note: this is deprecated in BOINC)
          call_boinc_report_app_status(current_cpu_time, restart_cpu_time, fraction_done);
 
          // Provide the fraction done to the BOINC client, 
          // this is necessary for the percentage bar on the client
          call_boinc_fraction_done(fraction_done);
-	  
+
          // Check the status of the client if not in standalone mode     
          process_status = check_boinc_status(handleProcess,process_status);
       }
-	
+
       // Check the status of the child process    
       process_status = check_child_status(handleProcess,process_status);
     }
@@ -923,8 +927,8 @@ int main(int argc, char** argv) {
        cerr << "..Failed, model did not start" << std::endl;
        return 1;	    
     }
-	
-	
+
+
     // Update model_completed
     model_completed = 1;
 
@@ -960,7 +964,7 @@ int main(int argc, char** argv) {
     call_boinc_begin_critical_section();
 
     //-----------------------------Create the final results zip file-----------------------------------------
-	
+
     zfl.clear();
     std::string node_file = slot_path + std::string("/NODE.001_01");
     zfl.push_back(node_file);
@@ -1017,7 +1021,7 @@ int main(int argc, char** argv) {
           if (!retval) {
              cerr << "Finished the upload of the final file" << '\n';
           }
-	       
+
 	  // Produce trickle
           process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
        }
