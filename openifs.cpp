@@ -632,9 +632,7 @@ int main(int argc, char** argv) {
     }
 
 
-    // Start the OpenIFS job
     // Set the strCmd parameter
-    std::string strCmd = slot_path + std::string("/oifs_43r3_model.exe");
     if( file_exists( slot_path + std::string("/oifs_43r3_model.exe") ) ) {
        // Launch single process executable
        std::string strCmd = slot_path + std::string("/oifs_43r3_model.exe");
@@ -647,6 +645,7 @@ int main(int argc, char** argv) {
        return 1;
     }
 
+    // Start the OpenIFS job
     handleProcess = launch_process_oifs(slot_path, strCmd.c_str(), exptid.c_str(), app_name);
     if (handleProcess > 0) process_status = 0;
 
