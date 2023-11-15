@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     std::string project_path, tmpstr1, tmpstr2, tmpstr3, tmpstr4, tmpstr5;
     std::string ifs_line="", iter="0", ifs_word="", second_part, first_part, upload_file_name, last_line="";
     std::string resolved_name, upload_file, result_base_name;
-    std::string wu_name="", project_dir="", version="";
+    std::string wu_name="", project_dir="", version="", strCmd="";
     int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
     int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter, standalone=0;
@@ -635,10 +635,10 @@ int main(int argc, char** argv) {
     // Set the strCmd parameter
     if( file_exists( slot_path + std::string("/oifs_43r3_model.exe") ) ) {
        // Launch single process executable
-       std::string strCmd = slot_path + std::string("/oifs_43r3_model.exe");
+       strCmd = slot_path + std::string("/oifs_43r3_model.exe");
     } else if( file_exists( slot_path + std::string("/oifs_43r3_omp_model.exe") ) ) {
        // Launch multi process executable
-       std::string strCmd = slot_path + std::string("/oifs_43r3_omp_model.exe");
+       strCmd = slot_path + std::string("/oifs_43r3_omp_model.exe");
     } else {
        // If no executable, then throw an error
        cerr << "..No executable present, ending model run" << std::endl;
