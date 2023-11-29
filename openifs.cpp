@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     std::string resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="", strCmd="";
     int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
-    int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
+    int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count, skip_main_loop=0;
     int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter, standalone=0;
     int last_upload; // The time of the last upload file (in seconds)
     std::string last_iter = "0";
@@ -117,6 +117,11 @@ int main(int argc, char** argv) {
       version = argv[9];
       cerr << "app name: " << app_name << '\n'; 
       cerr << "(argv9) app_version: " << argv[9] << '\n'; 
+
+      // In standalone get whether to skip the main loop from the command line
+      skip_main_loop = argv[10];
+      cerr << "skip main loop: " << skip_main_loop << '\n'; 
+      cerr << "(argv10) skip_main_loop: " << argv[10] << '\n'; 
     }
 
     call_boinc_begin_critical_section();
@@ -606,9 +611,9 @@ int main(int argc, char** argv) {
 	  return 1;
        }
 
-       result_base_name = std::filesystem::path(resolved_name).stem();     // returns filename without path nor '.zip'
+       result_base_name = std::filesystem::path(resolved_name).stem(); // returns filename without path nor '.zip'
        if ( result_base_name.length() > 2 ){
-          result_base_name.erase(result_base_name.length()-2);                   // removes the '_0'
+          result_base_name.erase( result_base_name.length() - 2 );     // remove the '_0'
        }
 
        cerr << "result_base_name: " << result_base_name << '\n';
@@ -665,7 +670,7 @@ int main(int argc, char** argv) {
     // Periodically check the process status and the BOINC client status
     std::string stat_lastline = "";
 
-    while (process_status == 0 && model_completed == 0) {
+    while ((process_status == 0 && model_completed == 0) && skip_main_loop == 0) {
        sleep_until(system_clock::now() + seconds(1)); // Time gap of 1 second to reduce overhead of control code
 
        count++;
