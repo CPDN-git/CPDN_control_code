@@ -1,0 +1,21 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: build
+      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install/include -L./boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17
+    - name: Upload logs on fail
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: Build failure log
+        path: ${{ runner.temp }}/build_log
