@@ -119,9 +119,9 @@ int main(int argc, char** argv) {
       cerr << "(argv9) app_version: " << argv[9] << '\n'; 
 
       // In standalone get whether to skip the main loop from the command line
-      skip_main_loop = argv[10];
+      skip_main_loop = atoi(argv[10]);
       cerr << "skip main loop: " << skip_main_loop << '\n'; 
-      cerr << "(argv10) skip_main_loop: " << argv[10] << '\n'; 
+      cerr << "(argv10) skip_main_loop: " << atoi(argv[10]) << '\n'; 
     }
 
     call_boinc_begin_critical_section();
