@@ -1,7 +1,7 @@
 //
 // Control code for the OpenIFS application in the climateprediction.net project
 //
-// Written by Andy Bowery (Oxford eResearch Centre, Oxford University) November 2022
+// Written by Andy Bowery (Oxford eResearch Centre, Oxford University) December 2023
 // Contributions from Glenn Carver (ex-ECMWF), 2022->
 //
 
