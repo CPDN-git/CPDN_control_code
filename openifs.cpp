@@ -657,7 +657,7 @@ int main(int argc, char** argv) {
        cerr << "Launching test executable: oifs_43r3_test.exe" << std::endl;
        strCmd = slot_path + std::string("/oifs_43r3_test.exe");
     } else {
-       // If no executable, then throw an error
+       // If no executable present, then an error is thrown
        cerr << "..No executable present, ending model run" << std::endl;
        return 1;
     }
