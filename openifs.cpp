@@ -645,11 +645,17 @@ int main(int argc, char** argv) {
 
     // Set the strCmd parameter
     if( file_exists( slot_path + std::string("/oifs_43r3_model.exe") ) ) {
-       // Launch single process executable
+       // Launch single process executable if present
+       cerr << "Launching single process version of oifs_43r3" << std::endl;
        strCmd = slot_path + std::string("/oifs_43r3_model.exe");
     } else if( file_exists( slot_path + std::string("/oifs_43r3_omp_model.exe") ) ) {
-       // Launch multi process executable
+       // Launch multi process executable if present
+       cerr << "Launching multi process version of oifs_43r3" << std::endl;
        strCmd = slot_path + std::string("/oifs_43r3_omp_model.exe");
+    } else if( file_exists( slot_path + std::string("/oifs_43r3_test.exe") ) ) {
+       // Launch test executable if present
+       cerr << "Launching test executable: oifs_43r3_test.exe" << std::endl;
+       strCmd = slot_path + std::string("/oifs_43r3_test.exe");
     } else {
        // If no executable, then throw an error
        cerr << "..No executable present, ending model run" << std::endl;
