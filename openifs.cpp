@@ -480,14 +480,20 @@ int main(int argc, char** argv) {
     // Set the core dump size to 0
     struct rlimit core_limits;
     core_limits.rlim_cur = core_limits.rlim_max = 0;
-    if (setrlimit(RLIMIT_CORE, &core_limits) != 0) cerr << "..Setting the core dump size to 0 failed" << std::endl;
+    if (setrlimit(RLIMIT_CORE, &core_limits) != 0) {
+       cerr << "..Setting the core dump size to 0 failed" << std::endl;
+       return 1;
+    }
 
     // Set the stack limit to be unlimited
     struct rlimit stack_limits;
     // In macOS we cannot set the stack size limit to infinity
     #ifndef __APPLE__ // Linux
        stack_limits.rlim_cur = stack_limits.rlim_max = RLIM_INFINITY;
-       if (setrlimit(RLIMIT_STACK, &stack_limits) != 0) cerr << "..Setting the stack limit to unlimited failed" << std::endl;
+       if (setrlimit(RLIMIT_STACK, &stack_limits) != 0) {
+          cerr << "..Setting the stack limit to unlimited failed" << std::endl;
+          return 1;
+       }
     #endif
 
 
