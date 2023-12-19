@@ -652,10 +652,10 @@ int main(int argc, char** argv) {
        // Launch multi process executable if present
        cerr << "Launching multi process version of oifs_43r3" << std::endl;
        strCmd = slot_path + std::string("/oifs_43r3_omp_model.exe");
-    } else if( file_exists( slot_path + std::string("/oifs_43r3_test.exe") ) ) {
+    } else if( file_exists( slot_path + std::string("/oifs_43r3_test.py") ) ) {
        // Launch test executable if present
-       cerr << "Launching test executable: oifs_43r3_test.exe" << std::endl;
-       strCmd = slot_path + std::string("/oifs_43r3_test.exe");
+       cerr << "Launching test executable: oifs_43r3_test.py" << std::endl;
+       strCmd = slot_path + std::string("/oifs_43r3_test.py");
     } else {
        // If no executable present, then an error is thrown
        cerr << "..No executable present, ending model run" << std::endl;
