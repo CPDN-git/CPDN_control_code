@@ -655,7 +655,8 @@ int main(int argc, char** argv) {
     } else if( file_exists( slot_path + std::string("/oifs_43r3_test.py") ) ) {
        // Launch test executable if present
        cerr << "Launching test executable: oifs_43r3_test.py" << std::endl;
-       strCmd = slot_path + std::string("/oifs_43r3_test.py --nfrres=") + to_string(restart_interval);
+       strCmd = slot_path + std::string("/oifs_43r3_test.py --nfrres=") + to_string(restart_interval)
+                          + std::string(" --upload_interval=") + to_string(upload_interval);
     } else {
        // If no executable present, then an error is thrown
        cerr << "..No executable present, ending model run" << std::endl;
