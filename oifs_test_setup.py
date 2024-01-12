@@ -16,9 +16,11 @@ if __name__ == "__main__":
       if not os.path.isdir("slots"):
         os.mkdir("slots")
 
+      script_path = os.getcwd()
 
       # Change the working path to projects
       os.chdir("projects")
+
 
       # Produce oifs_43r3_app file
       with open('oifs_43r3_app_1.00_x86_64-pc-linux-gnu', 'a') as oifs_app_file:
@@ -40,9 +42,9 @@ if __name__ == "__main__":
                        "     <hostid>0</hostid>\n" +\
                        "     <app_name>openifs</app_name>\n" +\
                        "     <project_preferences></project_preferences>\n" +\
-                       "     <project_dir>/home/abowery/Working_folder/test_oifs_43r3_williams/projects</project_dir>\n" +\
-                       "     <boinc_dir>/home/abowery/Working_folder/test_oifs_43r3_williams</boinc_dir>\n" +\
-                       "     <wu_name>oifs_43r3_f000_2017062612_1_d341_9031</wu_name>\n" +\
+                       "     <project_dir>"+script_path+"/projects</project_dir>\n" +\
+                       "     <boinc_dir>"+script_path+"</boinc_dir>\n" +\
+                       "     <wu_name>oifs_43r3_NNNN_yyyymmddhh_0_d000_0000</wu_name>\n" +\
                        "     <shm_key>0</shm_key>\n" +\
                        "     <slot>0</slot>\n" +\
                        "     <wu_cpu_time>0.000000</wu_cpu_time>\n" +\
