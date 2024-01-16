@@ -19,9 +19,10 @@ jobs:
   test:
     needs: build
     name: build_test
-    uses: actions/checkout@v3
-    uses: ./
     steps:  
+      uses: actions/checkout@v3
+      with:
+        context: .
     - name: set_up_ancillary_files
       run: chmod 744 oifs_test_setup.py
       shell: bash
