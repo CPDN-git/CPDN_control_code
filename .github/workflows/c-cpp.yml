@@ -8,10 +8,22 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: build
-      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install/include -L./boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17
+      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install/include -L./boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
     - name: Upload logs on fail
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
       with:
         name: Build failure log
         path: ${{ runner.temp }}/build_log
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: set_up_ancillary_files
+      run: ./oifs_test_setup.py
+    - name: test_run
+      run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
+      shell: bash
+      run: cd slots/
+      shell: bash
+      run: ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh NNNN 0000 d000 0 oifs_43r3 1 1.00
