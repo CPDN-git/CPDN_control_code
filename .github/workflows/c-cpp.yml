@@ -18,9 +18,11 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    using: "composite"
     steps:
-    - uses: actions/checkout@v3
     - name: set_up_ancillary_files
+      run: chmod 744 oifs_test_setup.py
+    - name: run oifs_test_setup
       run: ./oifs_test_setup.py
     - name: move executable
       run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
