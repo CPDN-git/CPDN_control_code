@@ -17,10 +17,10 @@ jobs:
         path: ${{ runner.temp }}/build_log
 
   test:
+    runs-on: ubuntu-latest
     needs: build
-    name: build_test
     steps:  
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
       with:
         context: .
     - name: set_up_ancillary_files
