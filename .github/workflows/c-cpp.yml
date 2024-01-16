@@ -17,10 +17,12 @@ jobs:
         path: ${{ runner.temp }}/build_log
 
   test:
+    needs: build
     runs-on: ubuntu-latest
-    steps:
+    steps:  
+    - uses: actions/checkout@v3
     - name: set_up_ancillary_files
-      run: chmod 744 ./oifs_test_setup.py
+      run: chmod 744 oifs_test_setup.py
       shell: bash
     - name: run oifs_test_setup
       run: ./oifs_test_setup.py
