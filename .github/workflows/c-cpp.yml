@@ -20,7 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: set_up_ancillary_files
-      run: chmod 744 oifs_test_setup.py
+      run: chmod 744 ./oifs_test_setup.py
+      shell: bash
     - name: run oifs_test_setup
       run: ./oifs_test_setup.py
     - name: move executable
