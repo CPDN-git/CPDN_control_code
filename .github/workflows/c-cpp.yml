@@ -18,7 +18,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    using: "composite"
     steps:
     - name: set_up_ancillary_files
       run: chmod 744 oifs_test_setup.py
