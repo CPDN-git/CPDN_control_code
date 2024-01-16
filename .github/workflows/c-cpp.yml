@@ -19,11 +19,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
     - name: set_up_ancillary_files
       run: ./oifs_test_setup.py
-    - name: test_run
+    - name: move executable
       run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
       shell: bash
+    - name: change_directory_to_slots
       run: cd slots/
       shell: bash
+    - name: test_run
       run: ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh NNNN 0000 d000 0 oifs_43r3 1 1.00
