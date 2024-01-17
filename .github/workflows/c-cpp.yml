@@ -15,17 +15,14 @@ jobs:
       with:
         name: Build failure log
         path: ${{ runner.temp }}/build_log
-    - name: set up ancillary files
+    - name: Set up ancillary files
       run: chmod 744 oifs_test_setup.py
-      shell: bash
-    - name: run oifs_test_setup
+    - name: Run oifs_test_setup
       run: ./oifs_test_setup.py
-    - name: move executable
+    - name: Move executable
       run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
-      shell: bash
     - name: change directory to slots and run test
       run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh NNNN 0000 d000 0 oifs_43r3 1 1.00
-      shell: bash
     - name: Upload test log
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
