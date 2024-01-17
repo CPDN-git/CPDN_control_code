@@ -23,12 +23,6 @@ jobs:
     - name: move executable
       run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
       shell: bash
-    - name: change_directory_to_slots
-      run: cd slots/
-      shell: bash
-    - name: check_path
-      run: pwd
-      shell: bash
-    - name: test_run
-      run: ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh NNNN 0000 d000 0 oifs_43r3 1 1.00
+    - name: change directory to slots and run test
+      run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh NNNN 0000 d000 0 oifs_43r3 1 1.00
       shell: bash
