@@ -44,7 +44,7 @@ if __name__ == "__main__":
                        "     <project_preferences></project_preferences>\n" +\
                        "     <project_dir>"+script_path+"/projects</project_dir>\n" +\
                        "     <boinc_dir>"+script_path+"</boinc_dir>\n" +\
-                       "     <wu_name>oifs_43r3_NNNN_yyyymmddhh_0_d000_0000</wu_name>\n" +\
+                       "     <wu_name>oifs_43r3_NNNN_yyyymmddhh_1_d000_0</wu_name>\n" +\
                        "     <shm_key>0</shm_key>\n" +\
                        "     <slot>0</slot>\n" +\
                        "     <wu_cpu_time>0.000000</wu_cpu_time>\n" +\
@@ -94,14 +94,14 @@ if __name__ == "__main__":
 
       # Create namelist file
       namelist_string = ">jf_namelist<\n"
-      namelist_file=open("oifs_43r3_NNNN_yyyymmddhh_0_d000_0000.zip","w")
+      namelist_file=open("oifs_43r3_NNNN_yyyymmddhh_1_d000_0.zip","w")
       namelist_file.write(namelist_string)
       namelist_file.close()
 
 
       # Create ic_ancil file
       ic_ancil_string = ">jf_ic_ancil<\n"
-      ic_ancil_file=open("ic_ancil_0000.zip","w")
+      ic_ancil_file=open("ic_ancil_0.zip","w")
       ic_ancil_file.write(ic_ancil_string)
       ic_ancil_file.close()
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
       # Create ifsdata file
       ifsdata_string = ">jf_ifsdata<\n"
-      ifsdata_file=open("ifsdata_0000.zip","w")
+      ifsdata_file=open("ifsdata_0.zip","w")
       ifsdata_file.write(ifsdata_string)
       ifsdata_file.close()
 
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
       # Create clim_data file
       clim_data_string = ">jf_clim_data<\n"
-      clim_data_file=open("clim_data_0000.zip","w")
+      clim_data_file=open("clim_data_0.zip","w")
       clim_data_file.write(clim_data_string)
       clim_data_file.close()
 
