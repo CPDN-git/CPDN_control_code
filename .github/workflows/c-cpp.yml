@@ -22,7 +22,7 @@ jobs:
     - name: Move executable
       run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
     - name: change directory to slots and run test
-      run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh NNNN 0000 d000 0 oifs_43r3 1 1.00
+      run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0
     - name: Upload test log
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
