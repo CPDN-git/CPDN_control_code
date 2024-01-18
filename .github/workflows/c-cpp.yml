@@ -28,4 +28,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Test failure log
-        path: ${{ runner.temp }}/test_log
+        path: slots/stderr_out
