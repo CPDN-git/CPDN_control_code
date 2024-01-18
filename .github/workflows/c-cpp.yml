@@ -21,8 +21,10 @@ jobs:
       run: ./oifs_test_setup.py
     - name: Move executable
       run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
+    - name: List contents of slots and projects
+      run: cd projects/ && ls -lt > stdout_and_stderr && cd ../slots/ && ls -lt >> stdout_and_stderr
     - name: change directory to slots and run test
-      run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 > stdout_and_stderr 2>&1
+      run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 >> stdout_and_stderr 2>&1
     - name: Upload test log
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
