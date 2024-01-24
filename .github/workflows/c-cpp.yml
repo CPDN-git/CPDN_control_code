@@ -8,21 +8,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Make the boinc-install directory
-      run: mkdir boinc-install2
+      run: mkdir boinc-install
     - name: Clone BOINC/boinc PUBLIC repository
       run: git clone https://github.com/BOINC/boinc.git
-    - name: Move into the boinc directory
-      run: cd boinc
     - name: Run autosetup
-      run: ./_autosetup
+      run: cd boinc && ./_autosetup
     - name: Build BOINC
-      run: ./configure --disable-server --disable-fcgi --disable-manager --disable-client --enable-libraries --enable-boinczip --prefix=boinc-install2 CXXFLAGS='-O3'
-    - name: Run the make install
-      run: make install
-    - name: Move back to the root directory
-      run: cd ..
+      run: cd boinc && ./configure --disable-server --disable-fcgi --disable-manager --disable-client --enable-libraries --enable-boinczip --prefix=boinc-install CXXFLAGS='-O3'
+    - name: Run make install
+      run: cd boinc && make install
     - name: Build the OpenIFS executable
-      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install2/include -L./boinc-install2/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
+      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install/include -L./boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
     - name: Upload built executable
       if: ${{ success() }}
       uses: actions/upload-artifact@v3
