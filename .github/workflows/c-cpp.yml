@@ -20,10 +20,7 @@ jobs:
     - name: Run autosetup
     - run: ./_autosetup
     - name: Build BOINC
-    - run: ./configure --disable-server --disable-fcgi --disable-manager --disable-client  \
-            --enable-libraries --enable-boinczip  \
-            --prefix=boinc-install2  \
-            CXXFLAGS='-O3'
+    - run: ./configure --disable-server --disable-fcgi --disable-manager --disable-client --enable-libraries --enable-boinczip --prefix=boinc-install2 CXXFLAGS='-O3'
     - name: Run the make install
     - run: make install
     - name: Move back to the root directory
