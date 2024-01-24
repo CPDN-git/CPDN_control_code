@@ -6,8 +6,9 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
     - name: Make the boinc-install directory
-    - run: mkdir boinc-install2
+      run: mkdir boinc-install2
     - name: Clone BOINC/boinc PUBLIC repository
       uses: BOINC/clone-github-repo-action@v2.3
       with:
@@ -16,15 +17,15 @@ jobs:
         owner: 'BOINC'
         repository: 'boinc'
     - name: Move into the boinc directory
-    - run: cd boinc
+      run: cd boinc
     - name: Run autosetup
-    - run: ./_autosetup
+      run: ./_autosetup
     - name: Build BOINC
-    - run: ./configure --disable-server --disable-fcgi --disable-manager --disable-client --enable-libraries --enable-boinczip --prefix=boinc-install2 CXXFLAGS='-O3'
+      run: ./configure --disable-server --disable-fcgi --disable-manager --disable-client --enable-libraries --enable-boinczip --prefix=boinc-install2 CXXFLAGS='-O3'
     - name: Run the make install
-    - run: make install
+      run: make install
     - name: Move back to the root directory
-    - run: cd ..
+      run: cd ..
     - name: Build the OpenIFS executable
       run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install2/include -L./boinc-install2/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
     - name: Upload built executable
