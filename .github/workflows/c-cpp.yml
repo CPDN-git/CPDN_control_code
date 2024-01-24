@@ -18,7 +18,7 @@ jobs:
     - name: Run make install
       run: cd boinc && make install
     - name: Build the OpenIFS executable
-      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install2/include -L./boinc-install2/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
+      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install2/include -I./boinc/api -L./boinc-install2/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
     - name: Upload built executable
       if: ${{ success() }}
       uses: actions/upload-artifact@v3
