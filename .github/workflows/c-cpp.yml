@@ -9,8 +9,13 @@ jobs:
     - uses: actions/checkout@v3
     - name: Make the boinc-install directory
     - run: mkdir boinc-install2
-    - name: Download BOINC
-    - run: git clone https://github.com/BOINC/boinc.git
+    - name: Clone BOINC/boinc PUBLIC repository
+      uses: BOINC/clone-github-repo-action@v2.3
+      with:
+        depth: 1
+        branch: 'main'
+        owner: 'BOINC'
+        repository: 'boinc'
     - name: Move into the boinc directory
     - run: cd boinc
     - name: Run autosetup
