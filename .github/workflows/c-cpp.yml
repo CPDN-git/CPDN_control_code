@@ -7,6 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Make the boinc-install directory
+    - uses: actions/checkout@v3
     - run: mkdir boinc-install2
     - name: Download BOINC
     - run: git clone https://github.com/BOINC/boinc.git
@@ -23,7 +24,6 @@ jobs:
     - run: make install
     - name: Move back to the root directory
     - run: cd ..
-    - uses: actions/checkout@v3
     - name: Build the OpenIFS executable
       run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install2/include -L./boinc-install2/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
     - name: Upload built executable
