@@ -6,7 +6,6 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
     - name: Make the boinc-install directory
     - run: mkdir boinc-install2
     - name: Clone BOINC/boinc PUBLIC repository
