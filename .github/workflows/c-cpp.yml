@@ -8,7 +8,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Make the boinc-install directory
-      run: mkdir boinc-install2
+      run: mkdir boinc-install
     - name: Clone BOINC/boinc PUBLIC repository
       run: git clone https://github.com/BOINC/boinc.git
     - name: Run autosetup
@@ -18,17 +18,17 @@ jobs:
     - name: Run make install
       run: cd boinc && make install
     - name: List contents of boinc-install
-      run: cd boinc-install2/include/boinc && ls -lt
+      run: cd boinc-install/include/boinc && ls -lt
     - name: Update container
       run: apt-get update && apt-get upgrade
     - name: Build the OpenIFS executable
-      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install2/include -L./boinc-install2/lib  -lboinc_api -lboinc -lboinc_zip -std=c++17 -o oifs_43r3_1.01_x86_64-pc-linux-gnu
+      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install/include -L./boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -std=c++17 -o oifs_43r3_1.01_x86_64-pc-linux-gnu
     - name: Upload built executable
       if: ${{ success() }}
       uses: actions/upload-artifact@v3
       with:
         name: Built executable
-        path: oifs_43r3_1.00_x86_64-pc-linux-gnu
+        path: oifs_43r3_1.01_x86_64-pc-linux-gnu
     - name: Upload logs on fail
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
@@ -40,7 +40,7 @@ jobs:
     - name: Run oifs_test_setup
       run: ./oifs_test_setup.py
     - name: Move executable
-      run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
+      run: mv oifs_43r3_1.01_x86_64-pc-linux-gnu projects/
     - name: List contents of the root folder
       run: ls -lt > stdout_and_stderr
     - name: List contents of projects folder
@@ -48,7 +48,7 @@ jobs:
     - name: List contents of slots folder
       run: cd slots/ && ls -lt >> ../stdout_and_stderr
     - name: change directory to slots and run test
-      run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 &>> ../stdout_and_stderr
+      run: cd slots/ && ../projects/oifs_43r3_1.01_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 &>> ../stdout_and_stderr
     - name: Upload test log
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
