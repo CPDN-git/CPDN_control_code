@@ -19,8 +19,6 @@ jobs:
       run: cd boinc && make install
     - name: List contents of boinc-install
       run: cd boinc-install/include/boinc && ls -lt
-    - name: Update container
-      run: apt-get update && apt-get upgrade
     - name: Build the OpenIFS executable
       run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install/include -L./boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.01_x86_64-pc-linux-gnu
     - name: Upload built executable
