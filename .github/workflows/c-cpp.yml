@@ -46,7 +46,7 @@ jobs:
     - name: List contents of slots folder
       run: cd slots/ && ls -lt >> ../stdout_and_stderr
     - name: change directory to slots and run test
-      run: cd slots/ && ../projects/oifs_43r3_1.01_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 &>> ../stdout_and_stderr
+      run: cd slots/ && strace ../projects/oifs_43r3_1.01_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 &>> ../stdout_and_stderr
     - name: Upload test log
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
