@@ -79,11 +79,11 @@ if __name__ == "__main__":
                          " HORIZ_RESOLUTION=\n" +\
                          " VERT_RESOLUTION=\n" +\
                          " GRID_TYPE=\n" +\
-                         " UPLOAD_INTERVAL=\n" +\
-                         " TRICKLE_UPLOAD_FREQUENCY=\n" +\
-                         " UTSTEP=\n" +\
-                         " !NFRPOS=\n" +\
-                         " NFRRES=\n"
+                         " UPLOAD_INTERVAL=1\n" +\
+                         " TRICKLE_UPLOAD_FREQUENCY=1\n" +\
+                         " UTSTEP=1\n" +\
+                         " !NFRPOS=1\n" +\
+                         " NFRRES=1\n"
 
       fort_file=open("fort.4","w")
       fort_file.write(fort_file_string)
