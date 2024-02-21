@@ -73,9 +73,9 @@ if __name__ == "__main__":
 
 
       # Create fort.4 file
-      fort_file_string = " IFSDATA_FILE=\n" +\
-                         " IC_ANCIL_FILE=\n" +\
-                         " CLIMATE_DATA_FILE=\n" +\
+      fort_file_string = " IFSDATA_FILE=ifsdata_0\n" +\
+                         " IC_ANCIL_FILE=ic_ancil_0\n" +\
+                         " CLIMATE_DATA_FILE=clim_data_0\n" +\
                          " HORIZ_RESOLUTION=\n" +\
                          " VERT_RESOLUTION=\n" +\
                          " GRID_TYPE=\n" +\
