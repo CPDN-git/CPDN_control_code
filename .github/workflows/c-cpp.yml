@@ -43,6 +43,8 @@ jobs:
       run: ls -lt > stdout_and_stderr
     - name: List contents of projects folder
       run: cd projects/ && ls -lt >> ../stdout_and_stderr
+    - name: copy oifs_43r3_test.py to slots
+      run: cp oifs_43r3_test.py slots/
     - name: List contents of slots folder
       run: cd slots/ && ls -lt >> ../stdout_and_stderr
     - name: change directory to slots and run test
