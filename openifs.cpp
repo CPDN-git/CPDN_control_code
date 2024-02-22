@@ -683,6 +683,9 @@ int main(int argc, char** argv) {
     // Periodically check the process status and the BOINC client status
     std::string stat_lastline = "";
 
+    // Print value of skip_main_loop
+    cerr << "skip_main_loop: " << to_string(skip_main_loop) <<  '\n';
+
     while ((process_status == 0 && model_completed == 0) && skip_main_loop == 0) {
        sleep_until(system_clock::now() + seconds(1)); // Time gap of 1 second to reduce overhead of control code
 
