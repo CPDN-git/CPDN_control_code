@@ -20,13 +20,13 @@ jobs:
     - name: List contents of boinc-install
       run: cd boinc-install/include/boinc && ls -lt
     - name: Build the OpenIFS executable
-      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install/include -L./boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.01_x86_64-pc-linux-gnu
+      run: g++ openifs.cpp CPDN_control_code.cpp -I./boinc-install/include -L./boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
     - name: Upload built executable
       if: ${{ success() }}
       uses: actions/upload-artifact@v3
       with:
         name: Built executable
-        path: oifs_43r3_1.01_x86_64-pc-linux-gnu
+        path: oifs_43r3_1.00_x86_64-pc-linux-gnu
     - name: Upload logs on fail
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
@@ -48,7 +48,7 @@ jobs:
     - name: List contents of slots folder
       run: cd slots/ && ls -lt >> ../stdout_and_stderr
     - name: change directory to slots and run test
-      run: cd slots/ && strace ../projects/oifs_43r3_1.01_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 1 &>> ../stdout_and_stderr
+      run: cd slots/ && strace ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 &>> ../stdout_and_stderr
     - name: Upload test log
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
