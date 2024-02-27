@@ -31,6 +31,9 @@ if __name__ == "__main__":
 
     while iteration <= max_iter:
 
+       time.sleep(60)
+
+       # At the end of every restart interval, write out the same line three times 
        if iteration % abs( int(options.nfrres) ) == 0:
           iteration2 = 3
        else:
@@ -39,6 +42,7 @@ if __name__ == "__main__":
        # Write to the ifs.stat file
        for x in range(iteration2):
           with open('ifs.stat', 'a') as ifs_stat_file:
+             # Line written to ifs.stat needs to be constant length
              if len(str(iteration)) == 1:
                 ifs_stat_file.write(' ' + datetime.now().strftime("%H:%M:%S") + ' 0AAA00AAA STEPO       ' + str(iteration) + '\n')
              if len(str(iteration)) == 2:
