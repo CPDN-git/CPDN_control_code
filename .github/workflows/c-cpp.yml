@@ -38,7 +38,7 @@ jobs:
     - name: Run oifs_test_setup
       run: ./oifs_test_setup.py
     - name: Move executable
-      run: mv oifs_43r3_1.01_x86_64-pc-linux-gnu projects/
+      run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
     - name: List contents of the root folder
       run: ls -lt > stdout_and_stderr
     - name: List contents of projects folder
