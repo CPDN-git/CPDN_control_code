@@ -39,12 +39,14 @@ jobs:
       run: ./oifs_test_setup.py
     - name: Move executable
       run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
+    - name: Build c++ test executable
+      run: g++ oifs_43r3_test.cpp -std=c++17 -o oifs_43r3_test.exe
     - name: List contents of the root folder
       run: ls -lt > stdout_and_stderr
     - name: List contents of projects folder
       run: cd projects/ && ls -lt >> ../stdout_and_stderr
-    - name: copy oifs_43r3_test.py to slots
-      run: cp oifs_43r3_test.py slots/
+    - name: move oifs_43r3_test.exe to slots
+      run: mv oifs_43r3_test.exe slots/
     - name: List contents of slots folder
       run: cd slots/ && ls -lt >> ../stdout_and_stderr
     - name: change directory to slots and run test
