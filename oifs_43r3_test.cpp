@@ -5,7 +5,7 @@
 
 // To build use: g++ oifs_43r3_test.cpp -std=c++17 -o oifs_43r3_test.exe
 
-// This program is run from the command line using: ./oifs_43r3_test.exe N N
+// This program is run from the command line using: ./oifs_43r3_test.exe
 
 #include <iostream>
 #include <iomanip>
@@ -23,14 +23,13 @@ using namespace std;
 using namespace std::chrono;
 
 
-int main(int argc, char** argv) {
+int main() {
 
-    std::string second_part;
-    int i, j, iteration = 0, max_iter = 5, iteration2 = 0;
+    std::string second_part, exptid = "0000";
+    int i, j, iteration = 0, max_iter = 4, iteration2 = 0;
 
-    // Read nfrres and upload_interval
-    std::string nfrres = argv[1]; // restart interval
-    std::string upload_interval = argv[2];
+    int nfrres = 1; // restart interval
+    int upload_interval = 1;
 
     cerr << "Starting oifs_43r3_test" << std::endl;
 
@@ -46,12 +45,12 @@ int main(int argc, char** argv) {
 
     while (iteration <= max_iter) {
 
-       // Time delay
-       //this_thread::sleep_until(system_clock::now() + seconds(60));
+       // Time delay to slow the program down to allow the main loop of the calling program to run
+       this_thread::sleep_until(system_clock::now() + seconds(10));
 
 
        // At the end of every restart interval, write out the same line three times
-       if ( iteration % abs( std::stoi(nfrres) ) == 0) {
+       if ( iteration % abs( nfrres ) == 0) {
           iteration2 = 3;
        } else {
           iteration2 = 1;
@@ -67,13 +66,13 @@ int main(int argc, char** argv) {
        }
 
        // Write out the ICM files if at the end of an upload_interval
-       if (iteration % stoi(upload_interval) == 0 and iteration > 0) {
+       if (iteration % upload_interval == 0 and iteration > 0) {
           if ( to_string(iteration).length() == 1) {
-             second_part = "00000" + to_string(iteration);
+             second_part = exptid +"+"+ "00000" + to_string(iteration);
           } else if ( to_string(iteration).length() == 2) {
-             second_part = "0000" + to_string(iteration);
+             second_part = exptid +"+"+ "0000" + to_string(iteration);
           } else if ( to_string(iteration).length() == 3) {
-             second_part = "000" + to_string(iteration);
+             second_part = exptid +"+"+ "000" + to_string(iteration);
           }
 
           std::string ICMGG_file = slot_path + std::string("/ICMGG") + second_part;
@@ -86,15 +85,15 @@ int main(int argc, char** argv) {
           std::ofstream ICMUA_file_out(ICMUA_file);
 
           // Write to the ICMGG
-          for (j=0;j<4000;j++) { ICMGG_file_out << rand() % 10; };
+          for (j=0; j<4000; j++) { ICMGG_file_out << rand() % 10; };
           ICMGG_file_out << std::endl;
 
           // Write to the ICMSH
-          for (j=0;j<4000;j++) { ICMSH_file_out << rand() % 10; };
+          for (j=0; j<4000; j++) { ICMSH_file_out << rand() % 10; };
           ICMSH_file_out << std::endl;
 
           // Write to the ICMUA
-          for (j=0;j<4000;j++) { ICMUA_file_out << rand() % 10; };
+          for (j=0; j<4000; j++) { ICMUA_file_out << rand() % 10; };
           ICMUA_file_out << std::endl;
 
           // Close the ICM file streams
@@ -108,11 +107,11 @@ int main(int argc, char** argv) {
     }
 
 
-    // And finally write the last CNTO line into the ifs.stat file
+    // And finally write the last CNT0 line into the ifs.stat file
     if ( to_string(iteration).length() == 1) {
-       ifs_stat_file_out <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA CNTO        " << to_string(iteration) << std::endl;
+       ifs_stat_file_out <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA CNT0        " << to_string(iteration) << std::endl;
     } else if ( to_string(iteration).length() == 2) {
-       ifs_stat_file_out <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA CNTO       " << to_string(iteration) << std::endl;
+       ifs_stat_file_out <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA CNT0       " << to_string(iteration) << std::endl;
     }
     ifs_stat_file_out.close();
 
@@ -120,7 +119,7 @@ int main(int argc, char** argv) {
     // Produce the NODE file
     std::string NODE_file = slot_path + std::string("/NODE.001_01");
     std::ofstream NODE_file_out(NODE_file);
-    for (j=0;j<4000;j++) { NODE_file_out << rand() % 10; };
+    for (j=0; j<4000; j++) { NODE_file_out << rand() % 10; };
     NODE_file_out << std::endl;
     NODE_file_out.close();
 
