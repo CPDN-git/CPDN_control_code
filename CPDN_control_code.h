@@ -26,6 +26,7 @@
 #include <sys/resource.h>
 #include "boinc/boinc_api.h"
 #include "boinc/boinc_zip.h"
+#include "boinc/diagnostics.h"
 #include "boinc/util.h"
 #include "rapidxml.hpp"
 #include <algorithm>
