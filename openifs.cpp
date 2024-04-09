@@ -711,6 +711,8 @@ int main(int argc, char** argv) {
                 // When the iteration number changes in the ifs.stat file, OpenIFS has completed writing
                 // to the output files for that iteration, those files can now be moved and uploaded.
 
+                cerr << "Reading last completed iteration step from last line of ifs.stat" << std::endl;
+
                 oifs_get_stat(ifs_stat_file, stat_lastline);
                 if ( oifs_parse_stat(stat_lastline, iter, 4) ) {     // iter updates
                    if ( !oifs_valid_step(iter,total_nsteps) ) {
@@ -719,6 +721,8 @@ int main(int argc, char** argv) {
                 }
              }
           } 
+
+          cerr << "Checking whether a new set of ICM files have been generated" << std::endl;
 
           if (std::stoi(iter) != std::stoi(last_iter)) {
              // Construct file name of the ICM result file
@@ -748,6 +752,8 @@ int main(int argc, char** argv) {
                 return retval;
              }
 
+             cerr << "Completed moving ICM files" << std::endl;
+
              // Convert iteration number to seconds
              current_iter = (std::stoi(last_iter)) * timestep_interval;
 
@@ -760,6 +766,8 @@ int main(int argc, char** argv) {
              if((( current_iter - last_upload ) >= (upload_interval * timestep_interval)) && (current_iter < total_length_of_simulation)) {
                 // Create an intermediate results zip file using BOINC zip
                 zfl.clear();
+
+                cerr << "End of upload interval reached, starting a new upload process" << std::endl;
 
                 call_boinc_begin_critical_section();
 
@@ -834,6 +842,7 @@ int main(int argc, char** argv) {
                       trickle_upload_count++;
                       if (trickle_upload_count == 10) {
                         // Produce trickle
+                        cerr << "Producing trickle" << std::endl;
                         process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
                         trickle_upload_count = 0;
                       }
@@ -1050,6 +1059,7 @@ int main(int argc, char** argv) {
        }
        call_boinc_end_critical_section();
     }
+
     // Else running in standalone
     else {
        upload_file_name = app_name + std::string("_") + unique_member_id + std::string("_") + start_date + std::string("_") + \
