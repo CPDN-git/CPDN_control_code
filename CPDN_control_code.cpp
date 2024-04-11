@@ -389,14 +389,11 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
     //cerr << "Writing to progress file: " << progress_file << "\n";
 
     // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
-    progress_file_out <<"<?xml version=\"1.0\" encoding=\"utf-8\"?>"<< '\n';
-    progress_file_out <<"<running_values>"<< '\n';
-    progress_file_out <<"  <last_cpu_time>"<<std::to_string(last_cpu_time)<<"</last_cpu_time>"<< '\n';
-    progress_file_out <<"  <upload_file_number>"<<std::to_string(upload_file_number)<<"</upload_file_number>"<< '\n';
-    progress_file_out <<"  <last_iter>"<<last_iter<<"</last_iter>"<< '\n';
-    progress_file_out <<"  <last_upload>"<<std::to_string(last_upload)<<"</last_upload>"<< '\n';
-    progress_file_out <<"  <model_completed>"<<std::to_string(model_completed)<<"</model_completed>"<< '\n';
-    progress_file_out <<"</running_values>"<< std::endl;
+    progress_file_out << "last_cpu_time=" << std::to_string(last_cpu_time) << '\n';
+    progress_file_out << "upload_file_number=" << std::to_string(upload_file_number) << '\n';
+    progress_file_out << "last_iter=" << last_iter << '\n';
+    progress_file_out << "last_upload=" << std::to_string(last_upload) << '\n';
+    progress_file_out << "model_completed="<< std::to_string(model_completed) << std::endl;
     progress_file_out.close();
 
     //cerr << "last_cpu_time: " << last_cpu_time << "\n";
