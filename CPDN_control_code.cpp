@@ -365,7 +365,7 @@ void read_progress_file(std::string progress_file, int& last_cpu_time, int& uplo
           //cerr << "upload_file_number: " << std::to_string(upload_file_number) << '\n';
        }
        else if (pfs.str().find("last_iter") != std::string::npos) {
-          last_iter = pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
+          last_iter = pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1);
           //cerr << "last_iter: " << last_iter << '\n';
        }
        else if (pfs.str().find("last_upload") != std::string::npos) {
