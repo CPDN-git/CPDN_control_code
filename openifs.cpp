@@ -493,11 +493,11 @@ int main(int argc, char** argv) {
 
 
     // Define the name and location of the progress file and the rcf file
-    std::string progress_file = slot_path + std::string("/progress_file_") + wuid + std::string(".xml");
+    std::string progress_file = slot_path + std::string("/progress_file_") + wuid;
     std::string rcf_file = slot_path + std::string("/rcf");
 
     // Check whether the rcf file and the progress file (contains model progress) are not already present from an unscheduled shutdown
-    cerr << "Checking for rcf file and progress XML file: " << progress_file << '\n';
+    cerr << "Checking for rcf file and progress file: " << progress_file << '\n';
 
     // Handle the cases of the various states of the rcf file and progress file
     if ( !file_exists(progress_file) && !file_exists(rcf_file) ) {
@@ -511,7 +511,7 @@ int main(int argc, char** argv) {
        // If progress file exists and is empty, an error has occurred, then kill model run
        print_last_lines("NODE.001_01", 70);
        print_last_lines("ifs.stat",8);
-       cerr << "..progress XML file exists, but is empty => problem with model, quitting run" << '\n';
+       cerr << "..progress file exists, but is empty => problem with model, quitting run" << '\n';
        return 1;
     } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
        // Read contents of progress file
@@ -521,7 +521,7 @@ int main(int argc, char** argv) {
           // Otherwise if progress file exists and rcf file does not exist, an error has occurred, then kill model run
           print_last_lines("NODE.001_01", 70);
           print_last_lines("ifs.stat",8);
-          cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
+          cerr << "..progress file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
           return 1;
        } else {
           // Else model restarts from the beginning
@@ -535,7 +535,7 @@ int main(int argc, char** argv) {
        // If rcf file exists and progress file does not exist, an error has occurred, then kill model run
        print_last_lines("NODE.001_01", 70);
        print_last_lines("ifs.stat",8);
-       cerr << "..rcf file exists, but progress XML file does not exist => problem with model, quitting run" << '\n';
+       cerr << "..rcf file exists, but progress file does not exist => problem with model, quitting run" << '\n';
        return 1;
     } else if ( (file_exists(progress_file) && !file_is_empty(progress_file)) && file_exists(rcf_file) ) {
        // If progress file exists and is not empty and rcf file exists, then read rcf file and progress file
