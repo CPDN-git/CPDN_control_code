@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     std::string resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="", strCmd="";
     int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
-    int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count, skip_main_loop=0;
+    int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
     int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter, standalone=0;
     int last_upload; // The time of the last upload file (in seconds)
     std::string last_iter = "0";
@@ -117,11 +117,6 @@ int main(int argc, char** argv) {
       version = argv[9];
       cerr << "app name: " << app_name << '\n'; 
       cerr << "(argv9) app_version: " << argv[9] << '\n'; 
-
-      // In standalone get whether to skip the main loop from the command line
-      skip_main_loop = atoi(argv[10]);
-      cerr << "skip main loop: " << skip_main_loop << '\n'; 
-      cerr << "(argv10) skip_main_loop: " << atoi(argv[10]) << '\n'; 
     }
 
     call_boinc_begin_critical_section();
@@ -498,11 +493,11 @@ int main(int argc, char** argv) {
 
 
     // Define the name and location of the progress file and the rcf file
-    std::string progress_file = slot_path + std::string("/progress_file_") + wuid + std::string(".xml");
+    std::string progress_file = slot_path + std::string("/progress_file_") + wuid;
     std::string rcf_file = slot_path + std::string("/rcf");
 
     // Check whether the rcf file and the progress file (contains model progress) are not already present from an unscheduled shutdown
-    cerr << "Checking for rcf file and progress XML file: " << progress_file << '\n';
+    cerr << "Checking for rcf file and progress file: " << progress_file << '\n';
 
     // Handle the cases of the various states of the rcf file and progress file
     if ( !file_exists(progress_file) && !file_exists(rcf_file) ) {
@@ -516,7 +511,7 @@ int main(int argc, char** argv) {
        // If progress file exists and is empty, an error has occurred, then kill model run
        print_last_lines("NODE.001_01", 70);
        print_last_lines("ifs.stat",8);
-       cerr << "..progress XML file exists, but is empty => problem with model, quitting run" << '\n';
+       cerr << "..progress file exists, but is empty => problem with model, quitting run" << '\n';
        return 1;
     } else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
        // Read contents of progress file
@@ -526,7 +521,7 @@ int main(int argc, char** argv) {
           // Otherwise if progress file exists and rcf file does not exist, an error has occurred, then kill model run
           print_last_lines("NODE.001_01", 70);
           print_last_lines("ifs.stat",8);
-          cerr << "..progress XML file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
+          cerr << "..progress file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
           return 1;
        } else {
           // Else model restarts from the beginning
@@ -540,7 +535,7 @@ int main(int argc, char** argv) {
        // If rcf file exists and progress file does not exist, an error has occurred, then kill model run
        print_last_lines("NODE.001_01", 70);
        print_last_lines("ifs.stat",8);
-       cerr << "..rcf file exists, but progress XML file does not exist => problem with model, quitting run" << '\n';
+       cerr << "..rcf file exists, but progress file does not exist => problem with model, quitting run" << '\n';
        return 1;
     } else if ( (file_exists(progress_file) && !file_is_empty(progress_file)) && file_exists(rcf_file) ) {
        // If progress file exists and is not empty and rcf file exists, then read rcf file and progress file
@@ -686,10 +681,8 @@ int main(int argc, char** argv) {
     // Periodically check the process status and the BOINC client status
     std::string stat_lastline = "";
 
-    // Print value of skip_main_loop
-    if (skip_main_loop) cerr << "skip_main_loop: " << to_string(skip_main_loop) <<  '\n';
 
-    while ((process_status == 0 && model_completed == 0) && skip_main_loop == 0) {
+    while (process_status == 0 && model_completed == 0) {
        sleep_until(system_clock::now() + seconds(1)); // Time gap of 1 second to reduce overhead of control code
 
        count++;

@@ -10,7 +10,7 @@
 // Initialise BOINC and set the options
 int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {
 
-    boinc_init_diagnostics(BOINC_DIAG_DEFAULTS);
+    //boinc_init_diagnostics(BOINC_DIAG_DEFAULTS);
     boinc_init();
     boinc_parse_init_data_file();
 
@@ -343,35 +343,41 @@ std::string get_tag(const std::string &filename) {
 // Read the progress file
 void read_progress_file(std::string progress_file, int& last_cpu_time, int& upload_file_number, std::string& last_iter, int& last_upload, int& model_completed) {
 
-    std::ifstream progress_file_in(progress_file);
-    std::stringstream progress_file_buffer;
-    xml_document<> doc;
+    // Parse the progress_file
+    std::string progress_file_line="", delimiter="=";
+    std::ifstream progress_file_filestream;
+    
+    // Open the progress_file file
+    if(!(progress_file_filestream.is_open())) {
+       progress_file_filestream.open(progress_file);
+    } 
+    
+    // Read the namelist file
+    while(std::getline(progress_file_filestream, progress_file_line)) { //get 1 row as a string
+       std::istringstream pfs(progress_file_line);   //put line into stringstream
 
-    // Parse progress file and extract values
-    progress_file_in.open(progress_file);
-    cerr << "Opened progress file: " << progress_file << '\n';
-    progress_file_buffer << progress_file_in.rdbuf();
-    progress_file_in.close();
-	    
-    // Parse XML progress file
-    // RapidXML needs careful memory management. Use string to preserve memory for later xml_node calls.
-    // Passing &progress_file_buffer.str()[0] caused new str on heap & memory error.
-    std::string prog_contents = progress_file_buffer.str();       // could use vector<char> here
-
-    doc.parse<0>(&prog_contents[0]);
-    xml_node<> *root_node = doc.first_node("running_values");
-    xml_node<> *last_cpu_time_node = root_node->first_node("last_cpu_time");
-    xml_node<> *upload_file_number_node = root_node->first_node("upload_file_number");
-    xml_node<> *last_iter_node = root_node->first_node("last_iter");
-    xml_node<> *last_upload_node = root_node->first_node("last_upload");
-    xml_node<> *model_completed_node = root_node->first_node("model_completed");
-
-    // Read the values from the XML
-    last_cpu_time = std::stoi(last_cpu_time_node->value());
-    upload_file_number = std::stoi(upload_file_number_node->value());
-    last_iter = last_iter_node->value();
-    last_upload = std::stoi(last_upload_node->value());
-    model_completed = std::stoi(model_completed_node->value());
+       if (pfs.str().find("last_cpu_time") != std::string::npos) {
+          last_cpu_time = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
+          //cerr << "last_cpu_time: " << std::to_string(last_cpu_time) << '\n';
+       }
+       else if (pfs.str().find("upload_file_number") != std::string::npos) {
+          upload_file_number = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
+          //cerr << "upload_file_number: " << std::to_string(upload_file_number) << '\n';
+       }
+       else if (pfs.str().find("last_iter") != std::string::npos) {
+          last_iter = pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1);
+          //cerr << "last_iter: " << last_iter << '\n';
+       }
+       else if (pfs.str().find("last_upload") != std::string::npos) {
+          last_upload = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
+          //cerr << "last_upload: " << std::to_string(last_upload) << '\n';
+       }
+       else if (pfs.str().find("model_completed") != std::string::npos) {
+          model_completed = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
+          //cerr << "model_completed: " << std::to_string(model_completed) << '\n';
+       }
+    }
+    progress_file_filestream.close();
 }
 
 
@@ -383,14 +389,11 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
     //cerr << "Writing to progress file: " << progress_file << "\n";
 
     // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
-    progress_file_out <<"<?xml version=\"1.0\" encoding=\"utf-8\"?>"<< '\n';
-    progress_file_out <<"<running_values>"<< '\n';
-    progress_file_out <<"  <last_cpu_time>"<<std::to_string(last_cpu_time)<<"</last_cpu_time>"<< '\n';
-    progress_file_out <<"  <upload_file_number>"<<std::to_string(upload_file_number)<<"</upload_file_number>"<< '\n';
-    progress_file_out <<"  <last_iter>"<<last_iter<<"</last_iter>"<< '\n';
-    progress_file_out <<"  <last_upload>"<<std::to_string(last_upload)<<"</last_upload>"<< '\n';
-    progress_file_out <<"  <model_completed>"<<std::to_string(model_completed)<<"</model_completed>"<< '\n';
-    progress_file_out <<"</running_values>"<< std::endl;
+    progress_file_out << "last_cpu_time=" << std::to_string(last_cpu_time) << '\n';
+    progress_file_out << "upload_file_number=" << std::to_string(upload_file_number) << '\n';
+    progress_file_out << "last_iter=" << last_iter << '\n';
+    progress_file_out << "last_upload=" << std::to_string(last_upload) << '\n';
+    progress_file_out << "model_completed="<< std::to_string(model_completed) << std::endl;
     progress_file_out.close();
 
     //cerr << "last_cpu_time: " << last_cpu_time << "\n";
