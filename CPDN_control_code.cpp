@@ -10,7 +10,7 @@
 // Initialise BOINC and set the options
 int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {
 
-    boinc_init_diagnostics(BOINC_DIAG_DEFAULTS);
+    //boinc_init_diagnostics(BOINC_DIAG_DEFAULTS);
     boinc_init();
     boinc_parse_init_data_file();
 
