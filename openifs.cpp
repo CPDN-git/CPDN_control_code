@@ -41,7 +41,8 @@ int main(int argc, char** argv) {
     }
 
 
-    cerr << "wu_name: " << wu_name << '\n';
+	cerr << "Control Code version: " << VERSION << '\n';
+	cerr << "wu_name: " << wu_name << '\n';
     cerr << "project_dir: " << project_dir << '\n';
     cerr << "version: " << version << '\n';
 
