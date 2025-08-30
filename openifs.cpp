@@ -142,6 +142,12 @@ int main(int argc, char** argv) {
     std::string namelist_zip = slot_path + std::string("/") + app_name + std::string("_") + unique_member_id + std::string("_") + start_date +\
                       std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
 
+	// Check for the existence of the namelist zip
+    if( !file_exists(namelist_zip) ) {
+       cerr << "..The namelist zip file does not exist: " << namelist_zip << std::endl;
+       return 1;        // should terminate, the model won't run.
+    }
+	
     // Get the name of the 'jf_' filename from a link within the namelist file
     std::string wu_source = get_tag(namelist_zip);
 
