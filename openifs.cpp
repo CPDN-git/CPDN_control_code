@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
     }
 
 	// Check whether the namelist zip is empty
-    if( !file_is_empty(namelist_zip) ) {
+    if( file_is_empty(namelist_zip) ) {
 	   cerr << "..The namelist zip file is empty: " << namelist_zip << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
