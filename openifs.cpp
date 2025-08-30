@@ -147,7 +147,13 @@ int main(int argc, char** argv) {
        cerr << "..The namelist zip file does not exist: " << namelist_zip << std::endl;
        return 1;        // should terminate, the model won't run.
     }
-	
+
+	// Check whether the namelist zip is empty
+    if( !file_is_empty(namelist_zip) ) {
+	   cerr << "..The namelist zip file is empty: " << namelist_zip << std::endl;
+       return 1;        // should terminate, the model won't run.
+	}
+		
     // Get the name of the 'jf_' filename from a link within the namelist file
     std::string wu_source = get_tag(namelist_zip);
 
