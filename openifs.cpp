@@ -284,6 +284,12 @@ int main(int argc, char** argv) {
     // Process the ic_ancil_file:
     std::string ic_ancil_zip = slot_path + std::string("/") + ic_ancil_file + std::string(".zip");
 
+    // Check for the existence of the ic_ancil zip file
+    if( !file_exists(ic_ancil_zip) ) {
+       cerr << "..The ic_ancil zip file does not exist: " << ic_ancil_zip << std::endl;
+       return 1;        // should terminate, the model won't run.
+    }
+	
     // For transfer downloading, BOINC renames download files to jf_HEXADECIMAL-NUMBER, these files
     // need to be renamed back to the original name
     // Get the name of the 'jf_' filename from a link within the ic_ancil_file
