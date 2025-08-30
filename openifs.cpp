@@ -160,10 +160,6 @@ int main(int argc, char** argv) {
        cerr << "..Unzipping the namelist file failed" << std::endl;
        return retval;
     }
-    // Remove the zip file
-    else {
-       std::remove(namelist_zip.c_str());
-    }
 
 
     // Parse the fort.4 namelist for the filenames and variables
