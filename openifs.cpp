@@ -155,23 +155,27 @@ int main(int argc, char** argv) {
 	}
 		
     // Get the name of the 'jf_' filename from a link within the namelist file
-    std::string wu_source = get_tag(namelist_zip);
+    std::string wu_source = "";
+	wu_source = get_tag(namelist_zip);
 
-    // Copy the namelist files to the working directory
-    std::string wu_destination = namelist_zip;
-    cerr << "Copying the namelist files from: " << wu_source << " to: " << wu_destination << '\n';
-    retval = call_boinc_copy(wu_source, wu_destination);
-    if (retval) {
-       cerr << "..Copying the namelist files to the working directory failed" << std::endl;
-       return retval;
-    }
+	// Copy and unzip the namelist zip only if namelist_zip contains a string between tags
+	if ( !wu_source.empty() ) {
+       // Copy the 'jf_' to the working directory and rename to the namelist file
+       std::string wu_destination = namelist_zip;
+       cerr << "Copying the namelist files from: " << wu_source << " to: " << wu_destination << '\n';
+       retval = call_boinc_copy(wu_source, wu_destination);
+       if (retval) {
+          cerr << "..Copying the namelist files to the working directory failed" << std::endl;
+          return retval;
+       }
 
-    // Unzip the namelist zip file
-    cerr << "Unzipping the namelist zip file: " << namelist_zip << '\n';
-    retval = call_boinc_unzip(namelist_zip, slot_path);
-    if (retval) {
-       cerr << "..Unzipping the namelist file failed" << std::endl;
-       return retval;
+       // Unzip the namelist zip file
+       cerr << "Unzipping the namelist zip file: " << namelist_zip << '\n';
+       retval = call_boinc_unzip(namelist_zip, slot_path);
+       if (retval) {
+          cerr << "..Unzipping the namelist file failed" << std::endl;
+          return retval;
+       }
     }
 
 
