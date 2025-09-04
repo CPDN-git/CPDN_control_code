@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     }
 
 
-	cerr << "Control Code version: " << VERSION << '\n';
+	cerr << "Control Code version: " << get_git_version() << '\n';
 	cerr << "wu_name: " << wu_name << '\n';
     cerr << "project_dir: " << project_dir << '\n';
     cerr << "version: " << version << '\n';
