@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
                       std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
 
 	// Copy the namelist_zip to the slot directory and unzip
-    if ( copy_and_unzip(namelist_zip, slot_path, "namelist_zip")) {
+    if ( copy_and_unzip(namelist_zip, namelist_zip, namelist_zip, slot_path, "namelist_zip") ) {
        cerr << "..Copying and unzipping the namelist_zip failed" << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
@@ -265,7 +265,7 @@ int main(int argc, char** argv) {
     std::string ic_ancil_zip = slot_path + std::string("/") + ic_ancil_file + std::string(".zip");
 
 	// Copy the ic_ancil_zip to the slot directory and unzip
-    if ( copy_and_unzip(ic_ancil_zip, slot_path, "ic_ancil_zip")) {
+    if ( copy_and_unzip(ic_ancil_zip, ic_ancil_zip, ic_ancil_zip, slot_path, "ic_ancil_zip") ) {
        cerr << "..Copying and unzipping the ic_ancil_zip failed" << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
