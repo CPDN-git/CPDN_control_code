@@ -790,7 +790,7 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
 
 
 // Takes the zip file, checks existence and whether empty and copies it to destination and unzips it
-int copy_and_unzip(std::string zipfile, std::string source, std::string destination, std::string type) {
+int copy_and_unzip(std::string zipfile, std::string slot_path, std::string destination, std::string type) {
     int retval = 0;
 
     // Check for the existence of the zip file
@@ -821,10 +821,10 @@ int copy_and_unzip(std::string zipfile, std::string source, std::string destinat
        }
 
        // Unzip the zip file
-       cerr << "Unzipping the " << namelist << " zip file: " << zipfile << '\n';
+       cerr << "Unzipping the " << type << " zip file: " << zipfile << '\n';
        retval = call_boinc_unzip(zipfile, slot_path);
        if (retval) {
-          cerr << "..Unzipping the " << namelist << " file failed" << std::endl;
+          cerr << "..Unzipping the " << type << " file failed" << std::endl;
           return retval;
        }
     }
