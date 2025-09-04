@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
                       std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
 
 	// Copy the namelist_zip to the slot directory and unzip
-    if ( copy_and_unzip(namelist_zip, namelist_zip, namelist_zip, slot_path, "namelist_zip") ) {
+    if ( copy_and_unzip(namelist_zip, namelist_zip, slot_path, "namelist_zip") ) {
        cerr << "..Copying and unzipping the namelist_zip failed" << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
@@ -265,7 +265,7 @@ int main(int argc, char** argv) {
     std::string ic_ancil_zip = slot_path + std::string("/") + ic_ancil_file + std::string(".zip");
 
 	// Copy the ic_ancil_zip to the slot directory and unzip
-    if ( copy_and_unzip(ic_ancil_zip, ic_ancil_zip, ic_ancil_zip, slot_path, "ic_ancil_zip") ) {
+    if ( copy_and_unzip(ic_ancil_zip, ic_ancil_zip, slot_path, "ic_ancil_zip") ) {
        cerr << "..Copying and unzipping the ic_ancil_zip failed" << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
@@ -276,7 +276,6 @@ int main(int argc, char** argv) {
     std::string ifsdata_folder = slot_path + std::string("/ifsdata");
     std::string ifsdata_zip = slot_path + std::string("/") + ifsdata_file + std::string(".zip");
     std::string ifsdata_destination = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
-    std::string ifsdata_unzip_source = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
     
     // Check if ifsdata folder does not already exists or is empty
     if ( !file_exists(ifsdata_folder) ) {
@@ -287,7 +286,7 @@ int main(int argc, char** argv) {
     }
     
     // Copy the ifsdata_zip to the slot directory and unzip
-    if ( copy_and_unzip(ifsdata_zip, ifsdata_destination, ifsdata_unzip_source, ifsdata_folder + std::string("/"), "ifsdata_zip") ) {
+    if ( copy_and_unzip(ifsdata_zip, ifsdata_destination, ifsdata_folder + std::string("/"), "ifsdata_zip") ) {
        cerr << "..Copying and unzipping the ifsdata_zip failed" << std::endl;
        return 1;        // should terminate, the model won't run.
     }
