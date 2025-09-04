@@ -142,8 +142,8 @@ int main(int argc, char** argv) {
     std::string namelist_zip = slot_path + std::string("/") + app_name + std::string("_") + unique_member_id + std::string("_") + start_date +\
                       std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
 
-	// Copy namelist_zip to the slot directory and unzip
-    if ( !copy_and_unzip(namelist_zip, slot_path, "namelist_zip")) {
+	// Copy the namelist_zip to the slot directory and unzip
+    if ( copy_and_unzip(namelist_zip, slot_path, "namelist_zip")) {
        cerr << "..Copying and unzipping the namelist_zip failed" << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
