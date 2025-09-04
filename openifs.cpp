@@ -293,37 +293,23 @@ int main(int argc, char** argv) {
 
 
     // Process the climate_data_file:
-    // Make the climate data directory
+    // Make the climate data directory and set the required paths
     std::string climate_data_path = slot_path + std::string("/") + horiz_resolution + grid_type;
+    std::string climate_data_zip = slot_path + std::string("/") + climate_data_file + std::string(".zip")
+    std::string climate_data_destination = climate_data_path + std::string("/") + climate_data_file + std::string(".zip");
+    
     // Check if climate_data folder does not already exists or is empty
     if ( !file_exists(climate_data_path) ) {
-      if (mkdir(climate_data_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) \
-                       cerr << "..mkdir for the climate data folder failed" << std::endl;
-
-      // Get the name of the 'jf_' filename from a link within the climate_data_file
-      std::string climate_data_source = get_tag(slot_path + std::string("/") + climate_data_file + std::string(".zip"));
-
-      // Copy the climate data file to working directory
-      std::string climate_data_destination = climate_data_path + std::string("/") + climate_data_file + std::string(".zip");
-      cerr << "Copying the climate data file from: " << climate_data_source << " to: " << climate_data_destination << '\n';
-      retval = call_boinc_copy(climate_data_source, climate_data_destination);
-      if (retval) {
-         cerr << "..Copying the climate data file to the working directory failed" << std::endl;
-         return retval;
-      }	
-
-      // Unzip the climate data zip file
-      std::string climate_zip = climate_data_destination;
-      cerr << "Unzipping the climate data zip file: " << climate_zip << '\n';
-      retval = call_boinc_unzip(climate_zip, climate_data_path);
-      if (retval) {
-         cerr << "..Unzipping the climate data file failed" << std::endl;
-         return retval;
-      }
-      // Remove the zip file
-      else {
-         std::remove(climate_zip.c_str());
-      }
+       if (mkdir(climate_data_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) {
+          cerr << "..mkdir for the climate data folder failed" << std::endl;
+          return 1;      
+       }
+    }               
+       
+    // Copy the climate_data_zip to the slot directory and unzip
+    if ( copy_and_unzip(climate_data_zip, climate_data_destination, climate_data_path, "climate_data_zip") ) {
+       cerr << "..Copying and unzipping the climate_data_zip failed" << std::endl;
+       return 1;        // should terminate, the model won't run.
     }
 
 
