@@ -272,37 +272,26 @@ int main(int argc, char** argv) {
 
 
     // Process the ifsdata_file:
-    // Make the ifsdata directory
+    // Make the ifsdata directory and set the required paths
     std::string ifsdata_folder = slot_path + std::string("/ifsdata");
+    std::string ifsdata_zip = slot_path + std::string("/") + ifsdata_file + std::string(".zip")
+    std::string ifsdata_destination = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
+    std::string ifsdata_unzip_source = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
+    
     // Check if ifsdata folder does not already exists or is empty
     if ( !file_exists(ifsdata_folder) ) {
-      if (mkdir(ifsdata_folder.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for ifsdata folder failed" << '\n';
-
-      // Get the name of the 'jf_' filename from a link within the ifsdata_file
-      std::string ifsdata_source = get_tag(slot_path + std::string("/") + ifsdata_file + std::string(".zip"));
-
-      // Copy the ifsdata_file to the working directory
-      std::string ifsdata_destination = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
-      cerr << "Copying the ifsdata_file from: " << ifsdata_source << " to: " << ifsdata_destination << '\n';
-      retval = call_boinc_copy(ifsdata_source, ifsdata_destination);
-      if (retval) {
-         cerr << "..Copying the ifsdata file to the working directory failed" << std::endl;
-         return retval;
-      }
-
-      // Unzip the ifsdata_file zip file
-      std::string ifsdata_zip = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
-      cerr << "Unzipping the ifsdata_zip file: " << ifsdata_zip << '\n';
-      retval = call_boinc_unzip(ifsdata_zip, ifsdata_folder + std::string("/"));
-      if (retval) {
-         cerr << "..Unzipping the ifsdata_zip file failed" << std::endl;
-         return retval;
-      }
-      // Remove the zip file
-      else {
-         std::remove(ifsdata_zip.c_str());
-      }
+       if (mkdir(ifsdata_folder.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) {
+          cerr << "..mkdir for ifsdata folder failed" << '\n';
+          return retval;
+       }
     }
+    
+    // Copy the ifsdata_zip to the slot directory and unzip
+    if ( copy_and_unzip(ifsdata_zip, ifsdata_destination, ifsdata_unzip_source, ifsdata_folder + std::string("/"), "ifsdata_zip") ) {
+       cerr << "..Copying and unzipping the ifsdata_zip failed" << std::endl;
+       return 1;        // should terminate, the model won't run.
+    }
+
 
     // Process the climate_data_file:
     // Make the climate data directory
