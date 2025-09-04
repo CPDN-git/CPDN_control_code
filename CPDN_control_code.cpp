@@ -787,3 +787,46 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
        return false;
     }
 }
+
+
+// Takes the zip file, checks existence and whether empty and copies it to destination and unzips it
+int copy_and_unzip(std::string zipfile, std::string source, std::string destination, std::string type) {
+    int retval = 0;
+
+    // Check for the existence of the zip file
+    if( !file_exists(zipfile) ) {
+       cerr << "..The " << type << " zip file does not exist: " << zipfile << std::endl;
+       return 1;        // should terminate, the model won't run.
+    }
+
+    // Check whether the zip file is empty
+    if( file_is_empty(zipfile) ) {
+       cerr << "..The " << type << " zip file is empty: " << zipfile << std::endl;
+       return 1;        // should terminate, the model won't run.
+    }
+		
+    // Get the name of the 'jf_' filename from a link within the zip file
+    std::string source = "";
+    source = get_tag(zipfile);
+
+    // Copy and unzip the zip file only if the zip file contains a string between tags
+    if ( !source.empty() ) {
+       // Copy the 'jf_' to the working directory and rename
+       std::string destination = zipfile;
+       cerr << "Copying the " << type << " files from: " << source << " to: " << destination << '\n';
+       retval = call_boinc_copy(source, destination);
+       if (retval) {
+          cerr << "..Copying the " << type << " files to the working directory failed" << std::endl;
+          return retval;
+       }
+
+       // Unzip the zip file
+       cerr << "Unzipping the " << namelist << " zip file: " << zipfile << '\n';
+       retval = call_boinc_unzip(zipfile, slot_path);
+       if (retval) {
+          cerr << "..Unzipping the " << namelist << " file failed" << std::endl;
+          return retval;
+       }
+    }
+    return retval;
+}
