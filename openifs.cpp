@@ -142,41 +142,11 @@ int main(int argc, char** argv) {
     std::string namelist_zip = slot_path + std::string("/") + app_name + std::string("_") + unique_member_id + std::string("_") + start_date +\
                       std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
 
-	// Check for the existence of the namelist zip
-    if( !file_exists(namelist_zip) ) {
-       cerr << "..The namelist zip file does not exist: " << namelist_zip << std::endl;
-       return 1;        // should terminate, the model won't run.
-    }
-
-	// Check whether the namelist zip is empty
-    if( file_is_empty(namelist_zip) ) {
-	   cerr << "..The namelist zip file is empty: " << namelist_zip << std::endl;
+	// Copy namelist_zip to the slot directory and unzip
+    if ( !copy_and_unzip(namelist_zip, slot_path, "namelist_zip")) {
+       cerr << "..Copying and unzipping the namelist_zip failed" << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
-		
-    // Get the name of the 'jf_' filename from a link within the namelist file
-    std::string wu_source = "";
-	wu_source = get_tag(namelist_zip);
-
-	// Copy and unzip the namelist zip only if namelist_zip contains a string between tags
-	if ( !wu_source.empty() ) {
-       // Copy the 'jf_' to the working directory and rename to the namelist file
-       std::string wu_destination = namelist_zip;
-       cerr << "Copying the namelist files from: " << wu_source << " to: " << wu_destination << '\n';
-       retval = call_boinc_copy(wu_source, wu_destination);
-       if (retval) {
-          cerr << "..Copying the namelist files to the working directory failed" << std::endl;
-          return retval;
-       }
-
-       // Unzip the namelist zip file
-       cerr << "Unzipping the namelist zip file: " << namelist_zip << '\n';
-       retval = call_boinc_unzip(namelist_zip, slot_path);
-       if (retval) {
-          cerr << "..Unzipping the namelist file failed" << std::endl;
-          return retval;
-       }
-    }
 
 
     // Parse the fort.4 namelist for the filenames and variables
