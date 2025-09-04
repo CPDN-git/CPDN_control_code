@@ -820,7 +820,7 @@ int copy_and_unzip(std::string zipfile, std::string destination, std::string unz
        }
 
        // Unzip the zip file
-       cerr << "Unzipping the " << type << " zip file: " << unzip_source << '\n';
+       cerr << "Unzipping the " << type << " zip file: " << destination << '\n';
        retval = call_boinc_unzip(destination, unzip_path);
        if (retval) {
           cerr << "..Unzipping the " << type << " file failed" << std::endl;
