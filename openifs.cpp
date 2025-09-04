@@ -295,7 +295,7 @@ int main(int argc, char** argv) {
     // Process the climate_data_file:
     // Make the climate data directory and set the required paths
     std::string climate_data_path = slot_path + std::string("/") + horiz_resolution + grid_type;
-    std::string climate_data_zip = slot_path + std::string("/") + climate_data_file + std::string(".zip")
+    std::string climate_data_zip = slot_path + std::string("/") + climate_data_file + std::string(".zip");
     std::string climate_data_destination = climate_data_path + std::string("/") + climate_data_file + std::string(".zip");
     
     // Check if climate_data folder does not already exists or is empty
