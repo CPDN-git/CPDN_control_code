@@ -274,7 +274,7 @@ int main(int argc, char** argv) {
     // Process the ifsdata_file:
     // Make the ifsdata directory and set the required paths
     std::string ifsdata_folder = slot_path + std::string("/ifsdata");
-    std::string ifsdata_zip = slot_path + std::string("/") + ifsdata_file + std::string(".zip")
+    std::string ifsdata_zip = slot_path + std::string("/") + ifsdata_file + std::string(".zip");
     std::string ifsdata_destination = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
     std::string ifsdata_unzip_source = ifsdata_folder + std::string("/") + ifsdata_file + std::string(".zip");
     
