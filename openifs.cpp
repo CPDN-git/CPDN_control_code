@@ -264,37 +264,11 @@ int main(int argc, char** argv) {
     // Process the ic_ancil_file:
     std::string ic_ancil_zip = slot_path + std::string("/") + ic_ancil_file + std::string(".zip");
 
-    // Check for the existence of the ic_ancil zip file
-    if( !file_exists(ic_ancil_zip) ) {
-       cerr << "..The ic_ancil zip file does not exist: " << ic_ancil_zip << std::endl;
+	// Copy the ic_ancil_zip to the slot directory and unzip
+    if ( copy_and_unzip(ic_ancil_zip, slot_path, "ic_ancil_zip")) {
+       cerr << "..Copying and unzipping the ic_ancil_zip failed" << std::endl;
        return 1;        // should terminate, the model won't run.
-    }
-	
-    // For transfer downloading, BOINC renames download files to jf_HEXADECIMAL-NUMBER, these files
-    // need to be renamed back to the original name
-    // Get the name of the 'jf_' filename from a link within the ic_ancil_file
-    std::string ic_ancil_source = get_tag(ic_ancil_zip);
-
-    // Copy the IC ancils to working directory
-    std::string ic_ancil_destination = ic_ancil_zip;
-    cerr << "Copying IC ancils from: " << ic_ancil_source << " to: " << ic_ancil_destination << '\n';
-    retval = call_boinc_copy(ic_ancil_source, ic_ancil_destination);
-    if (retval) {
-       cerr << "..Copying the IC ancils to the working directory failed" << std::endl;
-       return retval;
-    }
-
-    // Unzip the IC ancils zip file
-    cerr << "Unzipping the IC ancils zip file: " << ic_ancil_zip << '\n';
-    retval = call_boinc_unzip(ic_ancil_zip, slot_path);
-    if (retval) {
-       cerr << "..Unzipping the IC ancils file failed" << std::endl;
-       return retval;
-    }
-    // Remove the zip file
-    else {
-       std::remove(ic_ancil_zip.c_str());
-    }
+	}
 
 
     // Process the ifsdata_file:
