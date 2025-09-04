@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
        else if (nss.str().find("UTSTEP") != std::string::npos) {
           tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
-	  tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
+	      tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
           tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
           timestep_interval = std::stoi(tmpstr3);
           cerr << "utstep: " << timestep_interval << '\n';
