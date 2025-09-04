@@ -790,7 +790,7 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
 
 
 // Takes the zip file, checks existence and whether empty and copies it to destination and unzips it
-int copy_and_unzip(std::string zipfile, std::string slot_path, std::string type) {
+int copy_and_unzip(std::string zipfile, std::string destination, std::string unzip_source, std::string unzip_path, std::string type) {
     int retval = 0;
 
     // Check for the existence of the zip file
@@ -812,7 +812,6 @@ int copy_and_unzip(std::string zipfile, std::string slot_path, std::string type)
     // Copy and unzip the zip file only if the zip file contains a string between tags
     if ( !source.empty() ) {
        // Copy the 'jf_' to the working directory and rename
-       std::string destination = zipfile;
        cerr << "Copying the " << type << " files from: " << source << " to: " << destination << '\n';
        retval = call_boinc_copy(source, destination);
        if (retval) {
@@ -821,12 +820,13 @@ int copy_and_unzip(std::string zipfile, std::string slot_path, std::string type)
        }
 
        // Unzip the zip file
-       cerr << "Unzipping the " << type << " zip file: " << zipfile << '\n';
-       retval = call_boinc_unzip(zipfile, slot_path);
+       cerr << "Unzipping the " << type << " zip file: " << unzip_source << '\n';
+       retval = call_boinc_unzip(unzip_source, unzip_path);
        if (retval) {
           cerr << "..Unzipping the " << type << " file failed" << std::endl;
           return retval;
        }
     }
+	// Success, retval is 0
     return retval;
 }
