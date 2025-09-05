@@ -830,25 +830,3 @@ int copy_and_unzip(std::string zipfile, std::string destination, std::string unz
 	// Success, retval is 0
     return retval;
 }
-
-// Returns Git version
-std::string get_git_version() {
-    std::string version;
-    std::array<char, 128> buffer;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("git describe --tags --always --dirty", "r"), pclose);
-    
-    if (!pipe) {
-        throw std::runtime_error("popen() failed!");
-    }
-
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        version += buffer.data();
-    }
-    
-    // Trim trailing newline
-    size_t pos = version.find_last_not_of(" \n\r\t");
-    if (pos != std::string::npos) {
-        version.resize(pos + 1);
-    }
-    return version;
-}
