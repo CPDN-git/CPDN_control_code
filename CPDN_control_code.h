@@ -29,6 +29,7 @@
 #include "boinc/diagnostics.h"
 #include "boinc/util.h"
 #include "rapidxml.hpp"
+#include <algorithm>
 
 int initialise_boinc(std::string&, std::string&, std::string&, int&);
 int move_and_unzip_app_file(std::string, std::string, std::string, std::string);
