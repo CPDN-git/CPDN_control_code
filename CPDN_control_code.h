@@ -29,10 +29,6 @@
 #include "boinc/diagnostics.h"
 #include "boinc/util.h"
 #include "rapidxml.hpp"
-#include <algorithm>
-#include <memory>
-#include <stdexcept>
-#include <array>
 
 int initialise_boinc(std::string&, std::string&, std::string&, int&);
 int move_and_unzip_app_file(std::string, std::string, std::string, std::string);
@@ -70,7 +66,6 @@ void call_boinc_report_app_status(double, int, double);
 void call_boinc_fraction_done(double);
 void call_boinc_finish(int);
 int copy_and_unzip(std::string, std::string, std::string, std::string);
-std::string get_git_version();
 
 using namespace std;
 using namespace std::chrono;
