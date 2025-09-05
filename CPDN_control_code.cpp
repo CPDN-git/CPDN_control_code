@@ -805,7 +805,7 @@ int copy_and_unzip(std::string zipfile, std::string destination, std::string unz
        return 1;        // should terminate, the model won't run.
     }
 		
-    // Get the name of the 'jf_' filename from a link within the zip file
+    // Get the name of the 'jf_' filename from a link within the 'zipfile' file
     std::string source = "";
     source = get_tag(zipfile);
 
