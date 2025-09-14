@@ -38,7 +38,7 @@ To build the WRF model:
 To build the OpenIFS model:
 
     cd build
-    g++ openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
+    g++ -DCODE_VERSION="\"$(git rev-parse HEAD)\"" openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
 
 (assuming boinc libraries are located in ../boinc relative to this repository)
 
