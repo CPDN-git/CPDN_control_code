@@ -40,8 +40,8 @@ int main(int argc, char** argv) {
        return retval;
     }
 
-
-	cerr << "wu_name: " << wu_name << '\n';
+    cerr << "Control Code version: " << CODE_VERSION << '\n'; // CODE_VERSION is a macro set at compile time
+    cerr << "wu_name: " << wu_name << '\n';
     cerr << "project_dir: " << project_dir << '\n';
     cerr << "version: " << version << '\n';
 
