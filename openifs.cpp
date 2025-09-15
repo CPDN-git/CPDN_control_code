@@ -1022,7 +1022,7 @@ int main(int argc, char** argv) {
 
 
     // Now that the task has finished, remove the temp folder
-    std::remove(temp_path.c_str());
+    std::filesystem::remove_all(temp_path.c_str());
 
     sleep_until(system_clock::now() + seconds(120));
 
