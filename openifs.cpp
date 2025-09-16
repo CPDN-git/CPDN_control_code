@@ -1029,20 +1029,20 @@ int main(int argc, char** argv) {
     // if finished normally
     if (process_status == 1){
       call_boinc_end_critical_section();
-      call_boinc_finish(0);
       cerr << "Task finished" << std::endl;
+      call_boinc_finish(0);
       return 0;
     }
     else if (process_status == 2){
       call_boinc_end_critical_section();
-      call_boinc_finish(0);
       cerr << "Task finished" << std::endl;
+      call_boinc_finish(0);
       return 0;
     }
     else {
       call_boinc_end_critical_section();
-      call_boinc_finish(1);
       cerr << "Task finished" << std::endl;
+      call_boinc_finish(1);
       return 1;
     }	
 }
