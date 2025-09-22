@@ -28,5 +28,8 @@ $(TARGET): $(SRC)
 $(DEBUG): $(SRC)
 	$(CC) $(CVERSION) $(SRC) $(CDEBUG) $(INCLUDES) $(LIBDIR)/libboinc_api.a $(LIBDIR)/libboinc_zip.a $(LIBDIR)/libboinc.a  -o $(DEBUG)
 
+test: oifs_43r3_test.cpp
+	$(CC) -g -std=c++17 -Wall -o oifs_43r3_test.exe oifs_43r3_test.cpp
+
 clean:
 	$(RM) *.o $(TARGET) $(DEBUG)
