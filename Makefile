@@ -11,7 +11,7 @@ DEBUG   = oifs_$(VERSION)_x86_64-pc-linux-gnu-debug
 SRC     = openifs.cpp CPDN_control_code.cpp
 
 CC       = g++
-CVERSION = -DCODE_VERSION="\"$(git rev-parse HEAD)\""
+CVERSION := -DCODE_VERSION='"$(shell git rev-parse HEAD)"'	# use single quotes to preserve the double quotes in the code
 CFLAGS   = -g -static -pthread -std=c++17 -Wall
 # Address Sanitizer (ASan) can't use -static
 CDEBUG   = -fsanitize=address -ggdb3 -pthread -std=c++17 -Wall
