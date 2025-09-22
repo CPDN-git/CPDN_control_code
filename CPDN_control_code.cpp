@@ -407,7 +407,6 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
 // Produce the trickle and either upload to the project server or as a physical file
 void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) {
     std::string trickle, trickle_location;
-    int rsize;
 
     //cerr << "current_cpu_time: " << current_cpu_time << "\n";
     //cerr << "wu_name: " << wu_name << "\n";
@@ -582,8 +581,6 @@ bool check_stoi(std::string& cin) {
     //  Returns true on success, false if non-numeric data in input string.
     //  Glenn Carver
 
-    int step;
-
     if (std::any_of(cin.begin(), cin.end(), ::isalpha)) {
         cerr << "..Invalid characters in stoi string: " << cin << "\n";
         return false;
@@ -592,7 +589,7 @@ bool check_stoi(std::string& cin) {
     //  check stoi standard exceptions
     //  n.b. still need to check step <= max_step
     try {
-        step = std::stoi(cin);
+        auto step = std::stoi(cin);
         //cerr << "step converted is : " << step << "\n";
         return true;
     }

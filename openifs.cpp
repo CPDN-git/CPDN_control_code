@@ -20,9 +20,8 @@ int main(int argc, char** argv) {
     std::string last_iter = "0";
     char *pathvar=NULL;
     long handleProcess;
-    double tv_sec, tv_usec, fraction_done, current_cpu_time=0, total_nsteps = 0;
+    double fraction_done, current_cpu_time=0, total_nsteps = 0;
     struct dirent *dir;
-    struct rusage usage;
     regex_t regex;
     DIR *dirp=NULL;
     ZipFileList zfl;
