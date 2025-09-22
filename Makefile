@@ -8,7 +8,7 @@
 VERSION = 43r3_1.00
 TARGET  = oifs_$(VERSION)_x86_64-pc-linux-gnu
 DEBUG   = oifs_$(VERSION)_x86_64-pc-linux-gnu-debug
-SRC     = openifs.cpp
+SRC     = openifs.cpp CPDN_control_code.cpp
 
 CC       = g++
 CVERSION = -DCODE_VERSION="\"$(git rev-parse HEAD)\""
