@@ -44,6 +44,13 @@ int main(int argc, char** argv) {
     cerr << "project_dir: " << project_dir << '\n';
     cerr << "version: " << version << '\n';
 
+    // Check for required command line arguments
+    if (argc < 9) {
+        std::cerr << "Control code error: Not enough command line arguments provided.\n";
+        std::cerr << "Usage: " << argv[0] << " <start_date> <exptid> <unique_member_id> <batchid> <wuid> <fclen> <app_name> <nthreads> [app_version]\n";
+        return 1;
+    }
+
     cerr << "(argv0) " << argv[0] << '\n';
     cerr << "(argv1) start_date: " << argv[1] << '\n';
     cerr << "(argv2) exptid: " << argv[2] << '\n';
