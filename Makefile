@@ -21,7 +21,7 @@ LIBDIR    = ../boinc-install/lib
 LIBS      = -lboinc_api -lboinc_zip -lboinc
 
 
-all: $(TARGET) $(DEBUG)
+all: $(TARGET) $(DEBUG) $(TEST)
 
 $(TARGET): $(SRC)
 	$(CC) $(CVERSION) $(SRC) $(CFLAGS) $(INCLUDES) -L$(LIBDIR) $(LIBS) -o $(TARGET)
