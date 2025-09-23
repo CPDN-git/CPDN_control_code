@@ -44,7 +44,7 @@ bool file_exists(const std::string &str);
 bool file_is_empty(std::string &str);
 double cpu_time(long);
 double model_frac_done(double, double, int);
-std::string get_second_part(const std::string, const std::string);
+std::string get_second_part(const std::string&, const std::string&);
 int move_result_file(std::string, std::string, std::string, std::string);
 bool check_stoi(std::string& cin);
 bool oifs_parse_stat(std::string&, std::string&, int);

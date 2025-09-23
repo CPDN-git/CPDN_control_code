@@ -5,6 +5,7 @@
 // Contributions from Glenn Carver (ex-ECMWF), 2022->
 //
 
+#include <iomanip>
 #include "CPDN_control_code.h"
 
 // Initialise BOINC and set the options
@@ -117,13 +118,12 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
     // Unzip the app zip file
     std::string app_zip = slot_path + std::string("/") + app_file;
     cerr << "Unzipping the app zip file: " << app_zip << "\n";
-    retval = boinc_zip(UNZIP_IT, app_zip.c_str(), slot_path);
+    retval = boinc_zip(UNZIP_IT, app_zip, slot_path);
 
     if (retval) {
        cerr << "..Unzipping the app file failed" << "\n";
        return retval;
     }
-    // Remove the zip file
     else {
        std::remove(app_zip.c_str());       
     }
@@ -418,7 +418,7 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
     trickle_buffer << "<wu>" << wu_name << "</wu>\n<result>" << result_base_name << "</result>\n<ph></ph>\n<ts>" \
                    << timestep << "</ts>\n<cp>" << current_cpu_time << "</cp>\n<vr></vr>\n";
     trickle = trickle_buffer.str();
-    cerr << "Contents of trickle: " << trickle << "\n";
+    cerr << "Contents of trickle: \n" << trickle << "\n";
       
     // Upload the trickle if not in standalone mode
     if (!standalone) {
@@ -470,8 +470,8 @@ double cpu_time(long handleProcess) {
     //   return x;
     #else
        //getrusage(RUSAGE_SELF,&usage); //Return resource usage measurement
-       //tv_sec = usage.ru_utime.tv_sec; //Time spent executing in user mode (seconds)
-       //tv_usec = usage.ru_utime.tv_usec; //Time spent executing in user mode (microseconds)
+       //auto tv_sec = usage.ru_utime.tv_sec; //Time spent executing in user mode (seconds)
+       //auto tv_usec = usage.ru_utime.tv_usec; //Time spent executing in user mode (microseconds)
        //return tv_sec+(tv_usec/1000000); //Convert to seconds
        //fprintf(stderr,"tv_sec: %.5f\n",tv_sec);
        //fprintf(stderr,"tv_usec: %.5f\n",(tv_usec/1000000));
@@ -503,7 +503,7 @@ double model_frac_done(double step, double total_steps, int nthreads ) {
    // resolution, computer speed, etc. Tune it looking at varied runtimes & resolutions!
    // Higher is better than lower to underestimate.
    // 
-   // Impact of speedup due to multiple threads is accounted by below.
+   // Impact of speedup due to multiple threads is accounted for below.
    //
    // If we want more accuracy could use the ratio of the model timestep to 1h (T159 tstep) to 
    // provide a 'slowdown' factor for higher resolutions.
@@ -530,30 +530,12 @@ double model_frac_done(double step, double total_steps, int nthreads ) {
    return frac_done;
 }
 
-// Construct the second part of the file to be uploaded
-std::string get_second_part(string last_iter, string exptid) {
-   std::string second_part="";
-
-   if (last_iter.length() == 1) {
-      second_part = exptid +"+"+ "00000" + last_iter;
-   }
-   else if (last_iter.length() == 2) {
-      second_part = exptid + "+" + "0000" + last_iter;
-   }
-   else if (last_iter.length() == 3) {
-      second_part = exptid + "+" + "000" + last_iter;
-   }
-   else if (last_iter.length() == 4) {
-      second_part = exptid + "+" + "00" + last_iter;
-   }
-   else if (last_iter.length() == 5) {
-      second_part = exptid + "+" + "0" + last_iter;
-   }
-   else if (last_iter.length() == 6) {
-      second_part = exptid + "+" + last_iter;
-   }
-
-   return second_part;
+// Construct the second part of the output model filename to be uploaded
+// nb. exptid is always 4 characters for OpenIFS.
+std::string get_second_part(const std::string& last_iter, const std::string& exptid) {
+    std::ostringstream oss;
+    oss << exptid << "+" << std::setw(6) << std::setfill('0') << last_iter;
+    return oss.str();
 }
 
 
