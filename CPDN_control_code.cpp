@@ -431,9 +431,9 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
        boinc_send_trickle_up(variety.data(), trickle_data.data());
     }
     else {
-       std::stringstream trickle_location_buffer;
-       trickle_location_buffer << slot_path << "/trickle_" << time(NULL) << ".xml" << "\n";
-       std::string trickle_location = trickle_location_buffer.str();
+       std::stringstream trickle_location_buf;
+       trickle_location_buf << slot_path << "/trickle_" << time(NULL) << ".xml" << '\0';
+       std::string trickle_location = trickle_location_buf.str();
        cerr << "Writing trickle to location: " << trickle_location << "\n";
 
        FILE* trickle_file = fopen(trickle_location.c_str(), "w");
