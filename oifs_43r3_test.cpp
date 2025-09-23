@@ -25,11 +25,11 @@ using namespace std::chrono;
 
 int main() {
 
-    std::string second_part, exptid = "0000";
-    int i, j, iteration = 0, max_iter = 4, iteration2 = 0;
+    std::string second_part, exptid = "EXPT";
+    int i, j, iteration = 0, max_iter = 24, iteration2 = 0;
 
-    int nfrres = 1; // restart interval
-    int upload_interval = 1;
+    int nfrres = 2; // restart interval
+    int upload_interval = 2;
 
     cerr << "Starting oifs_43r3_test" << std::endl;
 
@@ -60,8 +60,10 @@ int main() {
        for (i=0; i < iteration2; i++) {
           if ( to_string(iteration).length() == 1) {
              ifs_stat_file_out <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA STEPO       " << to_string(iteration) << std::endl;
+             cerr              <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA STEPO       " << to_string(iteration) << std::endl;
           } else if ( to_string(iteration).length() == 2) {
              ifs_stat_file_out <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA STEPO      " << to_string(iteration) << std::endl;
+             cerr              <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA STEPO      " << to_string(iteration) << std::endl;
           }
        }
 
@@ -110,8 +112,10 @@ int main() {
     // And finally write the last CNT0 line into the ifs.stat file
     if ( to_string(iteration).length() == 1) {
        ifs_stat_file_out <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA CNT0        " << to_string(iteration) << std::endl;
+       cerr              <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA CNT0        " << to_string(iteration) << std::endl;
     } else if ( to_string(iteration).length() == 2) {
        ifs_stat_file_out <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA CNT0       " << to_string(iteration) << std::endl;
+       cerr              <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA CNT0       " << to_string(iteration) << std::endl;
     }
     ifs_stat_file_out.close();
 
