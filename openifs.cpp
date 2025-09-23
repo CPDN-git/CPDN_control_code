@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
 
 	// Copy the namelist_zip to the slot directory and unzip
     if ( copy_and_unzip(namelist_zip, namelist_zip, slot_path, "namelist_zip") ) {
-       cerr << "..Copying and unzipping the namelist_zip failed" << std::endl;
+       cerr << "..Copying and unzipping the namelist_zip failed: " << namelist_zip << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
 
@@ -271,7 +271,7 @@ int main(int argc, char** argv) {
 
 	// Copy the ic_ancil_zip to the slot directory and unzip
     if ( copy_and_unzip(ic_ancil_zip, ic_ancil_zip, slot_path, "ic_ancil_zip") ) {
-       cerr << "..Copying and unzipping the ic_ancil_zip failed" << std::endl;
+       cerr << "..Copying and unzipping the ic_ancil_zip failed: " << ic_ancil_zip << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
 
@@ -292,7 +292,7 @@ int main(int argc, char** argv) {
     
     // Copy the ifsdata_zip to the slot directory and unzip
     if ( copy_and_unzip(ifsdata_zip, ifsdata_destination, ifsdata_folder + std::string("/"), "ifsdata_zip") ) {
-       cerr << "..Copying and unzipping the ifsdata_zip failed" << std::endl;
+       cerr << "..Copying and unzipping the ifsdata_zip failed: " << ifsdata_zip << std::endl;
        return 1;        // should terminate, the model won't run.
     }
 
@@ -313,7 +313,7 @@ int main(int argc, char** argv) {
        
     // Copy the climate_data_zip to the slot directory and unzip
     if ( copy_and_unzip(climate_data_zip, climate_data_destination, climate_data_path, "climate_data_zip") ) {
-       cerr << "..Copying and unzipping the climate_data_zip failed" << std::endl;
+       cerr << "..Copying and unzipping the climate_data_zip failed: " << climate_data_zip << std::endl;
        return 1;        // should terminate, the model won't run.
     }
 
@@ -581,6 +581,7 @@ int main(int argc, char** argv) {
 
 
     // Set the strCmd parameter
+    // GC. This should be an input parameter on the command line.
     if( file_exists( slot_path + std::string("/oifs_43r3_model.exe") ) ) {
        // Launch single process executable if present
        cerr << "Launching single process version of oifs_43r3" << std::endl;
