@@ -405,9 +405,8 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
 
 
 // Produce the trickle and either upload to the project server or as a physical file
-void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) {
-    std::string trickle, trickle_location;
-
+void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) 
+{
     //cerr << "current_cpu_time: " << current_cpu_time << "\n";
     //cerr << "wu_name: " << wu_name << "\n";
     //cerr << "result_base_name: " << result_base_name << "\n";
@@ -417,27 +416,29 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
     std::stringstream trickle_buffer;
     trickle_buffer << "<wu>" << wu_name << "</wu>\n<result>" << result_base_name << "</result>\n<ph></ph>\n<ts>" \
                    << timestep << "</ts>\n<cp>" << current_cpu_time << "</cp>\n<vr></vr>\n";
-    trickle = trickle_buffer.str();
+    std::string trickle = trickle_buffer.str();
     cerr << "Contents of trickle: \n" << trickle << "\n";
+
+    // Create null terminated, non-const char buffers for the boinc_send_trickle_up call
+    // to avoid possible memory faults.
+    std::vector<char> variety{'o','r','i','g','\0'};
+    std::vector<char> trickle_data(trickle.begin(), trickle.end());
+    trickle_data.push_back('\0');
       
     // Upload the trickle if not in standalone mode
     if (!standalone) {
-       std::string variety("orig");
        cerr << "Uploading trickle at timestep: " << timestep << "\n";
-       boinc_send_trickle_up(variety.data(), const_cast<char*> (trickle.c_str()));
+       boinc_send_trickle_up(variety.data(), trickle_data.data());
     }
-
-    // Write out the trickle in standalone mode
     else {
        std::stringstream trickle_location_buffer;
        trickle_location_buffer << slot_path << "/trickle_" << time(NULL) << ".xml" << "\n";
-       trickle_location = trickle_location_buffer.str();
+       std::string trickle_location = trickle_location_buffer.str();
        cerr << "Writing trickle to location: " << trickle_location << "\n";
+
        FILE* trickle_file = fopen(trickle_location.c_str(), "w");
        if (trickle_file) {
-          //fwrite(trickle_file, 1, strlen(trickle.c_str()), trickle.c_str());
-          //fwrite(trickle.c_str(), 1, strlen(trickle.c_str()), trickle_file);
-          std::fwrite(trickle.c_str(), sizeof(char), sizeof(trickle.c_str()), trickle_file);
+          std::fwrite(trickle_data.data(), sizeof(trickle_data.data()), 1, trickle_file);
           fclose(trickle_file);
        }
     }
@@ -543,6 +544,7 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
     int retval = 0;
 
     // Move result file to the temporary folder in the project directory
+    cerr << "Checking for result file: " << (slot_path + std::string("/") + first_part + second_part) << "\n";
     if(file_exists(slot_path + std::string("/") + first_part + second_part)) {
        cerr << "Moving to projects directory: " << (slot_path+std::string("/") + first_part + second_part) << "\n";
        retval = boinc_copy((slot_path + std::string("/") + first_part + second_part).c_str() , \
