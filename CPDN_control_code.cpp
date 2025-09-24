@@ -125,7 +125,11 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
        return retval;
     }
     else {
-       std::remove(app_zip.c_str());       
+       try {
+           std::filesystem::remove(app_zip);
+       } catch (const std::filesystem::filesystem_error& e) {
+           cerr << "..move_and_unzip_app_file(). Error removing file: " << app_zip << ", error: " << e.what() << "\n";
+       }
     }
     return retval;
 }
@@ -417,10 +421,10 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
     trickle_buffer << "<wu>" << wu_name << "</wu>\n<result>" << result_base_name << "</result>\n<ph></ph>\n<ts>" \
                    << timestep << "</ts>\n<cp>" << current_cpu_time << "</cp>\n<vr></vr>\n";
     std::string trickle = trickle_buffer.str();
-    cerr << "Contents of trickle: \n" << trickle << "\n";
+    //cerr << "Contents of trickle: \n" << trickle << "\n";
 
     // Create null terminated, non-const char buffers for the boinc_send_trickle_up call
-    // to avoid possible memory faults.
+    // to avoid possible memory faults (as seen in the past).
     std::vector<char> variety{'o','r','i','g','\0'};
     std::vector<char> trickle_data(trickle.begin(), trickle.end());
     trickle_data.push_back('\0');
@@ -544,15 +548,21 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
     int retval = 0;
 
     // Move result file to the temporary folder in the project directory
-    cerr << "Checking for result file: " << (slot_path + std::string("/") + first_part + second_part) << "\n";
-    if(file_exists(slot_path + std::string("/") + first_part + second_part)) {
-       cerr << "Moving to projects directory: " << (slot_path+std::string("/") + first_part + second_part) << "\n";
-       retval = boinc_copy((slot_path + std::string("/") + first_part + second_part).c_str() , \
-                           (temp_path + std::string("/") + first_part + second_part).c_str());
+    std::string result_file = slot_path + std::string("/") + first_part + second_part;
+    std::string temp_file = temp_path + std::string("/") + first_part + second_part;
+    //cerr << "Checking for result file: " << result_file << "\n";
+
+    if(file_exists(result_file)) {
+       cerr << "Moving result file: " << std::filesystem::path(result_file).filename() << " to projects directory.\n";
+       retval = boinc_copy( result_file.c_str(), temp_file.c_str() );
 
        // If result file has been successfully copied over, remove it from slots directory
        if (!retval) {
-          std::remove((slot_path + std::string("/") + first_part + second_part).c_str());
+          try {
+              std::filesystem::remove(result_file);
+          } catch (const std::filesystem::filesystem_error& e) {
+              cerr << "..move_result_file(). Error removing file: " << result_file << ", error: " << e.what() << "\n";
+          }
        }
     }
     return retval;
@@ -587,8 +597,8 @@ bool check_stoi(std::string& cin) {
     }
 }
 
-bool oifs_parse_stat(std::string& logline, std::string& stat_column, int index) {
-   //   Parse a line of the OpenIFS ifs.stat log file, previously obtained from oifs_get_statline
+bool oifs_parse_stat(const std::string& logline, std::string& stat_column, const int index) {
+   //   Parse a line of the OpenIFS ifs.stat log file.
    //      logline  : incoming ifs.stat logfile line to be parsed
    //      stat_col : returned string given by position 'index'
    //  Returns false if string is empty.
@@ -602,58 +612,64 @@ bool oifs_parse_stat(std::string& logline, std::string& stat_column, int index) 
       tokens >> statstr;
 
    if ( statstr.empty() ){
+      cerr << "..oifs_parse_stat: warning, statstr is empty: " << logline << '\n';
       return false;
    } else {
       stat_column = statstr;
-      //cerr << "oifs_parse_ifsstat: parsed string  = " << stat_column << " index " << index << '\n';
       return true;
    }
 }
 
-bool oifs_get_stat(std::ifstream& ifs_stat, std::string& logline) {
-   // Parse content of ifs.stat and always return last non-zero line read from log file.
-   //
-   // Updates stream offset between calls to prevent completely re-reading the file,
-   // to reduce file I/O on the volunteer's machine.
-   //
-   //    ifs_stat : name of logfile (ifs.stat for current generation of OpenIFS models)
-   //    logline  : last line read from ifs.stat. Preserved between calls to this fn.
-   //    NOTE!  The file MUST already be open. This fn does not close it.
-   //
-   // Returns: False if file not open, otherwise true.
-   //
-   // TODO: ideally this should be part of a small class that
-   // inherits from ifstream to manage & read ifs.stat, as it relies on trust the
-   // callee has not opened & closed this file inbetween calls.
-   //
-   //     Glenn
 
-    string             statline = "";         // default: 4th element of ifs.stat file lines
-    static string      current_line = "";
-    static streamoff   p = 0;             // stream offset position
+bool fread_last_line(const std::string& fname, std::string& logline) {
+    //  Function to read & return last line of a file.
+    //  Works in a similar way to 'tail -f' command.
+    //  fname   : name of file to read
+    //  logline : last line read from file, preserved between calls to this fn.
+    //  Returns true if a new line read. returns false and logline unchanged
+    //          if no new line read, returns false and empty logline if file does not exist.
+    //
+    //    Glenn carver
 
-    if ( !ifs_stat.is_open() ) {
-        cerr << "..oifs_get_stat: error, ifs.stat file is not open" << endl;
-        p = 0;
-        current_line = "";
+    static std::streamoff last_offset = 0;
+    static std::string    last_line;
+    std::string           line;
+
+    // Check file exists and non-empty
+    std::ifstream logfile(fname, std::ios::in);
+    if (!logfile.is_open()) {
+        logline.clear();
+        last_offset = 0;
+        cerr << ".. file_last_line(): warning, " << fname << " does not exist." << std::endl;
         return false;
     }
 
-    ifs_stat.seekg(p);
-    while ( std::getline(ifs_stat, statline) ) {
-      current_line = statline;
+   // Seek to last offset and read lines to file end
+   logfile.seekg(last_offset, std::ios::beg);
 
-      if ( ifs_stat.tellg() == -1 )     // set p to eof for next call to this fn
-         p = p + statline.size();
-      else
-         p = ifs_stat.tellg();
+   while (std::getline(logfile, line)) {
+      last_line = line;
+   }
+   //cerr << "fread_last_line: last line read: " << last_line << '\n';
+
+   // Update last_offset for next call
+   last_offset = logfile.tellg();
+   if (last_offset == -1) {
+      // At EOF, set to file size
+      logfile.clear();                   // must clear stream error before attempting to read again
+      logfile.seekg(0, std::ios::end);   // seek backwards to start of file to get size.
+      last_offset = logfile.tellg();
     }
-    ifs_stat.clear();           // must clear stream error before attempting to read again as file remains open
 
-    logline = current_line;
+    logfile.close();
 
-    return true;
+    if (!last_line.empty()) {
+        logline = last_line;
+        return true;
+    }
+    return false;    // no new line read and arg logline unchanged
 }
+
 
 bool oifs_valid_step(std::string& step, int nsteps) {
    //  checks for a valid step count in arg 'step'
