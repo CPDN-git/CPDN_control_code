@@ -10,7 +10,7 @@
 int main(int argc, char** argv) {
     std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;
     std::string project_path, tmpstr1, tmpstr2, tmpstr3, tmpstr4, tmpstr5;
-    std::string ifs_line="", iter="0", ifs_word="", second_part, first_part, upload_file_name, last_line="";
+    std::string ifs_line="", iter="0", second_part, first_part, upload_file_name;
     std::string resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="", strCmd="";
     int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
@@ -623,42 +623,36 @@ int main(int argc, char** argv) {
 
     // Periodically check the process status and the BOINC client status
     std::string stat_lastline = "";
-
+    std::string ifs_stat      = slot_path + std::string("/ifs.stat");     // GC. TODO: should be std::filesystem path.
 
     while (process_status == 0 && model_completed == 0) {
        sleep_until(system_clock::now() + seconds(1)); // Time gap of 1 second to reduce overhead of control code
 
        count++;
 
-       // Check every 10 seconds whether an upload point has been reached
-       if(count==10) {
+       // Check whether an upload point has been reached
+       // GC. 09/25. reduced to 5 secs as testing shows 10secs can miss a timestep.
+       if(count==5) {
 
           iter = last_iter;
-          if( file_exists(slot_path + std::string("/ifs.stat")) ) {
+          if ( file_exists(ifs_stat) ) {
 
-             //  To reduce I/O, open file once only and use oifs_parse_ifsstat() to parse the step count
-             if( !(ifs_stat_file.is_open()) ) {
-                ifs_stat_file.open(slot_path + std::string("/ifs.stat"));
-             } 
-             if( ifs_stat_file.is_open() ) {
+             // Read completed step from last line of ifs.stat file.
+             // Note the first line from the model has a step count of '....  CNT3      -999 ....'
+             // When the iteration number changes in the ifs.stat file, OpenIFS has completed writing
+             // to the output files for that iteration, those files can now be moved and uploaded.
+             //cerr << "Reading completed iteration step from last line of ifs.stat" << std::endl;
 
-                // Read completed step from last line of ifs.stat file.
-                // Note the first line from the model has a step count of '....  CNT3      -999 ....'
-                // When the iteration number changes in the ifs.stat file, OpenIFS has completed writing
-                // to the output files for that iteration, those files can now be moved and uploaded.
-
-                cerr << "Reading last completed iteration step from last line of ifs.stat" << std::endl;
-
-                oifs_get_stat(ifs_stat_file, stat_lastline);
-                if ( oifs_parse_stat(stat_lastline, iter, 4) ) {     // iter updates
-                   if ( !oifs_valid_step(iter,total_nsteps) ) {
-                     iter = last_iter;
-                   }
-                }
+             if ( fread_last_line(ifs_stat, stat_lastline) ) {       // only returns true if lastline has changed
+                 if ( oifs_parse_stat(stat_lastline, iter, 4) ) {    // iter updates
+                    if ( !oifs_valid_step(iter,total_nsteps) ) {
+                       iter = last_iter;                             // revert to last valid step
+                    }
+                 }
              }
-          } 
+          }
 
-          cerr << "Checking whether a new set of ICM files have been generated" << std::endl;
+          //cerr << "Checking whether a new set of ICM files have been generated: iter, last_iter = " << iter << ", " << last_iter << std::endl;
 
           if (std::stoi(iter) != std::stoi(last_iter)) {
              // Construct file name of the ICM result file
@@ -687,8 +681,6 @@ int main(int argc, char** argv) {
                 cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
                 return retval;
              }
-
-             cerr << "Completed moving ICM files" << std::endl;
 
              // Convert iteration number to seconds
              current_iter = (std::stoi(last_iter)) * timestep_interval;
@@ -720,24 +712,18 @@ int main(int argc, char** argv) {
                    if(file_exists(temp_path + std::string("/ICMGG") + second_part)) {
                       cerr << "Adding to the zip: " << (temp_path + std::string("/ICMGG")+second_part) << '\n';
                       zfl.push_back(temp_path + std::string("/ICMGG") + second_part);
-                      // Delete the file that has been added to the zip
-                      // std::remove((temp_path+std::string("/ICMGG")+second_part).c_str());
                    }
 
                    // Add ICMSH result files to zip to be uploaded
                    if(file_exists(temp_path + std::string("/ICMSH") + second_part)) {
                       cerr << "Adding to the zip: " << (temp_path + std::string("/ICMSH")+second_part) << '\n';
                       zfl.push_back(temp_path + std::string("/ICMSH") + second_part);
-                      // Delete the file that has been added to the zip
-                      // std::remove((temp_path+std::string("/ICMSH")+second_part).c_str());
                    }
 
                    // Add ICMUA result files to zip to be uploaded
                    if(file_exists(temp_path + std::string("/ICMUA") + second_part)) {
                       cerr << "Adding to the zip: " << (temp_path + std::string("/ICMUA")+second_part) << '\n';
                       zfl.push_back(temp_path + std::string("/ICMUA") + second_part);
-                      // Delete the file that has been added to the zip
-                      // std::remove((temp_path+std::string("/ICMUA")+second_part).c_str());
                    }
                 }
 
@@ -761,7 +747,11 @@ int main(int argc, char** argv) {
                          // Files have been successfully zipped, they can now be deleted
                          for (j = 0; j < (int) zfl.size(); ++j) {
                             // Delete the zipped file
-                            std::remove(zfl[j].c_str());
+                            try {
+                                std::filesystem::remove(zfl[j]);
+                            } catch (const std::filesystem::filesystem_error& e) {
+                                std::cerr << "Error deleting file: " << zfl[j] << ", error: " << e.what() << '\n';
+                            }
                          }
                       }
 
@@ -808,7 +798,11 @@ int main(int argc, char** argv) {
                          // Files have been successfully zipped, they can now be deleted
                          for (j = 0; j < (int) zfl.size(); ++j) {
                             // Delete the zipped file
-                            std::remove(zfl[j].c_str());
+                            try {
+                                std::filesystem::remove(zfl[j]);
+                            } catch (const std::filesystem::filesystem_error& e) {
+                                std::cerr << "Error deleting file: " << zfl[j] << ", error: " << e.what() << '\n';
+                            }
                          }
                       }
                    }
@@ -875,10 +869,11 @@ int main(int argc, char** argv) {
 
     // To check whether model completed successfully, look for 'CNT0' in 3rd column of ifs.stat
     // This will always be the last line of a successful model forecast.
-    if(file_exists(slot_path + std::string("/ifs.stat"))) {
-       ifs_word="";
-       oifs_get_stat(ifs_stat_file, last_line);
-       oifs_parse_stat(last_line, ifs_word, 3);
+    if(file_exists(ifs_stat)) {
+       std::string ifs_word="";
+       fread_last_line(ifs_stat, stat_lastline);
+       oifs_parse_stat(stat_lastline, ifs_word, 3);
+       cerr << "Last line of ifs.stat, ifs_word: " << stat_lastline << ", " << ifs_word << '\n';
        if (ifs_word!="CNT0") {
          cerr << "CNT0 not found; string returned was: " << "'" << ifs_word << "'" << '\n';
          // print extra files to help diagnose fail
@@ -976,7 +971,11 @@ int main(int argc, char** argv) {
              // Files have been successfully zipped, they can now be deleted
              for (j = 0; j < (int) zfl.size(); ++j) {
                 // Delete the zipped file
-                std::remove(zfl[j].c_str());
+                try {
+                    std::filesystem::remove(zfl[j]);
+                } catch (std::filesystem::filesystem_error& e) {
+                    std::cerr << "Error deleting file: " << zfl[j] << ", error: " << e.what() << '\n';
+                }
              }
           }
 
@@ -990,7 +989,7 @@ int main(int argc, char** argv) {
              cerr << "Finished the upload of the final file" << '\n';
           }
 
-	  // Produce trickle
+	       // Produce trickle
           process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
        }
        call_boinc_end_critical_section();
@@ -1006,7 +1005,7 @@ int main(int argc, char** argv) {
        // Create the zipped upload file from the list of files added to zfl
        upload_file = project_path + upload_file_name;
 
-       if (zfl.size() > 0){
+       if (zfl.size() > 0) {
           retval = call_boinc_zip(upload_file, &zfl);
           if (retval) {
              cerr << "..Creating the zipped upload file failed" << std::endl;
@@ -1017,19 +1016,23 @@ int main(int argc, char** argv) {
              // Files have been successfully zipped, they can now be deleted
              for (j = 0; j < (int) zfl.size(); ++j) {
                 // Delete the zipped file
-                std::remove(zfl[j].c_str());
+                try {
+                  std::filesystem::remove(zfl[j]);
+                } catch (const std::filesystem::filesystem_error& e) {
+                  std::cerr << "Error deleting file: " << zfl[j] << ", error: " << e.what() << '\n';
+                }
              }
-          }
-        }
-	// Produce trickle
-        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);     
+         }
+         // Produce trickle
+         process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
+       }
     }
 
     //-------------------------------------------------------------------------------------------------------
 
 
     // Now that the task has finished, remove the temp folder
-    std::filesystem::remove_all(temp_path.c_str());
+    std::filesystem::remove_all(temp_path);
 
     sleep_until(system_clock::now() + seconds(120));
 
