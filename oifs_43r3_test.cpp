@@ -29,7 +29,7 @@ int main() {
     int i, j, iteration = 0, max_iter = 24, iteration2 = 0;
 
     int nfrres = 2; // restart interval
-    int upload_interval = 2;
+    int upload_interval = 4;
 
     cerr << "Starting oifs_43r3_test" << std::endl;
 
@@ -42,12 +42,9 @@ int main() {
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
 
+    this_thread::sleep_until(system_clock::now() + seconds(10));
 
     while (iteration <= max_iter) {
-
-       // Time delay to slow the program down to allow the main loop of the calling program to run
-       this_thread::sleep_until(system_clock::now() + seconds(10));
-
 
        // At the end of every restart interval, write out the same line three times
        if ( iteration % abs( nfrres ) == 0) {
@@ -106,6 +103,9 @@ int main() {
        }
 
        iteration = iteration + 1;
+
+       // Time delay to slow the program down to allow the main loop of the calling program to run
+       this_thread::sleep_until(system_clock::now() + seconds(10));
     }
 
 
@@ -123,7 +123,9 @@ int main() {
     // Produce the NODE file
     std::string NODE_file = slot_path + std::string("/NODE.001_01");
     std::ofstream NODE_file_out(NODE_file);
-    for (j=0; j<4000; j++) { NODE_file_out << rand() % 10; };
+    for (j=0; j<4000; j++) {
+      NODE_file_out << rand() % 10 << '\n';
+    }
     NODE_file_out << std::endl;
     NODE_file_out.close();
 
