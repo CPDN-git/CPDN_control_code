@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
                        std::to_string(num_days_trunc) + "_" +
                        batchid + "_" +
                        wuid + ".zip";
-   namelist_zip = namelist_zip_path.string();      // nb this is a const string.
+   std::string namelist_zip = namelist_zip_path.string();      // nb this is a const string.
 
 	// Copy the namelist_zip to the slot directory and unzip
     if ( copy_and_unzip(namelist_zip, namelist_zip, slot_path, "namelist_zip") ) {
