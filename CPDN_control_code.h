@@ -66,7 +66,7 @@ int call_boinc_upload_status(std::string);
 void call_boinc_report_app_status(double, int, double);
 void call_boinc_fraction_done(double);
 void call_boinc_finish(int);
-int copy_and_unzip(std::string, std::string, std::string, std::string);
+int copy_and_unzip(const std::string&, const std::string&, const std::string&, const std::string&);
 bool set_env_var(const std::string&, const std::string&);
 
 using namespace std;
