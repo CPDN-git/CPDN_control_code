@@ -143,8 +143,15 @@ int main(int argc, char** argv) {
 
 
     //------------------------------------------Process the namelist-----------------------------------------
-    std::string namelist_zip = slot_path + std::string("/") + app_name + std::string("_") + unique_member_id + std::string("_") + start_date +\
-                      std::string("_") + std::to_string(num_days_trunc) + std::string("_") + batchid + std::string("_") + wuid + std::string(".zip");
+
+   std::filesystem::path namelist_zip_path = slot_path;
+   namelist_zip_path /= std::string(app_name) + "_" +
+                       unique_member_id + "_" +
+                       start_date + "_" +
+                       std::to_string(num_days_trunc) + "_" +
+                       batchid + "_" +
+                       wuid + ".zip";
+   namelist_zip = namelist_zip_path.string();      // nb this is a const string.
 
 	// Copy the namelist_zip to the slot directory and unzip
     if ( copy_and_unzip(namelist_zip, namelist_zip, slot_path, "namelist_zip") ) {
@@ -320,7 +327,7 @@ int main(int argc, char** argv) {
     //------------------------------------Set the environmental variables------------------------------------
 
     // For memory safety, keep env strings static so they persist for the life of the program.
-    
+
     // Set the OIFS_DUMMY_ACTION environmental variable, this controls what OpenIFS does if it goes into a dummy subroutine
     // Possible values are: 'quiet', 'verbose' or 'abort'
     if ( !set_env_var("OIFS_DUMMY_ACTION", "abort") ) {

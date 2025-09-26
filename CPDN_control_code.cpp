@@ -60,7 +60,7 @@ int call_boinc_zip(const std::string& file_to_zip, const ZipFileList* zfl) {
     return boinc_zip(ZIP_IT, file_to_zip, zfl);
 }
 
-int call_boinc_copy(std::string source, std::string destination) {
+int call_boinc_copy(const std::string& source, const std::string& destination) {
     return boinc_copy(source.c_str(), destination.c_str());
 }
 
@@ -784,7 +784,8 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
 
 
 // Takes the zip file, checks existence and whether empty and copies it to destination and unzips it
-int copy_and_unzip(std::string zipfile, std::string destination, std::string unzip_path, std::string type) {
+// GC. TODO. Convert this to accept std::filesystem::path args.
+int copy_and_unzip(const std::string& zipfile, const std::string& destination, const std::string& unzip_path, const std::string& type) {
     int retval = 0;
 
     // Check for the existence of the zip file
@@ -821,7 +822,7 @@ int copy_and_unzip(std::string zipfile, std::string destination, std::string unz
           return retval;
        }
     }
-	// Success, retval is 0
+	 // Success, retval is 0
     return retval;
 }
 
