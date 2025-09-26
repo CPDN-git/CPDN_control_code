@@ -89,6 +89,11 @@ void call_boinc_finish(int status) {
 }
 
 
+// GC. do not use putenv, it takes control of the memory passed in (see multiple stackexchange posts)
+bool set_env_var(const std::string& name, const std::string& val) {
+    return (setenv(name.c_str(), val.c_str(), 1) == 0);     // 1 = overwrite existing value, true on success.
+}
+
 
 // Move and unzip the app file
 int move_and_unzip_app_file(std::string app_name, std::string version, std::string project_path, std::string slot_path) {
@@ -827,3 +832,5 @@ int copy_and_unzip(std::string zipfile, std::string destination, std::string unz
 	// Success, retval is 0
     return retval;
 }
+
+
