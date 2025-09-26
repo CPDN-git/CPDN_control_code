@@ -609,8 +609,9 @@ int main(int argc, char** argv) {
        count++;
 
        // Check whether an upload point has been reached
-       // GC. 09/25. reduced to 5 secs as testing shows 10secs can miss a timestep.
-       if(count==5) {
+       // GC. 09/25. reduced to 7 secs as testing shows 10secs can miss a timestep.
+       // Going too low can cause the %age done on boincmgr to flip backwards.
+       if(count==7) {
 
           iter = last_iter;
           if ( file_exists(ifs_stat) ) {
