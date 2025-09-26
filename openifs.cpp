@@ -18,7 +18,6 @@ int main(int argc, char** argv) {
     int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter, standalone=0;
     int last_upload; // The time of the last upload file (in seconds)
     std::string last_iter = "0";
-    char *pathvar=NULL;
     long handleProcess;
     double fraction_done, current_cpu_time=0, total_nsteps = 0;
     struct dirent *dir;
@@ -322,95 +321,65 @@ int main(int argc, char** argv) {
 
     // Set the OIFS_DUMMY_ACTION environmental variable, this controls what OpenIFS does if it goes into a dummy subroutine
     // Possible values are: 'quiet', 'verbose' or 'abort'
-    std::string OIFS_var("OIFS_DUMMY_ACTION=abort");
-    if (putenv((char *)OIFS_var.c_str())) {
+    if ( !set_env_var("OIFS_DUMMY_ACTION", "abort") ) {
       cerr << "..Setting the OIFS_DUMMY_ACTION environmental variable failed" << std::endl;
       return 1;
     }
-    pathvar = getenv("OIFS_DUMMY_ACTION");
-    //cerr << "The OIFS_DUMMY_ACTION environmental variable is: " << pathvar << '\n';
 
     // Set the OMP_NUM_THREADS environmental variable, the number of threads
-    std::string OMP_NUM_var = std::string("OMP_NUM_THREADS=") + nthreads;
-    if (putenv((char *)OMP_NUM_var.c_str())) {
+    if ( !set_env_var("OMP_NUM_THREADS", nthreads) ) {
       cerr << "..Setting the OMP_NUM_THREADS environmental variable failed" << std::endl;
       return 1;
     }
-    pathvar = getenv("OMP_NUM_THREADS");
-    //cerr << "The OMP_NUM_THREADS environmental variable is: " << pathvar << '\n';
 
     // Set the OMP_SCHEDULE environmental variable, this enforces static thread scheduling
-    std::string OMP_SCHED_var("OMP_SCHEDULE=STATIC");
-    if (putenv((char *)OMP_SCHED_var.c_str())) {
+    if ( !set_env_var("OMP_SCHEDULE", "STATIC") ) {
       cerr << "..Setting the OMP_SCHEDULE environmental variable failed" << std::endl;
       return 1;
     }
-    pathvar = getenv("OMP_SCHEDULE");
-    //cerr << "The OMP_SCHEDULE environmental variable is: " << pathvar << '\n';
 
     // Set the DR_HOOK environmental variable, this controls the tracing facility in OpenIFS, off=0 and on=1
-    std::string DR_HOOK_var("DR_HOOK=1");
-    if (putenv((char *)DR_HOOK_var.c_str())) {
+    if ( !set_env_var("DR_HOOK", "1") ) {
       cerr << "..Setting the DR_HOOK environmental variable failed" << std::endl;
       return 1;
     }
-    pathvar = getenv("DR_HOOK");
-    //cerr << "The DR_HOOK environmental variable is: " << pathvar << '\n';
 
     // Set the DR_HOOK_HEAPCHECK environmental variable, this ensures the heap size statistics are reported
-    std::string DR_HOOK_HEAP_var("DR_HOOK_HEAPCHECK=no");
-    if (putenv((char *)DR_HOOK_HEAP_var.c_str())) {
+    if ( !set_env_var("DR_HOOK_HEAPCHECK", "no") ) {
       cerr << "..Setting the DR_HOOK_HEAPCHECK environmental variable failed" << std::endl;
       return 1;
     }
-    pathvar = getenv("DR_HOOK_HEAPCHECK");
-    //cerr << "The DR_HOOK_HEAPCHECK environmental variable is: " << pathvar << '\n';
 
     // Set the DR_HOOK_STACKCHECK environmental variable, this ensures the stack size statistics are reported
-    std::string DR_HOOK_STACK_var("DR_HOOK_STACKCHECK=no");
-    if (putenv((char *)DR_HOOK_STACK_var.c_str())) {
+    if ( !set_env_var("DR_HOOK_STACKCHECK", "no") ) {
       cerr << "..Setting the DR_HOOK_STACKCHECK environmental variable failed" << std::endl;
       return 1;
     }
-    pathvar = getenv("DR_HOOK_STACKCHECK");
-    //cerr << "The DR_HOOK_STACKCHECK environmental variable is: " << pathvar << '\n';
 
     // Set the EC_MEMINFO environment variable, only applies to OpenIFS 43r3.
     // Disable EC_MEMINFO to remove the useless EC_MEMINFO messages to the stdout file to reduce filesize.
-    std::string EC_MEMINFO("EC_MEMINFO=0");
-    if (putenv((char *)EC_MEMINFO.c_str())) {
+    if ( !set_env_var("EC_MEMINFO", "0") ) {
        cerr << "..Setting the EC_MEMINFO environment variable failed" << std::endl;
        return 1;
     }
-    pathvar = getenv("EC_MEMINFO");
-    //cerr << "The EC_MEMINFO environment variable is: " << pathvar << '\n';
 
     // Disable Heap memory stats at end of run; does not work for CPDN version of OpenIFS
-    std::string EC_PROFILE_HEAP("EC_PROFILE_HEAP=0");
-    if (putenv((char *)EC_PROFILE_HEAP.c_str())) {
+    if ( !set_env_var("EC_PROFILE_HEAP", "0") ) {
        cerr << "..Setting the EC_PROFILE_HEAP environment variable failed" << std::endl;
        return 1;
     }
-    pathvar = getenv("EC_PROFILE_HEAP");
-    //cerr << "The EC_PROFILE_HEAP environment variable is: " << pathvar << '\n';
 
     // Disable all memory stats at end of run; does not work for CPDN version of OpenIFS
-    std::string EC_PROFILE_MEM("EC_PROFILE_MEM=0");
-    if (putenv((char *)EC_PROFILE_MEM.c_str())) {
+    if ( !set_env_var("EC_PROFILE_MEM", "0") ) {
        cerr << "..Setting the EC_PROFILE_MEM environment variable failed" << std::endl;
        return 1;
     }
-    pathvar = getenv("EC_PROFILE_MEM");
-    //cerr << "The EC_PROFILE_MEM environment variable is: " << pathvar << '\n';
 
     // Set the OMP_STACKSIZE environmental variable, OpenIFS needs more stack memory per process
-    std::string OMP_STACK_var("OMP_STACKSIZE=128M");
-    if (putenv((char *)OMP_STACK_var.c_str())) {
+    if ( !set_env_var("OMP_STACKSIZE", "128M") ) {
       cerr << "..Setting the OMP_STACKSIZE environmental variable failed" << std::endl;
       return 1;
     }
-    pathvar = getenv("OMP_STACKSIZE");
-    //cerr << "The OMP_STACKSIZE environmental variable is: " << pathvar << '\n';
 
     //-------------------------------------------------------------------------------------------------------
 
