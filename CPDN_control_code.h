@@ -69,7 +69,7 @@ void call_boinc_finish(int);
 int copy_and_unzip(std::string, std::string, std::string, std::string);
 
 // GC. recoded to not use putenv, it takes control of the memory passed in (see multiple stackexchange posts)
-bool set_env_var(const std::string& name, std::string& val) {
+bool set_env_var(const std::string& name, const std::string& val) {
     return (setenv(name.c_str(), val.c_str(), 1) == 0);     // 1 = overwrite existing value, true on success.
 }
 
