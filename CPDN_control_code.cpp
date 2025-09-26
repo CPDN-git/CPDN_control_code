@@ -89,7 +89,7 @@ void call_boinc_finish(int status) {
 }
 
 
-// GC. do not use putenv, it takes control of the memory passed in (see multiple stackexchange posts)
+// GC. recoded from original. do not use putenv, it takes control of the memory passed in (see multiple stackexchange posts on this issue)
 bool set_env_var(const std::string& name, const std::string& val) {
     return (setenv(name.c_str(), val.c_str(), 1) == 0);     // 1 = overwrite existing value, true on success.
 }
@@ -247,10 +247,6 @@ long launch_process_oifs(const std::string slot_path, const char* strCmd, const 
     int retval = 0;
     long handleProcess;
 
-    //cerr << "slot_path: " << slot_path << "\n";
-    //cerr << "strCmd: " << strCmd << "\n";
-    //cerr << "exptid: " << exptid << "\n";
-
     switch((handleProcess=fork())) {
        case -1: {
           cerr << "..Unable to start a new child process" << "\n";
@@ -258,24 +254,20 @@ long launch_process_oifs(const std::string slot_path, const char* strCmd, const 
           break;
        }
        case 0: { //The child process
-          char *pathvar=NULL;
+
           // Set the GRIB_SAMPLES_PATH environmental variable
-          std::string GRIB_SAMPLES_var = std::string("GRIB_SAMPLES_PATH=") + slot_path + \
-                                         std::string("/eccodes/ifs_samples/grib1_mlgrib2");
-          if (putenv((char *)GRIB_SAMPLES_var.c_str())) {
-            cerr << "..Setting the GRIB_SAMPLES_PATH failed" << "\n";
+          std::string GRIB_SAMPLES_var = slot_path + std::string("/eccodes/ifs_samples/grib1_mlgrib2");
+          if ( !set_env_var("GRIB_SAMPLES_PATH", GRIB_SAMPLES_var)) ) {
+            cerr << "..Setting the GRIB_SAMPLES_PATH failed" << std::endl;
           }
-          pathvar = getenv("GRIB_SAMPLES_PATH");
-          cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << pathvar << "\n";
+          cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << getenv("GRIB_SAMPLES_PATH") << "\n";
 
           // Set the GRIB_DEFINITION_PATH environmental variable
-          std::string GRIB_DEF_var = std::string("GRIB_DEFINITION_PATH=") + slot_path + \
-                                     std::string("/eccodes/definitions");
-          if (putenv((char *)GRIB_DEF_var.c_str())) {
+          std::string GRIB_DEF_var = slot_path + std::string("/eccodes/definitions");
+          if ( !set_env_var("GRIB_DEFINITION_PATH", GRIB_DEF_var) ) ) {
             cerr << "..Setting the GRIB_DEFINITION_PATH failed" << "\n";
           }
-          pathvar = getenv("GRIB_DEFINITION_PATH");
-          cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << pathvar << "\n";
+          cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
 
           if((app_name=="openifs") || (app_name=="oifs_40r1")) { // OpenIFS 40r1
             cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";

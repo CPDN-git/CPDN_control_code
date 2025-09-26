@@ -319,6 +319,8 @@ int main(int argc, char** argv) {
 
     //------------------------------------Set the environmental variables------------------------------------
 
+    // For memory safety, keep env strings static so they persist for the life of the program.
+    
     // Set the OIFS_DUMMY_ACTION environmental variable, this controls what OpenIFS does if it goes into a dummy subroutine
     // Possible values are: 'quiet', 'verbose' or 'abort'
     if ( !set_env_var("OIFS_DUMMY_ACTION", "abort") ) {
