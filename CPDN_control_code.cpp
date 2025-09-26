@@ -257,14 +257,14 @@ long launch_process_oifs(const std::string slot_path, const char* strCmd, const 
 
           // Set the GRIB_SAMPLES_PATH environmental variable
           std::string GRIB_SAMPLES_var = slot_path + std::string("/eccodes/ifs_samples/grib1_mlgrib2");
-          if ( !set_env_var("GRIB_SAMPLES_PATH", GRIB_SAMPLES_var)) ) {
+          if ( !set_env_var("GRIB_SAMPLES_PATH", GRIB_SAMPLES_var) )  {
             cerr << "..Setting the GRIB_SAMPLES_PATH failed" << std::endl;
           }
           cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << getenv("GRIB_SAMPLES_PATH") << "\n";
 
           // Set the GRIB_DEFINITION_PATH environmental variable
           std::string GRIB_DEF_var = slot_path + std::string("/eccodes/definitions");
-          if ( !set_env_var("GRIB_DEFINITION_PATH", GRIB_DEF_var) ) ) {
+          if ( !set_env_var("GRIB_DEFINITION_PATH", GRIB_DEF_var) )  {
             cerr << "..Setting the GRIB_DEFINITION_PATH failed" << "\n";
           }
           cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
