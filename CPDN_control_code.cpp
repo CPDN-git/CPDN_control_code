@@ -446,8 +446,7 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
 }
 
 // Check whether a file exists
-bool file_exists(const std::string& filename)
-{
+bool file_exists(const std::string& filename) {
     std::ifstream infile(filename.c_str());
     return infile.good();
 }
@@ -455,7 +454,7 @@ bool file_exists(const std::string& filename)
 // Check whether file is zero bytes long
 // from: https://stackoverflow.com/questions/2390912/checking-for-an-empty-file-in-c
 // returns True if file is zero bytes, otherwise False.
-bool file_is_empty(std::string& fpath) {
+bool file_is_empty(const std::string& fpath) {
    return (std::filesystem::file_size(fpath) == 0);
 }
 

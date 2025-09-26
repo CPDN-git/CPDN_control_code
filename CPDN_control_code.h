@@ -41,7 +41,7 @@ long launch_process_wrf(const std::string, const char*);
 std::string get_tag(const std::string &str);
 void process_trickle(double, const std::string, const std::string, const std::string, int, int);
 bool file_exists(const std::string &str);
-bool file_is_empty(std::string &str);
+bool file_is_empty(const std::string &str);
 double cpu_time(long);
 double model_frac_done(double, double, int);
 std::string get_second_part(const std::string&, const std::string&);
