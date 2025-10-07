@@ -1,3 +1,7 @@
+# Ignore binaries in zip code
+zip/build
+zip/install
+
 # Prerequisites
 *.d
 

@@ -2,10 +2,11 @@
 #  Makefile to generate the openifs wrapper.
 #
 #  Creates both production & debug versions.
+#  Modified:   Uses newer & memory safe(r) cpdn_zip functions built on ZipLib.
 #
 #       Glenn 
 
-VERSION = 43r3_1.00
+VERSION = 43r3_1.10
 TARGET  = oifs_$(VERSION)_x86_64-pc-linux-gnu
 DEBUG   = oifs_$(VERSION)_x86_64-pc-linux-gnu-debug
 TEST    = oifs_43r3_test.exe
@@ -16,18 +17,25 @@ CVERSION := -DCODE_VERSION='"$(shell git rev-parse HEAD | cut -c 1-8)"'	# use si
 CFLAGS   = -g -static -pthread -std=c++17 -Wall
 # Address Sanitizer (ASan) can't use -static
 CDEBUG   = -fsanitize=address -ggdb3 -pthread -std=c++17 -Wall
-INCLUDES  = -I../boinc-install/include
-LIBDIR    = ../boinc-install/lib
-LIBS      = -lboinc_api -lboinc_zip -lboinc
+
+BOINC_DIR = ../boinc-8.0.2-x86_64
+ZIP_DIR   = zip/install
+INCLUDES  = -I$(BOINC_DIR)/include -I$(ZIP_DIR)/include -I$(ZIP_DIR)/include/ZipLib
+BOINC_LIB = -L$(BOINC_DIR)/lib -lboinc_api -lboinc
+
+CPDNZIP_LIB  = -L$(ZIP_DIR)/lib -lcpdn_zip		# note this is a combined static library with cpdn_zip and ZipLib
+
+LIBS = $(BOINC_LIB) $(CPDNZIP_LIB)
+
 
 
 all: $(TARGET) $(DEBUG) $(TEST)
 
 $(TARGET): $(SRC)
-	$(CC) $(CVERSION) $(SRC) $(CFLAGS) $(INCLUDES) -L$(LIBDIR) $(LIBS) -o $(TARGET)
+	$(CC) $(CVERSION) $(SRC) $(CFLAGS) $(INCLUDES) $(LIBS) -o $(TARGET)
 
 $(DEBUG): $(SRC)
-	$(CC) $(CVERSION) $(SRC) $(CDEBUG) $(INCLUDES) $(LIBDIR)/libboinc_api.a $(LIBDIR)/libboinc_zip.a $(LIBDIR)/libboinc.a  -o $(DEBUG)
+	$(CC) $(CVERSION) $(SRC) $(CDEBUG) $(INCLUDES)  $(LIBS) -o $(DEBUG)
 
 $(TEST): oifs_43r3_test.cpp
 	$(CC) -g -std=c++17 -Wall -o $(TEST) oifs_43r3_test.cpp

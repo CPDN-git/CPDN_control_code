@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     struct dirent *dir;
     regex_t regex;
     DIR *dirp=NULL;
-    ZipFileList zfl;
+    std::vector<std::filesystem::path> zfl;
     std::ifstream ifs_stat_file;
 
 
@@ -335,7 +335,7 @@ int main(int argc, char** argv) {
       return 1;
     }
 
-    // Set the OMP_NUM_THREADS environmental variable, the number of threads
+    // Set the OMP_NUM_THREADS environmental variable; nthreads must be a positive integer string
     if ( !set_env_var("OMP_NUM_THREADS", nthreads) ) {
       cerr << "..Setting the OMP_NUM_THREADS environmental variable failed" << std::endl;
       return 1;
@@ -715,7 +715,9 @@ int main(int argc, char** argv) {
                       upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
                       cerr << "Zipping up the intermediate file: " << upload_file << '\n';
-                      retval = call_boinc_zip(upload_file, &zfl);  // n.b. pass std::string to avoid copy-on-call
+                      if (!cpdn_zip(upload_file, zfl)) {
+                         retval = 1;
+                      }
 
                       if (retval) {
                          cerr << "..Zipping up the intermediate file failed" << std::endl;
@@ -766,7 +768,9 @@ int main(int argc, char** argv) {
                    upload_file = project_path + upload_file_name;
 
                    if (zfl.size() > 0){
-                      retval = call_boinc_zip(upload_file, &zfl);
+                      if (!cpdn_zip(upload_file, zfl)) {
+                         retval = 1;
+                      }
 
                       if (retval) {
                          cerr << "..Creating the zipped upload file failed" << std::endl;
@@ -939,7 +943,9 @@ int main(int argc, char** argv) {
           upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
           cerr << "Zipping up the final file: " << upload_file << '\n';
-          retval = call_boinc_zip(upload_file, &zfl);
+          if (!cpdn_zip(upload_file, zfl)) {
+             retval = 1;
+          }
 
           if (retval) {
              cerr << "..Zipping up the final file failed" << std::endl;
@@ -985,7 +991,9 @@ int main(int argc, char** argv) {
        upload_file = project_path + upload_file_name;
 
        if (zfl.size() > 0) {
-          retval = call_boinc_zip(upload_file, &zfl);
+          if (!cpdn_zip(upload_file, zfl)) {
+             retval = 1;
+          }
           if (retval) {
              cerr << "..Creating the zipped upload file failed" << std::endl;
              call_boinc_end_critical_section();

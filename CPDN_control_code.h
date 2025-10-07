@@ -11,8 +11,10 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include <filesystem>  // required by file_is_empty
+#include <filesystem>
 #include <exception>
+#include <algorithm>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -24,12 +26,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
+
 #include "boinc/boinc_api.h"
-#include "boinc/boinc_zip.h"
 #include "boinc/diagnostics.h"
 #include "boinc/util.h"
 #include "rapidxml.hpp"
-#include <algorithm>
+#include "zip/cpdn_zip.h"
+
 
 int initialise_boinc(std::string&, std::string&, std::string&, int&);
 int move_and_unzip_app_file(std::string, std::string, std::string, std::string);
@@ -57,8 +60,6 @@ bool read_rcf_file(std::ifstream&, std::string&, std::string&);
 bool read_delimited_line(std::string&, std::string, std::string, int, std::string&);
 void call_boinc_begin_critical_section();
 void call_boinc_end_critical_section();
-int call_boinc_unzip(const std::string&, const std::string&);
-int call_boinc_zip(const std::string&, const ZipFileList*);
 int call_boinc_copy(const std::string&, const std::string&);
 int call_boinc_resolve_filename_s(std::string, std::string&);
 void call_boinc_upload_file(std::string);

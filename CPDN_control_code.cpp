@@ -52,14 +52,6 @@ void call_boinc_end_critical_section() {
     boinc_begin_critical_section();
 }
 
-int call_boinc_unzip(const std::string& zip_to_unzip, const std::string& path) {
-    return boinc_zip(UNZIP_IT, zip_to_unzip.c_str(), path);
-}
-
-int call_boinc_zip(const std::string& file_to_zip, const ZipFileList* zfl) {
-    return boinc_zip(ZIP_IT, file_to_zip, zfl);
-}
-
 int call_boinc_copy(const std::string& source, const std::string& destination) {
     return boinc_copy(source.c_str(), destination.c_str());
 }
@@ -89,7 +81,7 @@ void call_boinc_finish(int status) {
 }
 
 
-// GC. recoded from original. do not use putenv, it takes control of the memory passed in (see multiple stackexchange posts on this issue)
+// GC. recoded from original. do not use putenv, it stores the pointer of memory passed in (see multiple stackexchange posts on this issue)
 bool set_env_var(const std::string& name, const std::string& val) {
     return (setenv(name.c_str(), val.c_str(), 1) == 0);     // 1 = overwrite existing value, true on success.
 }
@@ -114,6 +106,7 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
     std::string app_source = project_path + app_file;
     std::string app_destination = slot_path + std::string("/") + app_file;
     cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
+
     retval = boinc_copy(app_source.c_str(), app_destination.c_str());
     if (retval) {
        cerr << "..Copying the app file to the working directory failed: error " << retval << "\n";
@@ -121,19 +114,20 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
     }
 
     // Unzip the app zip file
-    std::string app_zip = slot_path + std::string("/") + app_file;
-    cerr << "Unzipping the app zip file: " << app_zip << "\n";
-    retval = boinc_zip(UNZIP_IT, app_zip, slot_path);
+    std::filesystem::path app_zip_path = slot_path;
+    app_zip_path /= app_file;
+    cerr << "Unzipping the app zip file: " << app_zip_path << "\n";
 
-    if (retval) {
+    if (!cpdn_unzip(app_zip_path, slot_path)) {
+       retval = 1;               // Or some other non-zero error code
        cerr << "..Unzipping the app file failed" << "\n";
        return retval;
     }
     else {
        try {
-           std::filesystem::remove(app_zip);
+           std::filesystem::remove(app_zip_path);
        } catch (const std::filesystem::filesystem_error& e) {
-           cerr << "..move_and_unzip_app_file(). Error removing file: " << app_zip << ", error: " << e.what() << "\n";
+           cerr << "..move_and_unzip_app_file(). Error removing file: " << app_zip_path << ", error: " << e.what() << "\n";
        }
     }
     return retval;
@@ -813,10 +807,9 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
           return retval;
        }
 
-       // Unzip the zip file
        cerr << "Unzipping the " << type << " zip file: " << destination << '\n';
-       retval = call_boinc_unzip(destination, unzip_path);
-       if (retval) {
+       if (!cpdn_unzip(destination, unzip_path)) {
+          retval = 1; // Or some other non-zero error code
           cerr << "..Unzipping the " << type << " file failed" << std::endl;
           return retval;
        }
