@@ -237,7 +237,7 @@ int check_boinc_status(long handleProcess, int process_status) {
 }
 
 
-long launch_process_oifs(const std::string slot_path, const char* strCmd, const char* exptid, const std::string app_name) {
+long launch_process_oifs(const std::string slot_path, const std::string strCmd, const std::string exptid, const std::string app_name) {
     int retval = 0;
     long handleProcess;
 
@@ -250,26 +250,26 @@ long launch_process_oifs(const std::string slot_path, const char* strCmd, const 
        case 0: { //The child process
 
           // Set the GRIB_SAMPLES_PATH environmental variable
-          std::string GRIB_SAMPLES_var = slot_path + std::string("/eccodes/ifs_samples/grib1_mlgrib2");
+          std::string GRIB_SAMPLES_var = slot_path + "/eccodes/ifs_samples/grib1_mlgrib2";
           if ( !set_env_var("GRIB_SAMPLES_PATH", GRIB_SAMPLES_var) )  {
             cerr << "..Setting the GRIB_SAMPLES_PATH failed" << std::endl;
           }
           cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << getenv("GRIB_SAMPLES_PATH") << "\n";
 
           // Set the GRIB_DEFINITION_PATH environmental variable
-          std::string GRIB_DEF_var = slot_path + std::string("/eccodes/definitions");
+          std::string GRIB_DEF_var = slot_path + "/eccodes/definitions";
           if ( !set_env_var("GRIB_DEFINITION_PATH", GRIB_DEF_var) )  {
             cerr << "..Setting the GRIB_DEFINITION_PATH failed" << "\n";
           }
           cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
 
-          if((app_name=="openifs") || (app_name=="oifs_40r1")) { // OpenIFS 40r1
+          if( (app_name == "openifs") || (app_name == "oifs_40r1")) { // OpenIFS 40r1
             cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";
-            retval = execl(strCmd,strCmd,"-e",exptid,NULL);
+            retval = execl(strCmd.c_str(),strCmd.c_str(),"-e",exptid.c_str(),NULL);
           }
           else {  // OpenIFS 43r3 and above
             cerr << "Executing the command: " << strCmd << "\n";
-            retval = execl(strCmd,strCmd,NULL,NULL,NULL);
+            retval = execl(strCmd.c_str(),strCmd.c_str(),NULL,NULL,NULL);
           }
 
           // If execl returns then there was an error

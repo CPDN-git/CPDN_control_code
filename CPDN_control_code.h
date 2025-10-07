@@ -39,7 +39,7 @@ int move_and_unzip_app_file(std::string, std::string, std::string, std::string);
 const char* strip_path(const char* path);
 int check_child_status(long, int);
 int check_boinc_status(long, int);
-long launch_process_oifs(const std::string, const char*, const char*, const std::string);
+long launch_process_oifs(const std::string, const std::string, const std::string, const std::string);
 long launch_process_wrf(const std::string, const char*);
 std::string get_tag(const std::string &str);
 void process_trickle(double, const std::string, const std::string, const std::string, int, int);
