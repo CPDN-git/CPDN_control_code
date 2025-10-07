@@ -93,13 +93,13 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
 
     // macOS
     #if defined (__APPLE__)
-       std::string app_file = app_name + std::string("_app_") + version + std::string("_x86_64-apple-darwin.zip");
+       std::string app_file = app_name + "_app_" + version + "_x86_64-apple-darwin.zip";
     // ARM
     #elif defined (_ARM) 
-       std::string app_file = app_name + std::string("_app_") + version + std::string("_aarch64-poky-linux.zip");
+       std::string app_file = app_name + "_app_" + version + "_aarch64-poky-linux.zip";
     // Linux
     #else
-       std::string app_file = app_name + std::string("_app_") + version + std::string("_x86_64-pc-linux-gnu.zip");
+       std::string app_file = app_name + "_app_" + version + "_x86_64-pc-linux-gnu.zip";
     #endif
 
     // Copy the app file to the working directory
