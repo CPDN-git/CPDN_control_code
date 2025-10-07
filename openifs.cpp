@@ -671,7 +671,7 @@ int main(int argc, char** argv) {
 
              // Upload a new upload file if the end of an upload_interval has been reached
              if((( current_iter - last_upload ) >= (upload_interval * timestep_interval)) && (current_iter < total_length_of_simulation)) {
-                // Create an intermediate results zip file using BOINC zip
+                // Create an intermediate results zip file
                 zfl.clear();
 
                 cerr << "End of upload interval reached, starting a new upload process" << std::endl;
@@ -687,22 +687,14 @@ int main(int argc, char** argv) {
                    // Construct file name of the ICM result file
                    second_part = get_second_part(std::to_string(i), exptid);
 
-                   // Add ICMGG result files to zip to be uploaded
-                   if(file_exists(temp_path + std::string("/ICMGG") + second_part)) {
-                      cerr << "Adding to the zip: " << (temp_path + std::string("/ICMGG")+second_part) << '\n';
-                      zfl.push_back(temp_path + std::string("/ICMGG") + second_part);
-                   }
-
-                   // Add ICMSH result files to zip to be uploaded
-                   if(file_exists(temp_path + std::string("/ICMSH") + second_part)) {
-                      cerr << "Adding to the zip: " << (temp_path + std::string("/ICMSH")+second_part) << '\n';
-                      zfl.push_back(temp_path + std::string("/ICMSH") + second_part);
-                   }
-
-                   // Add ICMUA result files to zip to be uploaded
-                   if(file_exists(temp_path + std::string("/ICMUA") + second_part)) {
-                      cerr << "Adding to the zip: " << (temp_path + std::string("/ICMUA")+second_part) << '\n';
-                      zfl.push_back(temp_path + std::string("/ICMUA") + second_part);
+                   // Add ICM result files to zip to be uploaded
+                   std::vector<std::string> icm = {"ICMGG", "ICMSH", "ICMUA"};
+                   for (const auto& part : icm) {
+                      std::string fpath = temp_path + "/" + part + second_part;
+                      if (file_exists(fpath)) {
+                         cerr << "Adding to the zip: " << fpath << '\n';
+                         zfl.push_back(fpath);
+                      }
                    }
                 }
 
@@ -852,7 +844,7 @@ int main(int argc, char** argv) {
 
     // To check whether model completed successfully, look for 'CNT0' in 3rd column of ifs.stat
     // This will always be the last line of a successful model forecast.
-    if(file_exists(ifs_stat)) {
+    if (file_exists(ifs_stat)) {
        std::string ifs_word="";
        fread_last_line(ifs_stat, stat_lastline);
        oifs_parse_stat(stat_lastline, ifs_word, 3);
@@ -874,38 +866,21 @@ int main(int argc, char** argv) {
        return 1;	    
     }
 
-
     // Update model_completed
     model_completed = 1;
 
-    // We need to handle the last ICM files
-    // Construct final file name of the ICM result file
+    // Handle the last ICM files
     second_part = get_second_part(last_iter, exptid);
 
-    // Move the ICMGG result file to the temporary folder in the project directory
-    first_part = "ICMGG";
-    retval = move_result_file(slot_path, temp_path, first_part, second_part);
-    if (retval) {
-       cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
-       return retval;
+    // Move the ICMGG, ICMSH and ICMUA model output files to the task folder in the project directory
+    std::vector<std::string> icm = {"ICMGG", "ICMSH", "ICMUA"};
+    for (const auto& part : icm) {
+       retval = move_result_file(slot_path, temp_path, part, second_part);    // GC. TODO: combine part with second_part and pass as single argument
+       if (retval) {
+          cerr << "..Copying " << part << " result file to the temp folder in the projects directory failed" << "\n";
+          return retval;
+       }
     }
-
-    // Move the ICMSH result file to the temporary folder in the project directory
-    first_part = "ICMSH";
-    retval = move_result_file(slot_path, temp_path, first_part, second_part);
-    if (retval) {
-       cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
-       return retval;
-    }
-
-    // Move the ICMUA result file to the temporary folder in the project directory
-    first_part = "ICMUA";
-    retval = move_result_file(slot_path, temp_path, first_part, second_part);
-    if (retval) {
-       cerr << "..Copying " << first_part << " result file to the temp folder in the projects directory failed" << "\n";
-       return retval;
-    }
-
 
     call_boinc_begin_critical_section();
 
