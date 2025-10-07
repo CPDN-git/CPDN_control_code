@@ -24,7 +24,7 @@ jobs:
     - name: Build cpdn-zip library
       run:  cd zip && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=../install .. && make && make install
     - name: Build the OpenIFS control code executable
-      run:  make clean && make 
+      run:  BOINC_DIR=./boinc-install make 
     - name: Upload built executable
       if: ${{ success() }}
       uses: actions/upload-artifact@v4

@@ -1,5 +1,5 @@
 #
-#  Makefile to generate the openifs wrapper.
+#  Makefile to generate the openifs control code.
 #
 #  Creates both production & debug versions.
 #  Modified:   Uses newer & memory safe(r) cpdn_zip functions built on ZipLib.
@@ -18,7 +18,8 @@ CFLAGS   = -g -static -pthread -std=c++17 -Wall
 # Address Sanitizer (ASan) can't use -static
 CDEBUG   = -fsanitize=address -ggdb3 -pthread -std=c++17 -Wall
 
-BOINC_DIR = ../boinc-8.0.2-x86_64
+# For github actions, allow BOINC_DIR to be overridden
+BOINC_DIR ?= ../boinc-8.0.2-x86_64
 ZIP_DIR   = zip/install
 INCLUDES  = -I$(BOINC_DIR)/include -I$(ZIP_DIR)/include -I$(ZIP_DIR)/include/ZipLib
 BOINC_LIB = -L$(BOINC_DIR)/lib -lboinc_api -lboinc
