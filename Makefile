@@ -6,7 +6,7 @@
 #
 #       Glenn 
 
-VERSION = 43r3_1.10
+VERSION = 43r3_1.00
 TARGET  = oifs_$(VERSION)_x86_64-pc-linux-gnu
 DEBUG   = oifs_$(VERSION)_x86_64-pc-linux-gnu-debug
 TEST    = oifs_43r3_test.exe

@@ -104,7 +104,7 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
 
     // Copy the app file to the working directory
     std::string app_source = project_path + app_file;
-    std::string app_destination = slot_path + std::string("/") + app_file;
+    std::string app_destination = slot_path + "/" + app_file;
     cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
 
     retval = boinc_copy(app_source.c_str(), app_destination.c_str());
@@ -339,7 +339,8 @@ std::string get_tag(const std::string &filename) {
 void read_progress_file(std::string progress_file, int& last_cpu_time, int& upload_file_number, std::string& last_iter, int& last_upload, int& model_completed) {
 
     // Parse the progress_file
-    std::string progress_file_line="", delimiter="=";
+    std::string progress_file_line = "";
+    std::string delimiter = "=";
     std::ifstream progress_file_filestream;
     
     // Open the progress_file file
@@ -538,8 +539,8 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
     int retval = 0;
 
     // Move result file to the temporary folder in the project directory
-    std::string result_file = slot_path + std::string("/") + first_part + second_part;
-    std::string temp_file = temp_path + std::string("/") + first_part + second_part;
+    std::string result_file = slot_path + "/" + first_part + second_part;
+    std::string temp_file = temp_path + "/" + first_part + second_part;
     //cerr << "Checking for result file: " << result_file << "\n";
 
     if(file_exists(result_file)) {
