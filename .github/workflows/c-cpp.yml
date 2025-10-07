@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Install libzip
+      run: sudo apt install -y libzip-dev
     - name: Make the boinc-install directory
       run: mkdir boinc-install
     - name: Clone BOINC/boinc PUBLIC repository
