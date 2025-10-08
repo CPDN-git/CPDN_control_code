@@ -15,11 +15,14 @@ int main(int argc, char** argv) {
     std::string wu_name="", project_dir="", version="", strCmd="";
     int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
-    int last_cpu_time, restart_cpu_time = 0, upload_file_number, model_completed, restart_iter, standalone=0;
+    int last_cpu_time, upload_file_number, model_completed, restart_iter, standalone=0;
     int last_upload; // The time of the last upload file (in seconds)
     std::string last_iter = "0";
     long handleProcess;
-    double fraction_done, current_cpu_time=0, total_nsteps = 0;
+    double fraction_done = 0;
+    double current_cpu_time = 0;
+    double restart_cpu_time = 0;
+    double total_nsteps = 0;
     struct dirent *dir;
     regex_t regex;
     DIR *dirp=NULL;
@@ -808,18 +811,16 @@ int main(int argc, char** argv) {
           //fprintf(stderr,"current_cpu_time: %1.5f\n",current_cpu_time);
        }
 
-
       // Calculate the fraction done
       fraction_done = model_frac_done( atof(iter.c_str()), total_nsteps, atoi(nthreads.c_str()) );
       //fprintf(stderr,"fraction done: %.6f\n", fraction_done);
-
 
       if (!standalone) {
          // If the current iteration is at a restart iteration     
          if (!(std::stoi(iter)%restart_interval)) restart_cpu_time = current_cpu_time;
 
          // Provide the current cpu_time to the BOINC server (note: this is deprecated in BOINC)
-         call_boinc_report_app_status(current_cpu_time, restart_cpu_time, fraction_done);
+         boinc_report_app_status(current_cpu_time, restart_cpu_time, fraction_done);
 
          // Provide the fraction done to the BOINC client, 
          // this is necessary for the percentage bar on the client
