@@ -1,76 +1,178 @@
 # CPDN control code for climate models running in climateprediction.net (CPDN)
 
-This respository contains the instructions and code for building the controlling application used for controlling the climate models in the climateprediction.net project, at this point the ECMWF OpenIFS (43r3) and WRF models.
+This respository contains the instructions and code for building the controlling application 
+used for controlling the climate models in the climateprediction.net project, at this point 
+the ECMWF OpenIFS (43r3) and WRF models.
 
-To compile the controlling code you will need to download and build the BOINC code (this is available from: https://github.com/BOINC/boinc). For instructions on building this code see: https://boinc.berkeley.edu/trac/wiki/CompileClient.
+## Prerequisite: BOINC library
+
+To compile the controlling code you will need to download and build the BOINC code (this is available from: https://github.com/BOINC/boinc). 
+For instructions on building this code see: [BOINC github](https://github.com/BOINC/boinc/wiki/).
 
 As only the libraries are required, the boinc client and manager can be disabled (reduces system packages required).
 
-In short:
+Install and build the boinc library to a directory outside this repository and note the install path.
 
-    mkdir build
-    mkdir boinc
+Ensure libzip is installed e.g. : `sudo apt-get install libzip-dev`
+
+In short:
+```
     git clone https://github.com/BOINC/boinc.git
     cd boinc
     ./_autosetup
     ./configure --disable-server --disable-fcgi --disable-manager --disable-client  \
                 --enable-libraries --enable-boinczip  \
                 --prefix=/PATH_TO_BOINC_INSTALL/boinc-install  \
-                CXXFLAGS='-O3'
+                CXXFLAGS='-O2'
     make install
     cd ..
+```
 
-This installs the boinc libraries and include files into the parent directory to the git source (change the --prefix argument to install into a different directory). It's preferable not to install into the same directory as the source. To specify the location of the include files, use the -I argument on the compile line, to specify the location of the libraries, use the -L argument.
+This installs the boinc libraries and include files to the directory specified in the `--prefix` argument. 
+It's preferable not to install into the same directory as the source. 
+When compiling the control code, specify the location of the include files using the -I argument and the libraries using -L argument
+on the compiler command line (see Makefile).
 
+## Prerequisite: ZipLib and cpdn_zip library
 
-To compile the controller code on a Linux machine:
+As of Oct 2025, the control code no longer uses the boinc zip routines as distributed in the boinc code.
+These old routines are not memory safe; they use fixed sized buffers and unbounded string copy routines.
 
-First ensure that libzip is installed using (on an Ubuntu machine): sudo apt-get install libzip-dev
+The 'zip' directory now contains code to build `cpdn_zip` and `cpdn_unzip` functions to replace
+`boinc_zip` and `boinc_unzip`.
 
-Then we need to obtain the RapidXml header for parsing XML files. This is downloaded from the site: http://rapidxml.sourceforge.net/
-We only need the file: 'rapidxml.hpp'. Download this file and put in the same folder as the code. 
+### ZipLib
+
+This project uses [ZipLib](https://github.com/DreamyCecil/ZipLib).
+It's a modern C++ lightweight library based on STL streams. 
+
+It supports zip, bzip2 and lzma compression techniques. bzip2 offers higher
+compression at increased execution time and could be suitable for CPDN.
+
+ZipLib is already installed and setup as required by the cpdn_zip wrapper code.
+However, if ZipLib needs to be uploaded follow these steps:
+
+- To update ZipLib for this repo, download the ZipLib repo from github to a **temporary location** and not this repository.
+- Copy the `Zip/LibSource/ZipLib` directory to `ZipLib` in this directory. 
+- Also copy the README.md and LICENSE files for reference into ZipLib.
+- Bugfix: edit ZipLib/CMakeLists.txt and remove the line: 'target_compile_features(ZipLib_Sample PRIVATE cxx_std_11)'
+
+### cpdn_zip library
+
+This is a simple wrapper around ZipLib to provide `cpdn_zip` and `cpdn_unzip` functions
+now called by the control code.
+
+It is built as a static library, and combined with ZipLib object files and its 
+compression library dependencies. cpdn_zip and unzip use the zip library by default.
+
+CMake is the preferred build tool and the software is built in separate `build` and
+`install` directories to the source. See `CMakeLists.txt` in the `zip` folder for
+more details.
+
+ To build and run:
+
+ 1. cd CPDN_control_code/zip
+ 2. mkdir build
+ 3. cd build
+ 4. cmake -DCMAKE_INSTALL_PREFIX=../install ..
+ 5. make
+ 6. make install
+
+ To run a simple test of the code:
+ ```
+ ./test_zip
+ ```
+
+## Build control code
+### OpenIFS 43r3
+#### Linux
+
+If not already present, obtain the RapidXml header for parsing XML files. 
+This is downloaded from the site: [RapidXml](http://rapidxml.sourceforge.net/).
+We only need the file: 'rapidxml.hpp'. Download this file and put in the same folder as the code.
+
+To build the OpenIFS model, a Makefile is used.
+
+Ensure the Makefile uses ../zip/install/lib and ../zip/install/include and then run:
+```
+make clean
+make
+```
+This creates 3 executables:
+```
+VERSION = 43r3_1.00
+TARGET  = oifs_$(VERSION)_x86_64-pc-linux-gnu
+DEBUG   = oifs_$(VERSION)_x86_64-pc-linux-gnu-debug
+TEST    = oifs_43r3_test.exe
+```
+The DEBUG target is compiled with AddressSanitizer enabled and should be used for testing to check
+for memory leaks and memory corruption.
+
+The default 'TARGET' is the build intended for production.
+
+You may want to change the version number of the control code executable.
+
+#### ARM
+
+To build OpenIFS on an ARM architecture machine modify the Makefile to use the following compile command:
+```
+g++ openifs.cpp CPDN_control_code.cpp -D_ARM -I../boinc-install/include -L../boinc-install/lib -lboinc_api -lboinc -lboinc_zip -static -pthread -lstdc++ -lm -std=c++11 -o oifs_43r3_1.00_aarch64-poky-linux
+```
+
+#### macOS
+
+First ensure libzip is installed: `brew install libzip` and that we have obtained the RapidXml header as described above.
+
+Build the BOINC libraries using Xcode. Then build the OpenIFS control code with this command or modify the Makefile:
+```
+    clang++ openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -pthread -std=c++11 -o oifs_43r3_1.00_x86_64-apple-darwin
+```
+
+## How to run the control code executable with OpenIFS
+
+This creates the app run in the BOINC environment alongside the OpenIFS executable. 
+In order for OpenIFS to run, its ancillary files need to be installed correctly. This is the responsibility of the control code.
+
+The command to run the control in standalone mode with OpenIFS on Linux is:
+```
+    ./oifs_43r3_1.00_x86_64-pc-linux-gnu 2000010100 gw3a 0001 1 00001 1 oifs_43r3 1.00
+```
+Or for macOS:
+```
+    ./oifs_43r3_1.00_x86_64-apple-darwin 2000010100 gw3a 0001 1 00001 1 oifs_43r3 1.00
+```
+
+### WRF
+
+The WRF model currently does not work with the control code. 
 
 To build the WRF model:
 
-    cd build
+```
     g++ wrf.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o wrf_1.00_x86_64-pc-linux-gnu
+```
     
-To build the OpenIFS model:
+## Control code command line parameters
 
-    cd build
-    g++ -DCODE_VERSION="\"$(git rev-parse HEAD)\"" openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -static -pthread -std=c++17 -o oifs_43r3_1.00_x86_64-pc-linux-gnu
-
-(assuming boinc libraries are located in ../boinc relative to this repository)
-
-And to build OpenIFS on an ARM architecture machine:
-
-    cd build
-    g++ openifs.cpp CPDN_control_code.cpp -D_ARM -I../boinc-install/include -L../boinc-install/lib -lboinc_api -lboinc -lboinc_zip -static -pthread -lstdc++ -lm -std=c++11 -o oifs_43r3_1.00_aarch64-poky-linux
-
-To compile the OpenIFS code on a Mac machine:
-
-First ensure libzip is installed: brew install libzip
-
-And that we have obtained the RapidXml header.
-
-Build the BOINC libraries using Xcode. Then build the OpenIFS control code:
-
-    cd build
-    clang++ openifs.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lboinc_zip -pthread -std=c++11 -o oifs_43r3_1.00_x86_64-apple-darwin
-
-This will create an executable that is the app imported into the BOINC environment alongside the OpenIFS executable. Now to run this the OpenIFS ancillary files along with the OpenIFS executable will need to be alongside, the command to run this in standalone mode is (40r1):
-
-    ./oifs_43r3_1.00_x86_64-pc-linux-gnu 2000010100 gw3a 0001 1 00001 1 oifs_43r3 1.00
-
-Or for macOS:
-
-    ./oifs_43r3_1.00_x86_64-apple-darwin 2000010100 gw3a 0001 1 00001 1 oifs_43r3 1.00
-
-The command line parameters: [0] compiled executable, [1] start date in YYYYMMDDHH format, [2] experiment id, [3] unique member id, [4] batch id, [5] workunit id, [6] FCLEN, [7] app name, [8]  nthreads, [9] app version id.
+The command line parameters are: 
+[0] compiled executable, 
+[1] start date in YYYYMMDDHH format, 
+[2] experiment id, 
+[3] unique member id, 
+[4] batch id, 
+[5] workunit id, 
+[6] FCLEN, 
+[7] app name, 
+[8] nthreads, 
+[9] app version id.
 
 Note, [9] is only used in standalone mode.
 
-The current version of OpenIFS this supports is: oifs43r3. The OpenIFS code is compiled separately and is installed alongside the OpenIFS controller in BOINC. To upgrade the controller code in the future to later versions of OpenIFS consideration will need to be made whether there are any changes to the command line parameters the compiled version of OpenIFS takes in, and whether there are changes to the structure and content of the supporting ancillary files.
+The current version of OpenIFS this supports is: oifs43r3. 
+The OpenIFS code is compiled separately and is installed alongside the OpenIFS controller in BOINC. 
+To upgrade the controller code in the future to later versions of OpenIFS consideration will need 
+to be made whether there are any changes to the command line parameters the compiled version of 
+OpenIFS takes in, and whether there are changes to the structure and content of the supporting ancillary files.
 
 Currently in the controller code the following variables are fixed (this will change with further development):
 
