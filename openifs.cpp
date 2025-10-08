@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
       cerr << "(argv9) app_version: " << argv[9] << '\n'; 
     }
 
-    call_boinc_begin_critical_section();
+    boinc_begin_critical_section();
 
     // Create temporary folder for moving the results to and uploading the results from
     // BOINC measures the disk usage on the slots directory so we must move all results out of this folder
@@ -532,7 +532,7 @@ int main(int argc, char** argv) {
     // the first upload as an example and then stripping off '_0.zip'
 
     if (!standalone) {
-       retval = call_boinc_resolve_filename_s("upload_file_0.zip", resolved_name);
+       retval = boinc_resolve_filename_s("upload_file_0.zip", resolved_name);
        if (retval) {
           cerr << "..boinc_resolve_filename failed" << std::endl;
           return 1;
@@ -592,7 +592,7 @@ int main(int argc, char** argv) {
     handleProcess = launch_process_oifs(slot_path, strCmd, exptid, app_name);
     if (handleProcess > 0) process_status = 0;
 
-    call_boinc_end_critical_section();
+    boinc_end_critical_section();
 
 
     // process_status = 0 running
@@ -668,7 +668,8 @@ int main(int argc, char** argv) {
 
                 cerr << "End of upload interval reached, starting a new upload process" << std::endl;
 
-                call_boinc_begin_critical_section();
+                // *****  Critical section -- all returns must now call boinc_end_critical_section()  *****
+                boinc_begin_critical_section();
 
                 // Cycle through all the steps from the last upload to the current upload
                 for (i = (last_upload / timestep_interval); i < (current_iter / timestep_interval); i++) {
@@ -705,7 +706,7 @@ int main(int argc, char** argv) {
 
                       if (retval) {
                          cerr << "..Zipping up the intermediate file failed" << std::endl;
-                         call_boinc_end_critical_section();
+                         boinc_end_critical_section();
                          return retval;
                       }
                       else {
@@ -724,8 +725,13 @@ int main(int argc, char** argv) {
                       upload_file_name = "upload_file_" + std::to_string(upload_file_number) + ".zip";
                       cerr << "Uploading the intermediate file: " << upload_file_name << '\n';
                       sleep_until(system_clock::now() + seconds(20));
-                      call_boinc_upload_file(upload_file_name);
-                      retval = call_boinc_upload_status(upload_file_name);
+                      retval = boinc_upload_file(upload_file_name);
+                      if (retval) {
+                         cerr << "..boinc_upload_file failed for file: " << upload_file_name << std::endl;
+                         boinc_end_critical_section();
+                         return retval;
+                      }
+                      retval = boinc_upload_status(upload_file_name);
                       if (!retval) {
                          cerr << "Finished the upload of the intermediate file: " << upload_file_name << '\n';
                       }
@@ -758,7 +764,7 @@ int main(int argc, char** argv) {
 
                       if (retval) {
                          cerr << "..Creating the zipped upload file failed" << std::endl;
-                         call_boinc_end_critical_section();
+                         boinc_end_critical_section();
                          return retval;
                       }
                       else {
@@ -783,7 +789,9 @@ int main(int argc, char** argv) {
                    }
 
                 }
-                call_boinc_end_critical_section();
+
+                // *****  Normal end of critical section  *****
+                boinc_end_critical_section();
                 upload_file_number++;
              }
           }
@@ -815,7 +823,7 @@ int main(int argc, char** argv) {
 
          // Provide the fraction done to the BOINC client, 
          // this is necessary for the percentage bar on the client
-         call_boinc_fraction_done(fraction_done);
+         boinc_fraction_done(fraction_done);
 
          // Check the status of the client if not in standalone mode     
          process_status = check_boinc_status(handleProcess,process_status);
@@ -874,7 +882,7 @@ int main(int argc, char** argv) {
        }
     }
 
-    call_boinc_begin_critical_section();
+    boinc_begin_critical_section();
 
     //-----------------------------Create the final results zip file-----------------------------------------
 
@@ -916,7 +924,7 @@ int main(int argc, char** argv) {
 
           if (retval) {
              cerr << "..Zipping up the final file failed" << std::endl;
-             call_boinc_end_critical_section();
+             boinc_end_critical_section();
              return retval;
           }
           else {
@@ -935,8 +943,13 @@ int main(int argc, char** argv) {
           upload_file_name = "upload_file_" + std::to_string(upload_file_number) + ".zip";
           cerr << "Uploading the final file: " << upload_file_name << '\n';
           sleep_until(system_clock::now() + seconds(20));
-          call_boinc_upload_file(upload_file_name);
-          retval = call_boinc_upload_status(upload_file_name);
+          retval = boinc_upload_file(upload_file_name);
+          if (retval) {
+             cerr << "..boinc_upload_file failed for file: " << upload_file_name << std::endl;
+             boinc_end_critical_section();
+             return retval;
+          }
+          retval = boinc_upload_status(upload_file_name);
           if (!retval) {
              cerr << "Finished the upload of the final file" << '\n';
           }
@@ -944,7 +957,7 @@ int main(int argc, char** argv) {
 	       // Produce trickle
           process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
        }
-       call_boinc_end_critical_section();
+       boinc_end_critical_section();
     }
 
     // Else running in standalone
@@ -963,7 +976,7 @@ int main(int argc, char** argv) {
           }
           if (retval) {
              cerr << "..Creating the zipped upload file failed" << std::endl;
-             call_boinc_end_critical_section();
+             boinc_end_critical_section();
              return retval;
           }
           else {
@@ -991,21 +1004,21 @@ int main(int argc, char** argv) {
 
     // if finished normally
     if (process_status == 1){
-      call_boinc_end_critical_section();
+      boinc_end_critical_section();
       cerr << "Task finished" << std::endl;
-      call_boinc_finish(0);
+      boinc_finish(0);
       return 0;
     }
     else if (process_status == 2){
-      call_boinc_end_critical_section();
+      boinc_end_critical_section();
       cerr << "Task finished" << std::endl;
-      call_boinc_finish(0);
+      boinc_finish(0);
       return 0;
     }
     else {
-      call_boinc_end_critical_section();
+      boinc_end_critical_section();
       cerr << "Task finished" << std::endl;
-      call_boinc_finish(1);
+      boinc_finish(1);
       return 1;
     }	
 }

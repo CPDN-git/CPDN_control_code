@@ -43,41 +43,13 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     return boinc_init_options(&options);
 }
 
-// Wrappers for BOINC APIs calls, calls to APIs need to be in the same scope as the call to boinc_init()
-void call_boinc_begin_critical_section() {
-    boinc_begin_critical_section();
-}
-
-void call_boinc_end_critical_section() {
-    boinc_begin_critical_section();
-}
 
 int call_boinc_copy(const std::string& source, const std::string& destination) {
     return boinc_copy(source.c_str(), destination.c_str());
 }
 
-int call_boinc_resolve_filename_s(std::string logical_file_name, std::string& resolved_name) {
-    return boinc_resolve_filename_s(logical_file_name.c_str(), resolved_name);
-}
-
-void call_boinc_upload_file(std::string upload_file_name) {
-    boinc_upload_file(upload_file_name);
-}
-
-int call_boinc_upload_status(std::string upload_file_name) {
-    return boinc_upload_status(upload_file_name);
-}
-
 void call_boinc_report_app_status(double current_cpu_time, int restart_cpu_time, double fraction_done) {
     boinc_report_app_status(current_cpu_time,restart_cpu_time,fraction_done);
-}
-
-void call_boinc_fraction_done(double fraction_done) {
-    boinc_fraction_done(fraction_done);
-}
-
-void call_boinc_finish(int status) {
-    boinc_finish(status);
 }
 
 
