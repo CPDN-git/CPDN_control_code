@@ -44,15 +44,6 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
 }
 
 
-int call_boinc_copy(const std::string& source, const std::string& destination) {
-    return boinc_copy(source.c_str(), destination.c_str());
-}
-
-void call_boinc_report_app_status(double current_cpu_time, int restart_cpu_time, double fraction_done) {
-    boinc_report_app_status(current_cpu_time,restart_cpu_time,fraction_done);
-}
-
-
 // GC. recoded from original. do not use putenv, it stores the pointer of memory passed in (see multiple stackexchange posts on this issue)
 bool set_env_var(const std::string& name, const std::string& val) {
     return (setenv(name.c_str(), val.c_str(), 1) == 0);     // 1 = overwrite existing value, true on success.
@@ -75,22 +66,24 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
     #endif
 
     // Copy the app file to the working directory
-    std::string app_source = project_path + app_file;
-    std::string app_destination = slot_path + "/" + app_file;
+    std::filesystem::path app_source = project_path / app_file;
+    std::filesystem::path app_destination = slot_path / app_file;
     cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
 
-    retval = boinc_copy(app_source.c_str(), app_destination.c_str());
-    if (retval) {
-       cerr << "..Copying the app file to the working directory failed: error " << retval << "\n";
-       return retval;
+    // GC. Replace boinc copy with modern C++17 filesystem copy.  Overwrite to match boinc_copy behaviour.
+    try {
+      std::filesystem::copy_file(app_source, app_destination, std::filesystem::copy_options::overwrite_existing) )
+    } 
+    catch (const std::filesystem::filesystem_error& e) {
+      cerr << "..Error copying file: " << app_source << " to: " << app_destination << ", error: " << e.what() << "\n";
+      return 1;
     }
 
     // Unzip the app zip file
-    std::filesystem::path app_zip_path = slot_path;
-    app_zip_path /= app_file;
+    std::filesystem::path app_zip_path = slot_path / app_file;
     cerr << "Unzipping the app zip file: " << app_zip_path << "\n";
 
-    if (!cpdn_unzip(app_zip_path, slot_path)) {
+    if (!cpdn_unzip(app_zip_path, slot_path)){
        retval = 1;               // Or some other non-zero error code
        cerr << "..Unzipping the app file failed" << "\n";
        return retval;

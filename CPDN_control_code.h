@@ -58,8 +58,6 @@ void read_progress_file(std::string, int&, int&, std::string&, int&, int&);
 void update_progress_file(std::string, int, int, std::string, int, int);
 bool read_rcf_file(std::ifstream&, std::string&, std::string&);
 bool read_delimited_line(std::string&, std::string, std::string, int, std::string&);
-int call_boinc_copy(const std::string&, const std::string&);
-void call_boinc_report_app_status(double, int, double);
 int copy_and_unzip(const std::string&, const std::string&, const std::string&, const std::string&);
 bool set_env_var(const std::string&, const std::string&);
 
