@@ -146,7 +146,8 @@ int main(int argc, char** argv) {
 
 
     //------------------------------------------Process the namelist-----------------------------------------
-
+    // GC. Note, this is not the 'model fort.4' namelist file being referred to here. Needs renaming to avoid confusion.
+    
    std::filesystem::path namelist_zip_path = slot_path;
    namelist_zip_path /= std::string(app_name) + "_" +
                        unique_member_id + "_" +
@@ -275,7 +276,7 @@ int main(int argc, char** argv) {
     total_nsteps = (num_days * 86400.0) / (double) timestep_interval;
 
     // Process the ic_ancil_file:
-    std::string ic_ancil_zip = slot_path + std::string("/") + ic_ancil_file + std::string(".zip");
+    std::string ic_ancil_zip = slot_path + "/" + ic_ancil_file + ".zip";
 
 	// Copy the ic_ancil_zip to the slot directory and unzip
     if ( copy_and_unzip(ic_ancil_zip, ic_ancil_zip, slot_path, "ic_ancil_zip") ) {

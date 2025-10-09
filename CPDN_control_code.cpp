@@ -282,26 +282,32 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 }
 
 
-// Open a file and return the string contained between the arrow tags
+// Open a file and return the "jf_*" string contained between the arrow tags else empty string
 std::string get_tag(const std::string &filename) {
     std::ifstream file(filename);
-    if (file.is_open()) {
+    if (file.is_open())
+    {
        std::string line;
-       while (getline(file, line)) {
+       if ( getline(file, line) )      // GC. If file has jf_ tag it's usually a single line file. Don't read the whole file.
+       {
           std::string::size_type start = line.find('>');
-          if (start != line.npos) {
+          if (start != line.npos)
+          {
              std::string::size_type end = line.find('<', start + 1);
              if (end != line.npos) {
                 ++start;
-                std::string::size_type count_size = end - start;
-                return line.substr(start, count_size);
+                std::string::size_type count_size = end - start;        // GC. TODO. add a test on count_size in case we get garbage.
+                std::string            jf_file    = line.substr(start, count_size);
+                if ( jf_file.compare(0,3,"jf_" ) == 0 ) {
+                   file.close();
+                   return jf_file;
+                }
              }
           }
-          return "";
        }
        file.close();
     }
-    return "";
+    return std::string();
 }
 
 
@@ -416,12 +422,14 @@ bool file_exists(const std::string& filename) {
     return infile.good();
 }
 
+
 // Check whether file is zero bytes long
 // from: https://stackoverflow.com/questions/2390912/checking-for-an-empty-file-in-c
 // returns True if file is zero bytes, otherwise False.
 bool file_is_empty(const std::string& fpath) {
    return (std::filesystem::file_size(fpath) == 0);
 }
+
 
 // Calculate the cpu_time
 double cpu_time(long handleProcess) {
@@ -495,6 +503,7 @@ double model_frac_done(double step, double total_steps, int nthreads ) {
 
    return frac_done;
 }
+
 
 // Construct the second part of the output model filename to be uploaded
 // nb. exptid is always 4 characters for OpenIFS.
@@ -752,6 +761,7 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
 int copy_and_unzip(const std::string& zipfile, const std::string& destination, const std::string& unzip_path, const std::string& type) {
     int retval = 0;
 
+    cerr << "copy_and_unzip: zipfile: " << zipfile << ", destination: " << destination << ", unzip_path: " << unzip_path << '\n';
     // Check for the existence of the zip file
     if( !file_exists(zipfile) ) {
        cerr << "..The " << type << " zip file does not exist: " << zipfile << std::endl;
@@ -766,11 +776,12 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
 		
     // Get the name of the 'jf_' filename from a link within the 'zipfile' file
     std::string source = get_tag(zipfile);
+    cerr << "get_tag returned: " << source << '\n';
 
     // Copy and unzip the zip file only if the zip file contains a string between tags
     if ( !source.empty() ) {
        // Copy the 'jf_' to the working directory and rename
-       cerr << "Copying the " << type << " files from: " << source << " to: " << destination << '\n';
+       cerr << "Copying the " << type << " file from: " << source << " to: " << destination << '\n';
        try {
           std::filesystem::copy_file(source, destination, std::filesystem::copy_options::overwrite_existing);
        } 
