@@ -1,0 +1,28 @@
+:
+# Match what c-cpp.yml does to run standalone here.
+
+# Usage: ./oifs_43r3_1.00_x86_64-pc-linux-gnu-debug <start_date> <exptid> <unique_member_id> <batchid> <wuid> <fclen> <app_name> <nthreads> [app_version]
+
+# First run oifs_test_setup.py in the 'test' directory.
+#../oifs_test_setup.py
+
+set -x
+set -e
+
+cd slots
+
+[ -f stderr.txt ] && rm stderr.txt
+
+# copy test app executable
+cp ../../oifs_43r3_test.exe .
+
+# put control code exe into projects
+cp ../../oifs_43r3_1.00_x86_64-pc-linux-gnu-debug ../projects
+
+# run model
+
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/ubuntu/github/boinc-8.0.2-x86_64/lib
+
+../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu-debug yyyymmddhh EXPT NNNN d000 0 24 oifs_43r3 1 1.00 0
+
+set +x 
