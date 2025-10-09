@@ -52,6 +52,8 @@ bool set_env_var(const std::string& name, const std::string& val) {
 
 // Move and unzip the app file
 int move_and_unzip_app_file(std::string app_name, std::string version, std::string project_path, std::string slot_path) {
+   // GC. TODO. This code could be combined with copy_and_unzip() to avoid code duplication.
+
     int retval = 0;
 
     // macOS
@@ -66,21 +68,24 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
     #endif
 
     // Copy the app file to the working directory
-    std::filesystem::path app_source = project_path / app_file;
-    std::filesystem::path app_destination = slot_path / app_file;
+    std::filesystem::path app_source = project_path;
+    app_source /= app_file;
+    std::filesystem::path app_destination = slot_path;
+    app_destination /= app_file;
     cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
 
     // GC. Replace boinc copy with modern C++17 filesystem copy.  Overwrite to match boinc_copy behaviour.
     try {
-      std::filesystem::copy_file(app_source, app_destination, std::filesystem::copy_options::overwrite_existing) )
+      std::filesystem::copy_file(app_source, app_destination, std::filesystem::copy_options::overwrite_existing);
     } 
     catch (const std::filesystem::filesystem_error& e) {
-      cerr << "..Error copying file: " << app_source << " to: " << app_destination << ", error: " << e.what() << "\n";
+      cerr << "..move_and_unzip_app: Error copying file: " << app_source << " to: " << app_destination << ", error: " << e.what() << "\n";
       return 1;
     }
 
     // Unzip the app zip file
-    std::filesystem::path app_zip_path = slot_path / app_file;
+    std::filesystem::path app_zip_path = slot_path;
+    app_zip_path /= app_file;
     cerr << "Unzipping the app zip file: " << app_zip_path << "\n";
 
     if (!cpdn_unzip(app_zip_path, slot_path)){
@@ -760,17 +765,18 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
     }
 		
     // Get the name of the 'jf_' filename from a link within the 'zipfile' file
-    std::string source = "";
-    source = get_tag(zipfile);
+    std::string source = get_tag(zipfile);
 
     // Copy and unzip the zip file only if the zip file contains a string between tags
     if ( !source.empty() ) {
        // Copy the 'jf_' to the working directory and rename
        cerr << "Copying the " << type << " files from: " << source << " to: " << destination << '\n';
-       retval = call_boinc_copy(source, destination);
-       if (retval) {
-          cerr << "..Copying the " << type << " files to the working directory failed" << std::endl;
-          return retval;
+       try {
+          std::filesystem::copy_file(source, destination, std::filesystem::copy_options::overwrite_existing);
+       } 
+       catch (const std::filesystem::filesystem_error& e) {
+          cerr << "..copy_and_unzip: Error copying file: " << source << " to: " << destination << ", error: " << e.what() << "\n";
+          return 1;
        }
 
        cerr << "Unzipping the " << type << " zip file: " << destination << '\n';
