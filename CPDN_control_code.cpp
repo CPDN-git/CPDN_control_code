@@ -283,6 +283,13 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 
 
 // Open a file and return the "jf_*" string contained between the arrow tags else empty string
+// Explanation for Glenn's benefit :).  First run of task the filename contains a 'reference'
+// to the real zip file stored in the projects directory.  The reference is in the form of a
+// single line e.g. ">jf_ic_ancil_1234<". This function extracts the jf_ string so the real zip
+// file can be copied to overwrite the file containing the 'jf_' file reference. 
+// On the subsequent runs, what should happen is the client restores the original
+// 'reference' (jf_ic_ancil_1234) file. However, some clients do not do this which 
+// means the real zip file is there instead. In this case get_tag returns an empty string.
 std::string get_tag(const std::string &filename) {
     std::ifstream file(filename);
     if (file.is_open())
@@ -393,14 +400,13 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
 
     // Create null terminated, non-const char buffers for the boinc_send_trickle_up call
     // to avoid possible memory faults (as seen in the past).
-    std::vector<char> variety{'o','r','i','g','\0'};
     std::vector<char> trickle_data(trickle.begin(), trickle.end());
     trickle_data.push_back('\0');
       
     // Upload the trickle if not in standalone mode
     if (!standalone) {
        cerr << "Uploading trickle at timestep: " << timestep << "\n";
-       boinc_send_trickle_up(variety.data(), trickle_data.data());
+       boinc_send_trickle_up( (char*)"orig", trickle_data.data());
     }
     else {
        std::stringstream trickle_location_buf;
@@ -778,25 +784,40 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
     std::string source = get_tag(zipfile);
     cerr << "get_tag returned: " << source << '\n';
 
-    // Copy and unzip the zip file only if the zip file contains a string between tags
+    // Copy and unzip the zip file only if the zip file contains a string between tags.
+    // If it doesn't, the real zip file is likely already in the working directory from a previous run.
     if ( !source.empty() ) {
-       // Copy the 'jf_' to the working directory and rename
-       cerr << "Copying the " << type << " file from: " << source << " to: " << destination << '\n';
-       try {
-          std::filesystem::copy_file(source, destination, std::filesystem::copy_options::overwrite_existing);
-       } 
-       catch (const std::filesystem::filesystem_error& e) {
-          cerr << "..copy_and_unzip: Error copying file: " << source << " to: " << destination << ", error: " << e.what() << "\n";
-          return 1;
+       // Copy the 'jf_' file to the working directory and rename
+       if ( file_exists(source) ) {
+          cerr << "Copying the " << type << " file from: " << source << " to: " << destination << '\n';
+          try {
+             std::filesystem::copy_file(source, destination, std::filesystem::copy_options::overwrite_existing);
+          } 
+          catch (const std::filesystem::filesystem_error& e) {
+             cerr << "..copy_and_unzip: Error copying file: " << source << " to: " << destination << ", error: " << e.what() << "\n";
+             return 1;
+          }
        }
-
-       cerr << "Unzipping the " << type << " zip file: " << destination << '\n';
-       if (!cpdn_unzip(destination, unzip_path)) {
-          retval = 1; // Or some other non-zero error code
-          cerr << "..Unzipping the " << type << " file failed" << std::endl;
-          return retval;
+       else {
+            cerr << "..The " << type << " file retrieved from get_tag does not exist: " << source << std::endl;
+            return 1;      // GC what should we do here -- return or carry on and check destination exists from a previous run?
        }
     }
+
+    // If 'source' is empty, the 'jf_' link wasn't there so we assume the real zip file is already in the working directory.
+    // We could assume that the real zip file has already been unzipped, but to be safe unzip it if found.
+    if (file_exists(destination) ) {
+       cerr << "Unzipping the " << type << " zip file: " << destination << '\n';
+       if (!cpdn_unzip(destination, unzip_path)) {
+         cerr << "..Unzipping the " << type << " file failed" << std::endl;
+         return 1;
+       }
+    }
+    else {
+       cerr << "..The " << type << " file does not exist in the working directory: " << destination << std::endl;
+       return 1;
+    }
+
 	 // Success, retval is 0
     return retval;
 }
