@@ -79,7 +79,7 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
       std::filesystem::copy_file(app_source, app_destination, std::filesystem::copy_options::overwrite_existing);
     } 
     catch (const std::filesystem::filesystem_error& e) {
-      cerr << "..move_and_unzip_app: Error copying file: " << app_source << " to: " << app_destination << ", error: " << e.what() << "\n";
+      cerr << "..move_and_unzip_app: Error copying file: " << app_source << " to: " << app_destination << ",\nError: " << e.what() << std::endl;
       return 1;
     }
 
@@ -97,7 +97,7 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
        try {
            std::filesystem::remove(app_zip_path);
        } catch (const std::filesystem::filesystem_error& e) {
-           cerr << "..move_and_unzip_app_file(). Error removing file: " << app_zip_path << ", error: " << e.what() << "\n";
+           cerr << "..move_and_unzip_app_file(). Error removing file: " << app_zip_path << ",\nError: " << e.what() << std::endl;
        }
     }
     return retval;

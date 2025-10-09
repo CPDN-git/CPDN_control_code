@@ -586,7 +586,6 @@ int main(int argc, char** argv) {
        strCmd = slot_path + "/oifs_43r3_test.exe";
 
     } else {
-       // If no executable present, then an error is thrown
        cerr << "..No openifs executable present, ending task." << std::endl;
        return 1;
     }
