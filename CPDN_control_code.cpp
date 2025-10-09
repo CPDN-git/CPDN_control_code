@@ -794,7 +794,7 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
              std::filesystem::copy_file(source, destination, std::filesystem::copy_options::overwrite_existing);
           } 
           catch (const std::filesystem::filesystem_error& e) {
-             cerr << "..copy_and_unzip: Error copying file: " << source << " to: " << destination << ", error: " << e.what() << "\n";
+             cerr << "..copy_and_unzip: Error copying file: " << source << " to: " << destination << ",\nError: " << e.what() << "\n";
              return 1;
           }
        }
