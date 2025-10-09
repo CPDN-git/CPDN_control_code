@@ -229,7 +229,7 @@ long launch_process_oifs(const std::string slot_path, const std::string strCmd, 
           // Set the GRIB_DEFINITION_PATH environmental variable
           std::string GRIB_DEF_var = slot_path + "/eccodes/definitions";
           if ( !set_env_var("GRIB_DEFINITION_PATH", GRIB_DEF_var) )  {
-            cerr << "..Setting the GRIB_DEFINITION_PATH failed" << "\n";
+            cerr << "..Setting the GRIB_DEFINITION_PATH failed" << std::endl;
           }
           cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
 
@@ -243,7 +243,7 @@ long launch_process_oifs(const std::string slot_path, const std::string strCmd, 
           }
 
           // If execl returns then there was an error
-          cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << ",exptid=" << exptid << "\n";
+          cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << ",exptid=" << exptid << std::endl;
           exit(retval);
           break;
        }
@@ -260,7 +260,7 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 
     switch((handleProcess=fork())) {
        case -1: {
-          cerr << "..Unable to start a new child process" << "\n";
+          cerr << "..Unable to start a new child process" << std::endl;
           exit(0);
           break;
        }
@@ -270,13 +270,13 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 
           // If execl returns then there was an error
           if (retval) {
-             cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << "\n";
+             cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << std::endl;
              exit(retval);
              break;
           }
        }
        default: 
-          cerr << "The child process has been launched with process id: " << handleProcess << "\n";
+          cerr << "The child process has been launched with process id: " << handleProcess << std::endl;
     }
     return handleProcess;
 }
