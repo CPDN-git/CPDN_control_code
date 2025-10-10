@@ -2,7 +2,7 @@
 // Control code functions for the climateprediction.net project (CPDN)
 //
 // Written by Andy Bowery (Oxford eResearch Centre, Oxford University) May 2023
-// Contributions from Glenn Carver (ex-ECMWF), 2022->
+// Further development: Glenn Carver, CPDN, 2022->
 //
 
 #include <iomanip>
@@ -282,6 +282,7 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 }
 
 
+
 // Open a file and return the "jf_*" string contained between the arrow tags else empty string
 // Explanation for Glenn's benefit :).  First run of task the filename contains a 'reference'
 // to the real zip file stored in the projects directory.  The reference is in the form of a
@@ -290,31 +291,58 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 // On the subsequent runs, what should happen is the client restores the original
 // 'reference' (jf_ic_ancil_1234) file. However, some clients do not do this which 
 // means the real zip file is there instead. In this case get_tag returns an empty string.
+
+// GC. Modified to avoid reading the entire zip file if it's not a jf_ file reference.
+//     Otherwise we end up with a very big string in memory!
 std::string get_tag(const std::string &filename) {
-    std::ifstream file(filename);
-    if (file.is_open())
-    {
-       std::string line;
-       if ( getline(file, line) )      // GC. If file has jf_ tag it's usually a single line file. Don't read the whole file.
-       {
-          std::string::size_type start = line.find('>');
-          if (start != line.npos)
-          {
-             std::string::size_type end = line.find('<', start + 1);
-             if (end != line.npos) {
-                ++start;
-                std::string::size_type count_size = end - start;        // GC. TODO. add a test on count_size in case we get garbage.
-                std::string            jf_file    = line.substr(start, count_size);
-                if ( jf_file.compare(0,3,"jf_" ) == 0 ) {
-                   file.close();
-                   return jf_file;
-                }
-             }
-          }
-       }
-       file.close();
+
+    constexpr size_t MAX_READ_BYTES = 64;
+    std::string buffer(MAX_READ_BYTES, '\0'); // Initialize string with space for 64 chars
+
+    std::ifstream file(filename, std::ios::in | std::ios::binary);
+
+    if (!file.is_open()) {
+        std::cerr << "..get_tag. Failed to open file: " << filename << std::endl;
+        return std::string();
     }
-    return std::string();
+
+    // Read up to MAX_READ_BYTES directly into the string's underlying buffer
+    file.read(buffer.data(), MAX_READ_BYTES);
+    
+    // Get the actual number of bytes read
+    std::streamsize chars_read = file.gcount();
+
+    if (chars_read == 0) {
+       return std::string(); // File is empty
+    }
+
+    // Resize the string to the actual number of characters read
+    buffer.resize(chars_read);
+
+    const char START_TAG = '>';
+    const char END_TAG = '<';
+
+    // Find the first occurrence of the start delimiter
+    auto start_pos = buffer.find(START_TAG);
+
+    if (start_pos == std::string::npos) {
+        // '>' not found within the first 64 characters
+        return std::string();
+    }
+
+    auto tag_start = start_pos + 1;
+    auto tag_end   = buffer.find(END_TAG, tag_start);
+
+    if (tag_end == std::string::npos) {
+        // '<' not found after the '>'
+        return std::string();
+    }
+
+    // Extract the substring
+    // The length is (position of '<') - (position after '>')
+    auto length = tag_end - tag_start;
+    
+    return buffer.substr(tag_start, length);
 }
 
 

@@ -5,6 +5,8 @@
 // Contributions from Glenn Carver (ex-ECMWF), 2022->
 //
 
+#pragma once
+
 #include <string>
 #include <chrono>
 #include <thread>
