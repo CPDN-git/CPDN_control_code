@@ -104,14 +104,6 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
 }
 
 
-const char* strip_path(const char* path) {
-    int jj;
-    for (jj = (int) strlen(path);
-    jj > 0 && path[jj-1] != '/' && path[jj-1] != '\\'; jj--);
-    return (const char*) path+jj;
-}
-
-
 int check_child_status(long handleProcess, int process_status) {
     int stat,pid;
 
