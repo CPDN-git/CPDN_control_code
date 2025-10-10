@@ -782,11 +782,7 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
        }
     }
 
-    if ( returned_value != "" ) {
-       return true;
-    } else {
-       return false;
-    }
+    return !returned_value.empty();
 }
 
 
