@@ -7,29 +7,30 @@
 
 int main() {
     // --- Setup Test Environment ---
-    const std::filesystem::path test_dir = "zip_test_area";
-    const std::filesystem::path zip_archive_path = test_dir / "test_archive.zip";
-    const std::filesystem::path extraction_dir = test_dir / "extracted_files";
-    const std::filesystem::path file1_path = test_dir / "test_file1.txt";
-    const std::string file1_content = "This is the content of test file 1 using ZipLib.";
+    const std::filesystem::path test_dir = "zip_tdir";
+    const std::filesystem::path slot_dir = test_dir / "slots/0";
+    const std::filesystem::path zip_archive_path = slot_dir / "oifs_43r3_omp_l159_app.zip";
+    const std::filesystem::path extraction_dir = slot_dir;
+    const std::filesystem::path app_path = test_dir / "oifs_43r3_omp_l159.exe";
+    const std::string app_content = "This is the content of test using ZipLib.";
 
     // Clean up previous test runs
     std::filesystem::remove_all(test_dir);
 
     // Create directories
     std::filesystem::create_directory(test_dir);
-    std::filesystem::create_directory(extraction_dir);
+    std::filesystem::create_directories(slot_dir);
 
     // Create a dummy file to be zipped
     {
-        std::ofstream test_file(file1_path);
-        test_file << file1_content;
+        std::ofstream app(app_path);
+        app << app_content;
     }
-    std::cout << "Setup: Created test file '" << file1_path << "'" << std::endl;
+    std::cout << "Setup: Created test app file '" << app_path << "'" << std::endl;
 
     // --- Test cpdn_zip ---
     std::cout << "\n--- Testing cpdn_zip ---" << std::endl;
-    std::vector<std::filesystem::path> files_to_zip = {file1_path};
+    std::vector<std::filesystem::path> files_to_zip = { app_path };
     bool zip_result = cpdn_zip(zip_archive_path, files_to_zip);
 
     std::cout << "cpdn_zip returned: " << (zip_result ? "success" : "failure") << std::endl;
@@ -46,7 +47,7 @@ int main() {
 
     // --- Verification ---
     std::cout << "\n--- Verifying Results ---" << std::endl;
-    std::filesystem::path extracted_file_path = extraction_dir / file1_path.filename();
+    std::filesystem::path extracted_file_path = extraction_dir / app_path.filename();
     assert(std::filesystem::exists(extracted_file_path) && "Extracted file should exist.");
     std::cout << "SUCCESS: Found extracted file '" << extracted_file_path << "'" << std::endl;
 
@@ -56,12 +57,12 @@ int main() {
         std::ifstream extracted_file(extracted_file_path);
         std::getline(extracted_file, extracted_content);
     }
-    assert(extracted_content == file1_content && "Extracted file content must match original.");
+    assert(extracted_content == app_content && "Extracted file content must match original.");
     std::cout << "SUCCESS: Extracted file content matches original." << std::endl;
 
     // --- Clean up ---
-    std::cout << "\nCleaning up test directory..." << std::endl;
-    std::filesystem::remove_all(test_dir);
+    //std::cout << "\nCleaning up test directory..." << std::endl;
+    //std::filesystem::remove_all(test_dir);
 
     std::cout << "\nAll tests passed successfully!" << std::endl;
 
