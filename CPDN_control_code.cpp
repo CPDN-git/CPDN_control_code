@@ -83,21 +83,19 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
       return 1;
     }
 
-    // Unzip the app zip file
-    std::filesystem::path app_zip_path = slot_path;
-    app_zip_path /= app_file;
-    cerr << "Unzipping the app zip file: " << app_zip_path << "\n";
+    // Unzip the app zipfile
+    cerr << "Extracting the app zipfile: " << app_destination << "\n";
 
-    if (!cpdn_unzip(app_zip_path, slot_path)){
-       retval = 1;               // Or some other non-zero error code
-       cerr << "..Unzipping the app file failed" << "\n";
+    if (!cpdn_unzip(app_destination, slot_path)){
+       retval = 1;
+       cerr << "..Extracting the app zipfile failed" << "\n";
        return retval;
     }
     else {
        try {
-           std::filesystem::remove(app_zip_path);
+           std::filesystem::remove(app_destination);
        } catch (const std::filesystem::filesystem_error& e) {
-           cerr << "..move_and_unzip_app_file(). Error removing file: " << app_zip_path << ",\nError: " << e.what() << std::endl;
+           cerr << "..move_and_unzip_app_file(). Error removing file: " << app_destination << ",\nError: " << e.what() << std::endl;
        }
     }
     return retval;
@@ -783,7 +781,7 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
 int copy_and_unzip(const std::string& zipfile, const std::string& destination, const std::string& unzip_path, const std::string& type) {
     int retval = 0;
 
-    cerr << "copy_and_unzip: zipfile: " << zipfile << ", destination: " << destination << ", unzip_path: " << unzip_path << '\n';
+    cerr << "copy_and_unzip: zipfile: " << zipfile << ", destination: " << destination << ", unzip_path: " << unzip_path << std::endl;
     // Check for the existence of the zip file
     if( !file_exists(zipfile) ) {
        cerr << "..The " << type << " zip file does not exist: " << zipfile << std::endl;
