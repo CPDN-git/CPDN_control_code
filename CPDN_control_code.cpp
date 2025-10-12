@@ -781,7 +781,6 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
 int copy_and_unzip(const std::string& zipfile, const std::string& destination, const std::string& unzip_path, const std::string& type) {
     int retval = 0;
 
-    cerr << "copy_and_unzip: zipfile: " << zipfile << ", destination: " << destination << ", unzip_path: " << unzip_path << std::endl;
     // Check for the existence of the zip file
     if( !file_exists(zipfile) ) {
        cerr << "..The " << type << " zip file does not exist: " << zipfile << std::endl;
@@ -796,7 +795,6 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
 		
     // Get the name of the 'jf_' filename from a link within the 'zipfile' file
     std::string source = get_tag(zipfile);
-    cerr << "get_tag returned: " << source << '\n';
 
     // Copy and unzip the zip file only if the zip file contains a string between tags.
     // If it doesn't, the real zip file is likely already in the working directory from a previous run.
