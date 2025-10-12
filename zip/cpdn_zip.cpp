@@ -1,5 +1,6 @@
 #include "cpdn_zip.h"
 #include "ZipLib/ZipFile.h"
+#include "ZipLib/ZipArchive.h"
 #include <iostream>
 
 bool cpdn_zip(
@@ -11,7 +12,7 @@ bool cpdn_zip(
         // If the zip file exists, ZipFile::AddFile will append to it.
         // To create a fresh archive, we should remove it first.
         if (std::filesystem::exists(zip_filepath))
-{
+        {
             std::filesystem::remove(zip_filepath);
         }
 
@@ -48,22 +49,23 @@ bool cpdn_unzip(
         // Open the archive to inspect its contents
         auto archive = ZipFile::Open(zip_filepath.string());
 
-        for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
+        for (auto i = 0; i < archive->GetEntriesCount(); ++i)
         {
-            auto entry = archive->GetEntry(i);
+            auto entry = archive->GetEntry(i);      // this will throw exception if entry is null
             if (entry)
             {
-                // Construct the full destination path for the file
-                auto destination_path = output_directory / entry->GetName();
+                // Construct full destination path : implicitly assumes a relative path in the compressed archive
+                auto destination_path = output_directory / entry->GetFullName();
                 
-                // Ensure the parent directory exists
+                // Ensure parent directory exists
                 if (destination_path.has_parent_path())
                 {
                     std::filesystem::create_directories(destination_path.parent_path());
                 }
 
-                // Use the static ExtractFile method for each entry
-                ZipFile::ExtractFile(zip_filepath.string(), entry->GetName(), destination_path.string());
+                if ( !entry->IsDirectory() ) {
+                    ZipFile::ExtractFile(zip_filepath.string(), entry->GetFullName(), destination_path.string());
+                }
             }
         }
         return true;
