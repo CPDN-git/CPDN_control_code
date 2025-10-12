@@ -702,13 +702,13 @@ int main(int argc, char** argv) {
                       // Create the zipped upload file from the list of files added to zfl
                       upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
-                      cerr << "Zipping up the intermediate file: " << upload_file << '\n';
+                      cerr << "Compressing upload file: " << upload_file << '\n';
                       if (!cpdn_zip(upload_file, zfl)) {
                          retval = 1;
                       }
 
                       if (retval) {
-                         cerr << "..Zipping up the intermediate file failed" << std::endl;
+                         cerr << ".. compressing upload file failed" << std::endl;
                          boinc_end_critical_section();
                          return retval;
                       }
@@ -918,13 +918,13 @@ int main(int argc, char** argv) {
           // Create the zipped upload file from the list of files added to zfl
           upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
-          cerr << "Zipping up the final file: " << upload_file << '\n';
+          cerr << "Compressing final upload file: " << upload_file << '\n';
           if (!cpdn_zip(upload_file, zfl)) {
              retval = 1;
           }
 
           if (retval) {
-             cerr << "..Zipping up the final file failed" << std::endl;
+             cerr << "..compressing final upload file failed" << std::endl;
              boinc_end_critical_section();
              return retval;
           }
@@ -976,7 +976,7 @@ int main(int argc, char** argv) {
              retval = 1;
           }
           if (retval) {
-             cerr << "..Creating the zipped upload file failed" << std::endl;
+             cerr << "..Creating the compressed upload file failed" << std::endl;
              boinc_end_critical_section();
              return retval;
           }
