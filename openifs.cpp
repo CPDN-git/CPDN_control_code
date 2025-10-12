@@ -697,15 +697,21 @@ int main(int argc, char** argv) {
                 // If running under a BOINC client
                 if (!standalone) {
 
-                   if (zfl.size() > 0){
-
+                   if (zfl.size() > 0)
+                   {
                       // Create the zipped upload file from the list of files added to zfl
                       upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
                       cerr << "Compressing upload file: " << upload_file << '\n';
-                      if (!cpdn_zip(upload_file, zfl)) {
-                         retval = 1;
-                      }
+
+                      // Time the compression for diagnostics
+                      auto start = high_resolution_clock::now();
+                      auto outcome = cpdn_zip(upload_file, zfl);
+                      auto stop = high_resolution_clock::now();
+                      auto duration = duration_cast<milliseconds>(stop - start);
+                      cerr << "Time taken to compress upload file: " << duration.count() << " ms\n";
+
+                      retval = outcome ? 0 : 1;
 
                       if (retval) {
                          cerr << ".. compressing upload file failed" << std::endl;
@@ -919,9 +925,15 @@ int main(int argc, char** argv) {
           upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
           cerr << "Compressing final upload file: " << upload_file << '\n';
-          if (!cpdn_zip(upload_file, zfl)) {
-             retval = 1;
-          }
+
+          // Time the compression for diagnostics
+          auto start = high_resolution_clock::now();
+          auto outcome = cpdn_zip(upload_file, zfl);
+          auto stop = high_resolution_clock::now();
+          auto duration = duration_cast<milliseconds>(stop - start);
+          cerr << "Time taken to compress final upload file: " << duration.count() << " ms\n";
+          
+          retval = outcome ? 0 : 1;
 
           if (retval) {
              cerr << "..compressing final upload file failed" << std::endl;
