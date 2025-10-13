@@ -49,6 +49,13 @@ bool cpdn_unzip(
         // Open the archive to inspect its contents
         auto archive = ZipFile::Open(zip_filepath.string());
 
+        // If compressed archive is empty, return false as it's highly likely it's not a zip file.
+        if (archive->GetEntriesCount() == 0)
+        {
+            std::cerr << "cpdn_unzip error: Compressed archive: " << zip_filepath << " is empty, not a valid file?" << std::endl;
+            return false;
+        }
+
         for (auto i = 0; i < archive->GetEntriesCount(); ++i)
         {
             auto entry = archive->GetEntry(i);      // this will throw exception if entry is null
@@ -56,13 +63,16 @@ bool cpdn_unzip(
             {
                 // Construct full destination path : implicitly assumes a relative path in the compressed archive
                 auto destination_path = output_directory / entry->GetFullName();
+                //std::cerr << "Extracting: " << entry->GetFullName() << " to " << destination_path << std::endl;
                 
                 // Ensure parent directory exists
                 if (destination_path.has_parent_path())
                 {
+                    //std::cerr << "Creating directory: " << destination_path.parent_path() << std::endl;
                     std::filesystem::create_directories(destination_path.parent_path());
                 }
 
+                //std::cerr << "IsDirectory: " << (entry->IsDirectory() ? "Yes" : "No") << std::endl;
                 if ( !entry->IsDirectory() ) {
                     ZipFile::ExtractFile(zip_filepath.string(), entry->GetFullName(), destination_path.string());
                 }
