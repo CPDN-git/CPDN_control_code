@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
 
     // Set defaults for input arguments
     std::string OIFS_EXPID;           // model experiment id, must match string in filenames
-    std::string namelist="fort.4";    // namelist file, this name is fixed
+    const std::string namelist="fort.4";    // namelist file
 
     // Initialise BOINC
     retval = initialise_boinc(wu_name, project_dir, version, standalone);
