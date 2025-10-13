@@ -7,8 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Install libzip
-      run: sudo apt install -y libzip-dev
     - name: Make the boinc-install directory
       run: mkdir boinc-install
     - name: Clone BOINC/boinc PUBLIC repository
@@ -16,7 +14,7 @@ jobs:
     - name: Run autosetup
       run: cd boinc && ./_autosetup
     - name: Build BOINC
-      run: cd boinc && ./configure --disable-server --disable-fcgi --disable-manager --disable-client --enable-libraries --enable-boinczip --prefix=$PWD/../boinc-install CXXFLAGS='-O3'
+      run: cd boinc && ./configure --disable-server --disable-fcgi --disable-manager --disable-client --enable-libraries --disable-boinczip --prefix=$PWD/../boinc-install CXXFLAGS='-O3'
     - name: Run make install
       run: cd boinc && make install
     - name: List contents of boinc-install
