@@ -62,7 +62,5 @@ bool read_delimited_line(std::string&, std::string, std::string, int, std::strin
 int copy_and_unzip(const std::string&, const std::string&, const std::string&, const std::string&);
 bool set_env_var(const std::string&, const std::string&);
 
-using namespace std;
-using namespace std::chrono;
-using namespace std::this_thread;
+namespace chrono = std::chrono;
 using namespace rapidxml;

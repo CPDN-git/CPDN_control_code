@@ -23,9 +23,9 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     project_dir = dataBOINC.project_dir;
     version = std::to_string(dataBOINC.app_version);
 
-    //cerr << "wu_name: " << wu_name << '\n';
-    //cerr << "project_dir: " << project_dir << '\n';
-    //cerr << "version: " << version << '\n';
+    //std::cerr << "wu_name: " << wu_name << '\n';
+    //std::cerr << "project_dir: " << project_dir << '\n';
+    //std::cerr << "version: " << version << '\n';
 
     // Set BOINC optional values
     BOINC_OPTIONS options;
@@ -72,30 +72,30 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
     app_source /= app_file;
     std::filesystem::path app_destination = slot_path;
     app_destination /= app_file;
-    cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
+    std::cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
 
     // GC. Replace boinc copy with modern C++17 filesystem copy.  Overwrite to match boinc_copy behaviour.
     try {
       std::filesystem::copy_file(app_source, app_destination, std::filesystem::copy_options::overwrite_existing);
     } 
     catch (const std::filesystem::filesystem_error& e) {
-      cerr << "..move_and_unzip_app: Error copying file: " << app_source << " to: " << app_destination << ",\nError: " << e.what() << std::endl;
+      std::cerr << "..move_and_unzip_app: Error copying file: " << app_source << " to: " << app_destination << ",\nError: " << e.what() << std::endl;
       return 1;
     }
 
     // Unzip the app zipfile
-    cerr << "Extracting the app zipfile: " << app_destination << "\n";
+    std::cerr << "Extracting the app zipfile: " << app_destination << "\n";
 
     if (!cpdn_unzip(app_destination, slot_path)){
        retval = 1;
-       cerr << "..Extracting the app zipfile failed" << "\n";
+       std::cerr << "..Extracting the app zipfile failed" << "\n";
        return retval;
     }
     else {
        try {
            std::filesystem::remove(app_destination);
        } catch (const std::filesystem::filesystem_error& e) {
-           cerr << "..move_and_unzip_app_file(). Error removing file: " << app_destination << ",\nError: " << e.what() << std::endl;
+           std::cerr << "..move_and_unzip_app_file(). Error removing file: " << app_destination << ",\nError: " << e.what() << std::endl;
        }
     }
     return retval;
@@ -112,24 +112,24 @@ int check_child_status(long handleProcess, int process_status) {
        // Child exited normally but model might still have failed
        if (WIFEXITED(stat)) {
           process_status = 1;
-          cerr << "..The child process terminated with status: " << WEXITSTATUS(stat) << '\n';
+          std::cerr << "..The child process terminated with status: " << WEXITSTATUS(stat) << '\n';
        }
        // Child process has exited due to signal that was not caught
        // n.b. OpenIFS has its own signal handler.
        else if (WIFSIGNALED(stat)) {
           process_status = 3;
-          cerr << "..The child process has been killed with signal: " << WTERMSIG(stat) << '\n';
+          std::cerr << "..The child process has been killed with signal: " << WTERMSIG(stat) << '\n';
        }
        // Child is stopped
        else if (WIFSTOPPED(stat)) {
           process_status = 4;
-          cerr << "..The child process has stopped with signal: " << WSTOPSIG(stat) << '\n';
+          std::cerr << "..The child process has stopped with signal: " << WSTOPSIG(stat) << '\n';
        }
     }
     else if ( pid == -1) {
       // should not get here, it means the child could not be found
       process_status = 5;
-      cerr << "..Unable to retrieve status of child process " << '\n';
+      std::cerr << "..Unable to retrieve status of child process " << '\n';
       perror("waitpid() error");
     }
     return process_status;
@@ -142,19 +142,19 @@ int check_boinc_status(long handleProcess, int process_status) {
 
     // If a quit, abort or no heartbeat has been received from the BOINC client, end child process
     if (status.quit_request) {
-       cerr << "Quit request received from BOINC client, ending the child process" << '\n';
+       std::cerr << "Quit request received from BOINC client, ending the child process" << '\n';
        kill(handleProcess, SIGKILL);
        process_status = 2;
        return process_status;
     }
     else if (status.abort_request) {
-       cerr << "Abort request received from BOINC client, ending the child process" << '\n';
+       std::cerr << "Abort request received from BOINC client, ending the child process" << '\n';
        kill(handleProcess, SIGKILL);
        process_status = 1;
        return process_status;
     }
     else if (status.no_heartbeat) {
-       cerr << "No heartbeat received from BOINC client, ending the child process" << '\n';
+       std::cerr << "No heartbeat received from BOINC client, ending the child process" << '\n';
        kill(handleProcess, SIGKILL);
        process_status = 1;
        return process_status;
@@ -162,33 +162,33 @@ int check_boinc_status(long handleProcess, int process_status) {
     // Else if BOINC client is suspended, suspend child process and periodically check BOINC client status
     else {
        if (status.suspended) {
-          cerr << "Suspend request received from the BOINC client, suspending the child process" << '\n';
+          std::cerr << "Suspend request received from the BOINC client, suspending the child process" << '\n';
           kill(handleProcess, SIGSTOP);
 
           while (status.suspended) {
              boinc_get_status(&status);
              if (status.quit_request) {
-                cerr << "Quit request received from the BOINC client, ending the child process" << '\n';
+                std::cerr << "Quit request received from the BOINC client, ending the child process" << '\n';
                 kill(handleProcess, SIGKILL);
                 process_status = 2;
                 return process_status;
              }
              else if (status.abort_request) {
-                cerr << "Abort request received from the BOINC client, ending the child process" << '\n';
+                std::cerr << "Abort request received from the BOINC client, ending the child process" << '\n';
                 kill(handleProcess, SIGKILL);
                 process_status = 1;
                 return process_status;
              }
              else if (status.no_heartbeat) {
-                cerr << "No heartbeat received from the BOINC client, ending the child process" << '\n';
+                std::cerr << "No heartbeat received from the BOINC client, ending the child process" << '\n';
                 kill(handleProcess, SIGKILL);
                 process_status = 1;
                 return process_status;
              }
-             sleep_until(system_clock::now() + seconds(1));
+             std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(1));
           }
           // Resume child process
-          cerr << "Resuming the child process" << "\n";
+          std::cerr << "Resuming the child process" << "\n";
           kill(handleProcess, SIGCONT);
           process_status = 0;
        }
@@ -203,7 +203,7 @@ long launch_process_oifs(const std::string slot_path, const std::string strCmd, 
 
     switch((handleProcess=fork())) {
        case -1: {
-          cerr << "..Unable to start a new child process" << "\n";
+          std::cerr << "..Unable to start a new child process" << "\n";
           exit(0);
           break;
        }
@@ -212,33 +212,33 @@ long launch_process_oifs(const std::string slot_path, const std::string strCmd, 
           // Set the GRIB_SAMPLES_PATH environmental variable
           std::string GRIB_SAMPLES_var = slot_path + "/eccodes/ifs_samples/grib1_mlgrib2";
           if ( !set_env_var("GRIB_SAMPLES_PATH", GRIB_SAMPLES_var) )  {
-            cerr << "..Setting the GRIB_SAMPLES_PATH failed" << std::endl;
+            std::cerr << "..Setting the GRIB_SAMPLES_PATH failed" << std::endl;
           }
-          cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << getenv("GRIB_SAMPLES_PATH") << "\n";
+          std::cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << getenv("GRIB_SAMPLES_PATH") << "\n";
 
           // Set the GRIB_DEFINITION_PATH environmental variable
           std::string GRIB_DEF_var = slot_path + "/eccodes/definitions";
           if ( !set_env_var("GRIB_DEFINITION_PATH", GRIB_DEF_var) )  {
-            cerr << "..Setting the GRIB_DEFINITION_PATH failed" << std::endl;
+            std::cerr << "..Setting the GRIB_DEFINITION_PATH failed" << std::endl;
           }
-          cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
+          std::cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
 
           if( (app_name == "openifs") || (app_name == "oifs_40r1")) { // OpenIFS 40r1
-            cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";
+            std::cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";
             retval = execl(strCmd.c_str(),strCmd.c_str(),"-e",exptid.c_str(),NULL);
           }
           else {  // OpenIFS 43r3 and above
-            cerr << "Executing the command: " << strCmd << "\n";
+            std::cerr << "Executing the command: " << strCmd << "\n";
             retval = execl(strCmd.c_str(),strCmd.c_str(),NULL,NULL,NULL);
           }
 
           // If execl returns then there was an error
-          cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << ",exptid=" << exptid << std::endl;
+          std::cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << ",exptid=" << exptid << std::endl;
           exit(retval);
           break;
        }
        default: 
-          cerr << "The child process has been launched with process id: " << handleProcess << "\n";
+          std::cerr << "The child process has been launched with process id: " << handleProcess << "\n";
     }
     return handleProcess;
 }
@@ -250,23 +250,23 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 
     switch((handleProcess=fork())) {
        case -1: {
-          cerr << "..Unable to start a new child process" << std::endl;
+          std::cerr << "..Unable to start a new child process" << std::endl;
           exit(0);
           break;
        }
        case 0: { //The child process
-          cerr << "Executing the command: " << strCmd << "\n";
+          std::cerr << "Executing the command: " << strCmd << "\n";
           retval = execl(strCmd,strCmd,NULL,NULL,NULL);
 
           // If execl returns then there was an error
           if (retval) {
-             cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << std::endl;
+             std::cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << std::endl;
              exit(retval);
              break;
           }
        }
        default: 
-          cerr << "The child process has been launched with process id: " << handleProcess << std::endl;
+          std::cerr << "The child process has been launched with process id: " << handleProcess << std::endl;
     }
     return handleProcess;
 }
@@ -292,7 +292,7 @@ std::string get_tag(const std::string &filename) {
     std::ifstream file(filename, std::ios::in | std::ios::binary);
 
     if (!file.is_open()) {
-        std::cerr << "..get_tag. Failed to open file: " << filename << std::endl;
+         std::cerr << "..get_tag. Failed to open file: " << filename << std::endl;
         return std::string();
     }
 
@@ -355,23 +355,23 @@ void read_progress_file(std::string progress_file, int& last_cpu_time, int& uplo
 
        if (pfs.str().find("last_cpu_time") != std::string::npos) {
           last_cpu_time = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //cerr << "last_cpu_time: " << std::to_string(last_cpu_time) << '\n';
+          //std::cerr << "last_cpu_time: " << std::to_string(last_cpu_time) << '\n';
        }
        else if (pfs.str().find("upload_file_number") != std::string::npos) {
           upload_file_number = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //cerr << "upload_file_number: " << std::to_string(upload_file_number) << '\n';
+          //std::cerr << "upload_file_number: " << std::to_string(upload_file_number) << '\n';
        }
        else if (pfs.str().find("last_iter") != std::string::npos) {
           last_iter = pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1);
-          //cerr << "last_iter: " << last_iter << '\n';
+          //std::cerr << "last_iter: " << last_iter << '\n';
        }
        else if (pfs.str().find("last_upload") != std::string::npos) {
           last_upload = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //cerr << "last_upload: " << std::to_string(last_upload) << '\n';
+          //std::cerr << "last_upload: " << std::to_string(last_upload) << '\n';
        }
        else if (pfs.str().find("model_completed") != std::string::npos) {
           model_completed = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //cerr << "model_completed: " << std::to_string(model_completed) << '\n';
+          //std::cerr << "model_completed: " << std::to_string(model_completed) << '\n';
        }
     }
     progress_file_filestream.close();
@@ -383,7 +383,7 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
                           std::string last_iter, int last_upload, int model_completed) {
 
     std::ofstream progress_file_out(progress_file);
-    //cerr << "Writing to progress file: " << progress_file << "\n";
+    //std::cerr << "Writing to progress file: " << progress_file << "\n";
 
     // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
     progress_file_out << "last_cpu_time=" << std::to_string(last_cpu_time) << '\n';
@@ -393,28 +393,28 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
     progress_file_out << "model_completed="<< std::to_string(model_completed) << std::endl;
     progress_file_out.close();
 
-    //cerr << "last_cpu_time: " << last_cpu_time << "\n";
-    //cerr << "upload_file_number: " << upload_file_number << "\n";
-    //cerr << "last_iter: " << last_iter << "\n";
-    //cerr << "last_upload: " << last_upload << "\n";
-    //cerr << "model_completed: " << model_completed << "\n";
+    //std::cerr << "last_cpu_time: " << last_cpu_time << "\n";
+    //std::cerr << "upload_file_number: " << upload_file_number << "\n";
+    //std::cerr << "last_iter: " << last_iter << "\n";
+    //std::cerr << "last_upload: " << last_upload << "\n";
+    //std::cerr << "model_completed: " << model_completed << "\n";
 }
 
 
 // Produce the trickle and either upload to the project server or as a physical file
 void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) 
 {
-    //cerr << "current_cpu_time: " << current_cpu_time << "\n";
-    //cerr << "wu_name: " << wu_name << "\n";
-    //cerr << "result_base_name: " << result_base_name << "\n";
-    //cerr << "slot_path: " << slot_path << "\n";
-    //cerr << "timestep: " << timestep << "\n";
+    //std::cerr << "current_cpu_time: " << current_cpu_time << "\n";
+    //std::cerr << "wu_name: " << wu_name << "\n";
+    //std::cerr << "result_base_name: " << result_base_name << "\n";
+    //std::cerr << "slot_path: " << slot_path << "\n";
+    //std::cerr << "timestep: " << timestep << "\n";
 
     std::stringstream trickle_buffer;
     trickle_buffer << "<wu>" << wu_name << "</wu>\n<result>" << result_base_name << "</result>\n<ph></ph>\n<ts>" \
                    << timestep << "</ts>\n<cp>" << current_cpu_time << "</cp>\n<vr></vr>\n";
     std::string trickle = trickle_buffer.str();
-    //cerr << "Contents of trickle: \n" << trickle << "\n";
+    //std::cerr << "Contents of trickle: \n" << trickle << "\n";
 
     // Create null terminated, non-const char buffers for the boinc_send_trickle_up call
     // to avoid possible memory faults (as seen in the past).
@@ -423,14 +423,14 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
       
     // Upload the trickle if not in standalone mode
     if (!standalone) {
-       cerr << "Uploading trickle at timestep: " << timestep << "\n";
+       std::cerr << "Uploading trickle at timestep: " << timestep << "\n";
        boinc_send_trickle_up( (char*)"orig", trickle_data.data());
     }
     else {
        std::stringstream trickle_location_buf;
        trickle_location_buf << slot_path << "/trickle_" << time(NULL) << ".xml" << '\0';
        std::string trickle_location = trickle_location_buf.str();
-       cerr << "Writing trickle to location: " << trickle_location << "\n";
+       std::cerr << "Writing trickle to location: " << trickle_location << "\n";
 
        FILE* trickle_file = fopen(trickle_location.c_str(), "w");
        if (trickle_file) {
@@ -544,10 +544,10 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
     // Move result file to the temporary folder in the project directory
     std::string result_file = slot_path + "/" + first_part + second_part;
     std::string temp_file = temp_path + "/" + first_part + second_part;
-    //cerr << "Checking for result file: " << result_file << "\n";
+    //std::cerr << "Checking for result file: " << result_file << "\n";
 
     if(file_exists(result_file)) {
-       cerr << "Moving result file: " << std::filesystem::path(result_file).filename() << " to projects directory.\n";
+       std::cerr << "Moving result file: " << std::filesystem::path(result_file).filename() << " to projects directory.\n";
        retval = boinc_copy( result_file.c_str(), temp_file.c_str() );
 
        // If result file has been successfully copied over, remove it from slots directory
@@ -555,7 +555,7 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
           try {
               std::filesystem::remove(result_file);
           } catch (const std::filesystem::filesystem_error& e) {
-              cerr << "..move_result_file(). Error removing file: " << result_file << ", error: " << e.what() << "\n";
+              std::cerr << "..move_result_file(). Error removing file: " << result_file << ", error: " << e.what() << "\n";
           }
        }
     }
@@ -570,7 +570,7 @@ bool check_stoi(std::string& cin) {
     //  Glenn Carver
 
     if (std::any_of(cin.begin(), cin.end(), ::isalpha)) {
-        cerr << "..Invalid characters in stoi string: " << cin << "\n";
+        std::cerr << "..Invalid characters in stoi string: " << cin << "\n";
         return false;
     }
 
@@ -578,15 +578,15 @@ bool check_stoi(std::string& cin) {
     //  n.b. still need to check step <= max_step
     try {
         auto step = std::stoi(cin);
-        //cerr << "step converted is : " << step << "\n";
+        //std::cerr << "step converted is : " << step << "\n";
         return true;
     }
     catch (const std::invalid_argument &excep) {
-        cerr << "..Invalid input argument for stoi : " << excep.what() << "\n";
+        std::cerr << "..Invalid input argument for stoi : " << excep.what() << "\n";
         return false;
     }
     catch (const std::out_of_range &excep) {
-        cerr << "..Out of range value for stoi : " << excep.what() << "\n";
+        std::cerr << "..Out of range value for stoi : " << excep.what() << "\n";
         return false;
     }
 }
@@ -597,7 +597,7 @@ bool oifs_parse_stat(const std::string& logline, std::string& stat_column, const
    //      stat_col : returned string given by position 'index'
    //  Returns false if string is empty.
 
-   istringstream tokens;
+   std::istringstream tokens;
    std::string statstr="";
 
    //  split input, get token specified by 'column' unless file is corrupted
@@ -606,7 +606,7 @@ bool oifs_parse_stat(const std::string& logline, std::string& stat_column, const
       tokens >> statstr;
 
    if ( statstr.empty() ){
-      cerr << "..oifs_parse_stat: warning, statstr is empty: " << logline << '\n';
+      std::cerr << "..oifs_parse_stat: warning, statstr is empty: " << logline << '\n';
       return false;
    } else {
       stat_column = statstr;
@@ -634,7 +634,7 @@ bool fread_last_line(const std::string& fname, std::string& logline) {
     if (!logfile.is_open()) {
         logline.clear();
         last_offset = 0;
-        cerr << ".. file_last_line(): warning, " << fname << " does not exist." << std::endl;
+        std::cerr << ".. file_last_line(): warning, " << fname << " does not exist." << std::endl;
         return false;
     }
 
@@ -644,7 +644,7 @@ bool fread_last_line(const std::string& fname, std::string& logline) {
    while (std::getline(logfile, line)) {
       last_line = line;
    }
-   //cerr << "fread_last_line: last line read: " << last_line << '\n';
+   //std::cerr << "fread_last_line: last line read: " << last_line << '\n';
 
    // Update last_offset for next call
    last_offset = logfile.tellg();
@@ -672,7 +672,7 @@ bool oifs_valid_step(std::string& step, int nsteps) {
 
    // make sure step is valid integer
    if (!check_stoi(step)) {
-      cerr << "..oifs_valid_step: Invalid characters in stoi string, unable to convert step to int: " << step << '\n';
+      std::cerr << "..oifs_valid_step: Invalid characters in stoi string, unable to convert step to int: " << step << '\n';
       return false;
    } else {
       // check step is in valid range: 0 -> total no. of steps
@@ -686,7 +686,7 @@ bool oifs_valid_step(std::string& step, int nsteps) {
 }
 
 
-int print_last_lines(string filename, int maxlines) {
+int print_last_lines(std::string filename, int maxlines) {
    // Opens a file if exists and uses circular buffer to read & print last lines of file to stderr.
    // Returns: zero : either can't open file or file is empty
    //          > 0  : no. of lines in file (may be less than maxlines)
@@ -694,8 +694,8 @@ int print_last_lines(string filename, int maxlines) {
 
    int     count = 0;
    int     start, end;
-   string  lines[maxlines];
-   ifstream filein(filename);
+   std::string  lines[maxlines];
+   std::ifstream filein(filename);
 
    if ( filein.is_open() ) {
       while ( getline(filein, lines[count%maxlines]) )
@@ -705,13 +705,13 @@ int print_last_lines(string filename, int maxlines) {
    if ( count > 0 ) {
       // find the oldest lines first in the buffer, will not be at start if count > maxlines
       start = count > maxlines ? (count%maxlines) : 0;
-      end   = min(maxlines,count);
+      end   = std::min(maxlines,count);
 
-      cerr << ">>> Printing last " << end << " lines from file: " << filename << '\n';
+      std::cerr << ">>> Printing last " << end << " lines from file: " << filename << '\n';
       for ( int i=0; i<end; i++ ) {
-         cerr << lines[ (start+i)%maxlines ] << '\n';
+         std::cerr << lines[ (start+i)%maxlines ] << '\n';
       }
-      cerr << "------------------------------------------------" << '\n';
+      std::cerr << "------------------------------------------------" << '\n';
    }
 
    return count;
@@ -736,14 +736,14 @@ bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::strin
        read_delimited_line(rcf_file_line, delimiter, "CTIME", position, ctime_value);
 
     }
-    //cerr << "rcf file CSTEP: " << cstep_value << '\n';
-    //cerr << "rcf file CTIME: " << ctime_value << '\n';
+    //std::cerr << "rcf file CSTEP: " << cstep_value << '\n';
+    //std::cerr << "rcf file CTIME: " << ctime_value << '\n';
 
     if (cstep_value == "") {
-       cerr << "CSTEP value not present in rcf file" << '\n';
+       std::cerr << "CSTEP value not present in rcf file" << '\n';
        return false;
     } else if (ctime_value == "") {
-       cerr << "CTIME value not present in rcf file" << '\n';
+       std::cerr << "CTIME value not present in rcf file" << '\n';
        return false;
     } else {
        return true;
@@ -783,13 +783,13 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
 
     // Check for the existence of the zip file
     if( !file_exists(zipfile) ) {
-       cerr << "..The " << type << " zip file does not exist: " << zipfile << std::endl;
+       std::cerr << "..The " << type << " zip file does not exist: " << zipfile << std::endl;
        return 1;        // should terminate, the model won't run.
     }
 
     // Check whether the zip file is empty
     if( file_is_empty(zipfile) ) {
-       cerr << "..The " << type << " zip file is empty: " << zipfile << std::endl;
+       std::cerr << "..The " << type << " zip file is empty: " << zipfile << std::endl;
        return 1;        // should terminate, the model won't run.
     }
 		
@@ -801,17 +801,17 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
     if ( !source.empty() ) {
        // Copy the 'jf_' file to the working directory and rename
        if ( file_exists(source) ) {
-          cerr << "Copying the " << type << " file from: " << source << " to: " << destination << '\n';
+          std::cerr << "Copying the " << type << " file from: " << source << " to: " << destination << '\n';
           try {
              std::filesystem::copy_file(source, destination, std::filesystem::copy_options::overwrite_existing);
           } 
           catch (const std::filesystem::filesystem_error& e) {
-             cerr << "..copy_and_unzip: Error copying file: " << source << " to: " << destination << ",\nError: " << e.what() << "\n";
+             std::cerr << "..copy_and_unzip: Error copying file: " << source << " to: " << destination << ",\nError: " << e.what() << "\n";
              return 1;
           }
        }
        else {
-            cerr << "..The " << type << " file retrieved from get_tag does not exist: " << source << std::endl;
+            std::cerr << "..The " << type << " file retrieved from get_tag does not exist: " << source << std::endl;
             return 1;      // GC what should we do here -- return or carry on and check destination exists from a previous run?
        }
     }
@@ -819,14 +819,14 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
     // If 'source' is empty, the 'jf_' link wasn't there so we assume the real zip file is already in the working directory.
     // We could assume that the real zip file has already been unzipped, but to be safe unzip it if found.
     if (file_exists(destination) ) {
-       cerr << "Unzipping the " << type << " zip file: " << destination << '\n';
+       std::cerr << "Unzipping the " << type << " zip file: " << destination << '\n';
        if (!cpdn_unzip(destination, unzip_path)) {
-         cerr << "..Unzipping the " << type << " file failed" << std::endl;
+         std::cerr << "..Unzipping the " << type << " file failed" << std::endl;
          return 1;
        }
     }
     else {
-       cerr << "..The " << type << " file does not exist in the working directory: " << destination << std::endl;
+       std::cerr << "..The " << type << " file does not exist in the working directory: " << destination << std::endl;
        return 1;
     }
 

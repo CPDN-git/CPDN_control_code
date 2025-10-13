@@ -37,14 +37,14 @@ int main(int argc, char** argv) {
     // Initialise BOINC
     retval = initialise_boinc(wu_name, project_dir, version, standalone);
     if (retval) {
-       cerr << "..BOINC initialisation failed" << "\n";
+       std::cerr << "..BOINC initialisation failed" << "\n";
        return retval;
     }
 
-    cerr << "Control Code version: " << CODE_VERSION << '\n'; // CODE_VERSION is a macro set at compile time
-    cerr << "wu_name: " << wu_name << '\n';
-    cerr << "project_dir: " << project_dir << '\n';
-    cerr << "version: " << version << '\n';
+    std::cerr << "Control Code version: " << CODE_VERSION << '\n'; // CODE_VERSION is a macro set at compile time
+    std::cerr << "wu_name: " << wu_name << '\n';
+    std::cerr << "project_dir: " << project_dir << '\n';
+    std::cerr << "version: " << version << '\n';
 
     // Check for required command line arguments
     if (argc < 9) {
@@ -53,15 +53,15 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    cerr << "(argv0) " << argv[0] << '\n';
-    cerr << "(argv1) start_date: " << argv[1] << '\n';
-    cerr << "(argv2) exptid: " << argv[2] << '\n';
-    cerr << "(argv3) unique_member_id: " << argv[3] << '\n';
-    cerr << "(argv4) batchid: " << argv[4] << '\n';
-    cerr << "(argv5) wuid: " << argv[5] << '\n';
-    cerr << "(argv6) fclen: " << argv[6] << '\n';
-    cerr << "(argv7) app_name: " << argv[7] << '\n';
-    cerr << "(argv8) nthreads: " << argv[8] << std::endl;
+    std::cerr << "(argv0) " << argv[0] << '\n';
+    std::cerr << "(argv1) start_date: " << argv[1] << '\n';
+    std::cerr << "(argv2) exptid: " << argv[2] << '\n';
+    std::cerr << "(argv3) unique_member_id: " << argv[3] << '\n';
+    std::cerr << "(argv4) batchid: " << argv[4] << '\n';
+    std::cerr << "(argv5) wuid: " << argv[5] << '\n';
+    std::cerr << "(argv6) fclen: " << argv[6] << '\n';
+    std::cerr << "(argv7) app_name: " << argv[7] << '\n';
+    std::cerr << "(argv8) nthreads: " << argv[8] << std::endl;
 
     // Read the exptid, umid, batchid, wuid, fclen, app_name, number of threads from the command line
     std::string start_date = argv[1]; // simulation start date
@@ -81,50 +81,50 @@ int main(int argc, char** argv) {
     // Get the slots path (the current working path)
     std::string slot_path = std::filesystem::current_path();
     if (slot_path.empty()) {
-      cerr << "..current_path() returned empty" << std::endl;
+      std::cerr << "..current_path() returned empty" << std::endl;
     }
     else {
-      cerr << "Working directory is: "<< slot_path << '\n';      
+      std::cerr << "Working directory is: "<< slot_path << '\n';      
     }
 
     if (!standalone) {
 
       // Get the project path
       project_path = project_dir + std::string("/");
-      cerr << "Project directory is: " << project_path << '\n';
+      std::cerr << "Project directory is: " << project_path << '\n';
 
       // Get the app version and re-parse to add a dot
       if (version.length()==2) {
          version = version.insert(0,".");
-         //cerr << "version: " << version << '\n';
+         //std::cerr << "version: " << version << '\n';
       }
       else if (version.length()==3) {
          version = version.insert(1,".");
-         //cerr << "version: " << version << '\n';
+         //std::cerr << "version: " << version << '\n';
       }
       else if (version.length()==4) {
          version = version.insert(2,".");
-         //cerr << "version: " << version << '\n';
+         //std::cerr << "version: " << version << '\n';
       }
       else {
-         cerr << "..Error with the length of app_version, length is: " << version.length() << '\n';
+         std::cerr << "..Error with the length of app_version, length is: " << version.length() << '\n';
          return 1;
       }
 
-      cerr << "app name: " << app_name << '\n';
-      cerr << "version: " << version << '\n';
+      std::cerr << "app name: " << app_name << '\n';
+      std::cerr << "version: " << version << '\n';
     }
     // Running in standalone
     else {
-      cerr << "Running in standalone mode" << '\n';
+      std::cerr << "Running in standalone mode" << '\n';
       // Set the project path
       project_path = slot_path + std::string("/../projects/");
-      cerr << "Project directory is: " << project_path << '\n';
+      std::cerr << "Project directory is: " << project_path << '\n';
 
       // In standalone get the app version from the command line
       version = argv[9];
-      cerr << "app name: " << app_name << '\n'; 
-      cerr << "(argv9) app_version: " << argv[9] << '\n'; 
+      std::cerr << "app name: " << app_name << '\n'; 
+      std::cerr << "(argv9) app_version: " << argv[9] << '\n'; 
     }
 
     boinc_begin_critical_section();
@@ -132,15 +132,15 @@ int main(int argc, char** argv) {
     // Create temporary folder for moving the results to and uploading the results from
     // BOINC measures the disk usage on the slots directory so we must move all results out of this folder
     std::string temp_path = project_path + app_name + "_" + wuid;
-    cerr << "Location of temp folder: " << temp_path << '\n';
+    std::cerr << "Location of temp folder: " << temp_path << '\n';
     if ( !file_exists(temp_path) ) {
-      if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) cerr << "..mkdir for temp folder for results failed" << std::endl;
+      if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) std::cerr << "..mkdir for temp folder for results failed" << std::endl;
     }
 
     // Move and unzip app file
     retval = move_and_unzip_app_file(app_name, version, project_path, slot_path);
     if (retval) {
-      cerr << "..move_and_unzip_app_file failed" << "\n";
+      std::cerr << "..move_and_unzip_app_file failed" << "\n";
       return retval;
     }
 
@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
 
 	// Copy the namelist_zip to the slot directory and unzip
     if ( copy_and_unzip(namelist_zip, namelist_zip, slot_path, "namelist_zip") ) {
-       cerr << "..Copying and unzipping the namelist_zip failed: " << namelist_zip << std::endl;
+       std::cerr << "..Copying and unzipping the namelist_zip failed: " << namelist_zip << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
 
@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
 
     // Check for the existence of the namelist
     if( !file_exists(namelist_file) ) {
-       cerr << "..The namelist file does not exist: " << namelist_file << std::endl;
+       std::cerr << "..The namelist file does not exist: " << namelist_file << std::endl;
        return 1;        // should terminate, the model won't run.
     }
 
@@ -189,51 +189,51 @@ int main(int argc, char** argv) {
           ifsdata_file = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           ifsdata_file.erase(std::remove(ifsdata_file.begin(), ifsdata_file.end(), ' '), ifsdata_file.end());
-          cerr << "ifsdata_file: " << ifsdata_file << '\n';
+          std::cerr << "ifsdata_file: " << ifsdata_file << '\n';
        }
        else if (nss.str().find("IC_ANCIL_FILE") != std::string::npos) {
           ic_ancil_file = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           ic_ancil_file.erase(std::remove(ic_ancil_file.begin(), ic_ancil_file.end(), ' '), ic_ancil_file.end());
-          cerr << "ic_ancil_file: " << ic_ancil_file << '\n'; 
+          std::cerr << "ic_ancil_file: " << ic_ancil_file << '\n'; 
        }
        else if (nss.str().find("CLIMATE_DATA_FILE") != std::string::npos) {
           climate_data_file = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           climate_data_file.erase(std::remove(climate_data_file.begin(),climate_data_file.end(),' '), climate_data_file.end());
-          cerr << "climate_data_file: " << climate_data_file << '\n';
+          std::cerr << "climate_data_file: " << climate_data_file << '\n';
        }
        else if (nss.str().find("HORIZ_RESOLUTION") != std::string::npos) {
           horiz_resolution = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           horiz_resolution.erase(std::remove(horiz_resolution.begin(),horiz_resolution.end(),' '), horiz_resolution.end());
-          cerr << "horiz_resolution: " << horiz_resolution << '\n';
+          std::cerr << "horiz_resolution: " << horiz_resolution << '\n';
        }
        else if (nss.str().find("VERT_RESOLUTION") != std::string::npos) {
           vert_resolution = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           vert_resolution.erase(std::remove(vert_resolution.begin(), vert_resolution.end(), ' '), vert_resolution.end());
-          cerr << "vert_resolution: " << vert_resolution << '\n';
+          std::cerr << "vert_resolution: " << vert_resolution << '\n';
        }
        else if (nss.str().find("GRID_TYPE") != std::string::npos) {
           grid_type = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           grid_type.erase(std::remove(grid_type.begin(), grid_type.end(),' '), grid_type.end());
-          cerr << "grid_type: " << grid_type << '\n';
+          std::cerr << "grid_type: " << grid_type << '\n';
        }
        else if (nss.str().find("UPLOAD_INTERVAL") != std::string::npos) {
           tmpstr1 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           tmpstr1.erase(std::remove(tmpstr1.begin(), tmpstr1.end(),' '), tmpstr1.end());
           upload_interval=std::stoi(tmpstr1);
-          cerr << "upload_interval: " << upload_interval << '\n';
+          std::cerr << "upload_interval: " << upload_interval << '\n';
        }
        else if (nss.str().find("TRICKLE_UPLOAD_FREQUENCY") != std::string::npos) {
           tmpstr2 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),' '), tmpstr2.end());
           trickle_upload_frequency=std::stoi(tmpstr2);
-          cerr << "trickle_upload_frequency: " << trickle_upload_frequency << '\n';
+          std::cerr << "trickle_upload_frequency: " << trickle_upload_frequency << '\n';
        }
        else if (nss.str().find("UTSTEP") != std::string::npos) {
           tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
@@ -241,7 +241,7 @@ int main(int argc, char** argv) {
 	      tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
           tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
           timestep_interval = std::stoi(tmpstr3);
-          cerr << "utstep: " << timestep_interval << '\n';
+          std::cerr << "utstep: " << timestep_interval << '\n';
        }
        else if (nss.str().find("!NFRPOS") != std::string::npos) {
           tmpstr4 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
@@ -249,7 +249,7 @@ int main(int argc, char** argv) {
           tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),','), tmpstr4.end());
           tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),' '), tmpstr4.end());
           ICM_file_interval = std::stoi(tmpstr4);
-          cerr << "nfrpos: " << ICM_file_interval << '\n';
+          std::cerr << "nfrpos: " << ICM_file_interval << '\n';
        }
        else if (nss.str().find("NFRRES") != std::string::npos) {     // frequency of model output: +ve steps, -ve in hours.
           tmpstr5 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
@@ -259,7 +259,7 @@ int main(int argc, char** argv) {
           if ( check_stoi(tmpstr5) ) {
             restart_interval = stoi(tmpstr5);
           } else {
-            cerr << "..Warning, unable to read restart interval, setting to zero, got string: " << tmpstr5 << std::endl;
+            std::cerr << "..Warning, unable to read restart interval, setting to zero, got string: " << tmpstr5 << std::endl;
             restart_interval = 0;
           }
        }
@@ -270,7 +270,7 @@ int main(int argc, char** argv) {
 
     // restart frequency might be in units of hrs, convert to model steps
     if ( restart_interval < 0 )   restart_interval = abs(restart_interval)*3600 / timestep_interval;
-    cerr << "nfrres: restart dump frequency (steps) " << restart_interval << '\n';
+    std::cerr << "nfrres: restart dump frequency (steps) " << restart_interval << '\n';
 
     // this should match CUSTEP in fort.4. If it doesn't we have a problem
     total_nsteps = (num_days * 86400.0) / (double) timestep_interval;
@@ -280,7 +280,7 @@ int main(int argc, char** argv) {
 
 	// Copy the ic_ancil_zip to the slot directory and unzip
     if ( copy_and_unzip(ic_ancil_zip, ic_ancil_zip, slot_path, "ic_ancil_zip") ) {
-       cerr << "..Copying and unzipping the ic_ancil_zip failed: " << ic_ancil_zip << std::endl;
+       std::cerr << "..Copying and unzipping the ic_ancil_zip failed: " << ic_ancil_zip << std::endl;
        return 1;        // should terminate, the model won't run.
 	}
 
@@ -293,7 +293,7 @@ int main(int argc, char** argv) {
     // Check if ifsdata folder does not already exists or is empty
     if ( !file_exists(ifsdata_folder) ) {
        if (mkdir(ifsdata_folder.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) {
-          cerr << "..mkdir for ifsdata folder failed" << std::endl;
+          std::cerr << "..mkdir for ifsdata folder failed" << std::endl;
           return 1;        // should terminate, the model won't run.
        }
     }
@@ -302,7 +302,7 @@ int main(int argc, char** argv) {
     // GC TODO. convert to fs::path and get rid of handling '/'
     std::string ifsdata_check = ifsdata_folder + "/";
     if ( copy_and_unzip(ifsdata_zip, ifsdata_destination, ifsdata_check, "ifsdata_zip") ) {
-       cerr << "..Copying and unzipping the ifsdata_zip failed: " << ifsdata_zip << std::endl;
+       std::cerr << "..Copying and unzipping the ifsdata_zip failed: " << ifsdata_zip << std::endl;
        return 1;        // should terminate, the model won't run.
     }
 
@@ -316,14 +316,14 @@ int main(int argc, char** argv) {
     // Check if climate_data folder does not already exists or is empty
     if ( !file_exists(climate_data_path) ) {
        if (mkdir(climate_data_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) {
-          cerr << "..mkdir for the climate data folder failed" << std::endl;
+          std::cerr << "..mkdir for the climate data folder failed" << std::endl;
           return 1;
        }
     }               
        
     // Copy the climate_data_zip to the slot directory and unzip
     if ( copy_and_unzip(climate_data_zip, climate_data_destination, climate_data_path, "climate_data_zip") ) {
-       cerr << "..Copying and unzipping the climate_data_zip failed: " << climate_data_zip << std::endl;
+       std::cerr << "..Copying and unzipping the climate_data_zip failed: " << climate_data_zip << std::endl;
        return 1;        // should terminate, the model won't run.
     }
 
@@ -335,62 +335,62 @@ int main(int argc, char** argv) {
     // Set the OIFS_DUMMY_ACTION environmental variable, this controls what OpenIFS does if it goes into a dummy subroutine
     // Possible values are: 'quiet', 'verbose' or 'abort'
     if ( !set_env_var("OIFS_DUMMY_ACTION", "abort") ) {
-      cerr << "..Setting the OIFS_DUMMY_ACTION environmental variable failed" << std::endl;
+      std::cerr << "..Setting the OIFS_DUMMY_ACTION environmental variable failed" << std::endl;
       return 1;
     }
 
     // Set the OMP_NUM_THREADS environmental variable; nthreads must be a positive integer string
     if ( !set_env_var("OMP_NUM_THREADS", nthreads) ) {
-      cerr << "..Setting the OMP_NUM_THREADS environmental variable failed" << std::endl;
+      std::cerr << "..Setting the OMP_NUM_THREADS environmental variable failed" << std::endl;
       return 1;
     }
 
     // Set the OMP_SCHEDULE environmental variable, this enforces static thread scheduling
     if ( !set_env_var("OMP_SCHEDULE", "STATIC") ) {
-      cerr << "..Setting the OMP_SCHEDULE environmental variable failed" << std::endl;
+      std::cerr << "..Setting the OMP_SCHEDULE environmental variable failed" << std::endl;
       return 1;
     }
 
     // Set the DR_HOOK environmental variable, this controls the tracing facility in OpenIFS, off=0 and on=1
     if ( !set_env_var("DR_HOOK", "1") ) {
-      cerr << "..Setting the DR_HOOK environmental variable failed" << std::endl;
+      std::cerr << "..Setting the DR_HOOK environmental variable failed" << std::endl;
       return 1;
     }
 
     // Set the DR_HOOK_HEAPCHECK environmental variable, this ensures the heap size statistics are reported
     if ( !set_env_var("DR_HOOK_HEAPCHECK", "no") ) {
-      cerr << "..Setting the DR_HOOK_HEAPCHECK environmental variable failed" << std::endl;
+      std::cerr << "..Setting the DR_HOOK_HEAPCHECK environmental variable failed" << std::endl;
       return 1;
     }
 
     // Set the DR_HOOK_STACKCHECK environmental variable, this ensures the stack size statistics are reported
     if ( !set_env_var("DR_HOOK_STACKCHECK", "no") ) {
-      cerr << "..Setting the DR_HOOK_STACKCHECK environmental variable failed" << std::endl;
+      std::cerr << "..Setting the DR_HOOK_STACKCHECK environmental variable failed" << std::endl;
       return 1;
     }
 
     // Set the EC_MEMINFO environment variable, only applies to OpenIFS 43r3.
     // Disable EC_MEMINFO to remove the useless EC_MEMINFO messages to the stdout file to reduce filesize.
     if ( !set_env_var("EC_MEMINFO", "0") ) {
-       cerr << "..Setting the EC_MEMINFO environment variable failed" << std::endl;
+       std::cerr << "..Setting the EC_MEMINFO environment variable failed" << std::endl;
        return 1;
     }
 
     // Disable Heap memory stats at end of run; does not work for CPDN version of OpenIFS
     if ( !set_env_var("EC_PROFILE_HEAP", "0") ) {
-       cerr << "..Setting the EC_PROFILE_HEAP environment variable failed" << std::endl;
+       std::cerr << "..Setting the EC_PROFILE_HEAP environment variable failed" << std::endl;
        return 1;
     }
 
     // Disable all memory stats at end of run; does not work for CPDN version of OpenIFS
     if ( !set_env_var("EC_PROFILE_MEM", "0") ) {
-       cerr << "..Setting the EC_PROFILE_MEM environment variable failed" << std::endl;
+       std::cerr << "..Setting the EC_PROFILE_MEM environment variable failed" << std::endl;
        return 1;
     }
 
     // Set the OMP_STACKSIZE environmental variable, OpenIFS needs more stack memory per process
     if ( !set_env_var("OMP_STACKSIZE", "128M") ) {
-      cerr << "..Setting the OMP_STACKSIZE environmental variable failed" << std::endl;
+      std::cerr << "..Setting the OMP_STACKSIZE environmental variable failed" << std::endl;
       return 1;
     }
 
@@ -400,7 +400,7 @@ int main(int argc, char** argv) {
     struct rlimit core_limits;
     core_limits.rlim_cur = core_limits.rlim_max = 0;
     if (setrlimit(RLIMIT_CORE, &core_limits) != 0) {
-       cerr << "..Setting the core dump size to 0 failed" << std::endl;
+       std::cerr << "..Setting the core dump size to 0 failed" << std::endl;
        return 1;
     }
 
@@ -410,7 +410,7 @@ int main(int argc, char** argv) {
     #ifndef __APPLE__ // Linux
        stack_limits.rlim_cur = stack_limits.rlim_max = RLIM_INFINITY;
        if (setrlimit(RLIMIT_STACK, &stack_limits) != 0) {
-          cerr << "..Setting the stack limit to unlimited failed" << std::endl;
+          std::cerr << "..Setting the stack limit to unlimited failed" << std::endl;
           return 1;
        }
     #endif
@@ -421,7 +421,7 @@ int main(int argc, char** argv) {
     std::string rcf_file = slot_path + "/rcf";
 
     // Check whether the rcf file and the progress file (contains model progress) are not already present from an unscheduled shutdown
-    cerr << "Checking for rcf file and progress file: " << progress_file << '\n';
+    std::cerr << "Checking for rcf file and progress file: " << progress_file << '\n';
 
     // Handle the cases of the various states of the rcf file and progress file
     if ( !file_exists(progress_file) && !file_exists(rcf_file) ) {
@@ -436,7 +436,7 @@ int main(int argc, char** argv) {
        // If progress file exists and is empty, an error has occurred, then kill model run
        print_last_lines("NODE.001_01", 70);
        print_last_lines("ifs.stat",8);
-       cerr << "..progress file exists, but is empty => problem with model, quitting run" << '\n';
+       std::cerr << "..progress file exists, but is empty => problem with model, quitting run" << '\n';
        return 1;
     }
     else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
@@ -447,7 +447,7 @@ int main(int argc, char** argv) {
           // Otherwise if progress file exists and rcf file does not exist, an error has occurred, then kill model run
           print_last_lines("NODE.001_01", 70);
           print_last_lines("ifs.stat",8);
-          cerr << "..progress file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
+          std::cerr << "..progress file exists, but rcf file does not exist => problem with model, quitting run" << '\n';
           return 1;
        }
        else {
@@ -463,7 +463,7 @@ int main(int argc, char** argv) {
        // If rcf file exists and progress file does not exist, an error has occurred, then kill model run
        print_last_lines("NODE.001_01", 70);
        print_last_lines("ifs.stat",8);
-       cerr << "..rcf file exists, but progress file does not exist => problem with model, quitting run" << '\n';
+       std::cerr << "..rcf file exists, but progress file does not exist => problem with model, quitting run" << '\n';
        return 1;
     }
     else if ( (file_exists(progress_file) && !file_is_empty(progress_file)) && file_exists(rcf_file) ) {
@@ -478,15 +478,15 @@ int main(int argc, char** argv) {
          }
          if( rcf_file_stream.is_open() ) {
             if (read_rcf_file(rcf_file_stream, ctime_value, cstep_value)) {
-               cerr << "Read the rcf file" << '\n';
-               //cerr << "rcf file CSTEP: " << cstep_value << '\n';
-               //cerr << "rcf file CTIME: " << ctime_value << '\n';
+               std::cerr << "Read the rcf file" << '\n';
+               //std::cerr << "rcf file CSTEP: " << cstep_value << '\n';
+               //std::cerr << "rcf file CTIME: " << ctime_value << '\n';
             }
             else {
                // Reading the rcf file failed, then kill model run
                print_last_lines("NODE.001_01", 70);
                print_last_lines("ifs.stat",8);
-               cerr << "..Reading the rcf file failed" << '\n';
+               std::cerr << "..Reading the rcf file failed" << '\n';
 	            return 1;
             }
          }
@@ -498,18 +498,18 @@ int main(int argc, char** argv) {
 
        // Check if the CSTEP variable from rcf is greater than the last_iter, if so then quit model run
        if ( stoi(cstep_value) > stoi(last_iter) ) {
-          cerr << "..CSTEP variable from rcf is greater than last_iter from progress file, error has occurred, quitting model run" << '\n';
+          std::cerr << "..CSTEP variable from rcf is greater than last_iter from progress file, error has occurred, quitting model run" << '\n';
           return 1;
        }
 
        // Adjust last_iter to the step of the previous model restart dump step.
        // This is always a multiple of the restart frequency
 
-       cerr << "-- Model is restarting --\n";
-       cerr << "Adjusting last_iter, " << last_iter << ", to previous model restart step.\n";
+       std::cerr << "-- Model is restarting --\n";
+       std::cerr << "Adjusting last_iter, " << last_iter << ", to previous model restart step.\n";
        restart_iter = stoi(last_iter);
        restart_iter = restart_iter - ((restart_iter % restart_interval) - 1);   // -1 because the model will continue from restart_iter.
-       last_iter = to_string(restart_iter); 
+       last_iter = std::to_string(restart_iter); 
     }
 
     // Update progress file with current values
@@ -525,12 +525,12 @@ int main(int argc, char** argv) {
 
     // Check if upload_interval x timestep_interval equal to zero
     if (upload_interval * timestep_interval == 0) {
-       cerr << "..upload_interval x timestep_interval equals zero" << std::endl;
+       std::cerr << "..upload_interval x timestep_interval equals zero" << std::endl;
        return 1;
     }
 
     int total_length_of_simulation = (int) (num_days * 86400);
-    cerr << "total_length_of_simulation: " << total_length_of_simulation << '\n';
+    std::cerr << "total_length_of_simulation: " << total_length_of_simulation << '\n';
 
     // Get result_base_name to construct upload file names using 
     // the first upload as an example and then stripping off '_0.zip'
@@ -538,7 +538,7 @@ int main(int argc, char** argv) {
     if (!standalone) {
        retval = boinc_resolve_filename_s("upload_file_0.zip", resolved_name);
        if (retval) {
-          cerr << "..boinc_resolve_filename failed" << std::endl;
+          std::cerr << "..boinc_resolve_filename failed" << std::endl;
           return 1;
        }
 
@@ -547,9 +547,9 @@ int main(int argc, char** argv) {
           result_base_name.erase( result_base_name.length() - 2 );     // remove the '_0'
        }
 
-       cerr << "result_base_name: " << result_base_name << '\n';
+       std::cerr << "result_base_name: " << result_base_name << '\n';
        if (result_base_name.compare("upload_file") == 0) {
-          cerr << "..Failed to get result name" << std::endl;
+          std::cerr << "..Failed to get result name" << std::endl;
           return 1;
        }
     }
@@ -561,7 +561,7 @@ int main(int argc, char** argv) {
        // If exists then run file
        FILE* pipe = popen(override_env_vars.c_str(), "r");
        if (!pipe) {
-          cerr << "..Failed to open environment variables override file" << std::endl;
+          std::cerr << "..Failed to open environment variables override file" << std::endl;
           return 1;
        }
        pclose(pipe);
@@ -572,21 +572,21 @@ int main(int argc, char** argv) {
     // GC. This should be an input parameter on the command line.
     if( file_exists( slot_path + "/oifs_43r3_model.exe" ) ) {
        // Launch single process executable if present
-       cerr << "Launching single process version of oifs_43r3" << std::endl;
+       std::cerr << "Launching single process version of oifs_43r3" << std::endl;
        strCmd = slot_path + "/oifs_43r3_model.exe";
 
     } else if( file_exists( slot_path + "/oifs_43r3_omp_model.exe" ) ) {
        // Launch multi process executable if present
-       cerr << "Launching multi process version of oifs_43r3" << std::endl;
+       std::cerr << "Launching multi process version of oifs_43r3" << std::endl;
        strCmd = slot_path + "/oifs_43r3_omp_model.exe";
 
     } else if( file_exists( slot_path + "/oifs_43r3_test.exe" ) ) {
        // Launch test executable if present
-       cerr << "Launching test executable: oifs_43r3_test.exe" << std::endl;
+       std::cerr << "Launching test executable: oifs_43r3_test.exe" << std::endl;
        strCmd = slot_path + "/oifs_43r3_test.exe";
 
     } else {
-       cerr << "..No openifs executable present, ending task." << std::endl;
+       std::cerr << "..No openifs executable present, ending task." << std::endl;
        return 1;
     }
 
@@ -613,7 +613,7 @@ int main(int argc, char** argv) {
     std::string ifs_stat      = slot_path + "/ifs.stat";     // GC. TODO: should be std::filesystem path.
 
     while (process_status == 0 && model_completed == 0) {
-       sleep_until(system_clock::now() + seconds(1)); // Time gap of 1 second to reduce overhead of control code
+       std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(1)); // Time gap of 1 second to reduce overhead of control code
 
        count++;
 
@@ -629,7 +629,7 @@ int main(int argc, char** argv) {
              // Note the first line from the model has a step count of '....  CNT3      -999 ....'
              // When the iteration number changes in the ifs.stat file, OpenIFS has completed writing
              // to the output files for that iteration, those files can now be moved and uploaded.
-             //cerr << "Reading completed iteration step from last line of ifs.stat" << std::endl;
+             //std::cerr << "Reading completed iteration step from last line of ifs.stat" << std::endl;
 
              if ( fread_last_line(ifs_stat, stat_lastline) ) {       // only returns true if lastline has changed
                  if ( oifs_parse_stat(stat_lastline, iter, 4) ) {    // iter updates
@@ -640,7 +640,7 @@ int main(int argc, char** argv) {
              }
           }
 
-          //cerr << "Checking whether a new set of ICM files have been generated: iter, last_iter = " << iter << ", " << last_iter << std::endl;
+          //std::cerr << "Checking whether a new set of ICM files have been generated: iter, last_iter = " << iter << ", " << last_iter << std::endl;
 
           if (std::stoi(iter) != std::stoi(last_iter)) {
              // Construct file name of the ICM result file
@@ -651,7 +651,7 @@ int main(int argc, char** argv) {
              for (const auto& part : icm) {
                   retval = move_result_file(slot_path, temp_path, part, second_part);
                   if (retval) {
-                     cerr << "..Copying " << part << " result file to the temp folder in the projects directory failed" << "\n";
+                     std::cerr << "..Copying " << part << " result file to the temp folder in the projects directory failed" << "\n";
                      return retval;
                   }
              }
@@ -659,26 +659,26 @@ int main(int argc, char** argv) {
              // Convert iteration number to seconds
              current_iter = (std::stoi(last_iter)) * timestep_interval;
 
-             //cerr << "Current iteration of model: " << last_iter << '\n';
-             //cerr << "timestep_interval: " << timestep_interval << '\n';
-             //cerr << "current_iter: " << current_iter << '\n';
-             //cerr << "last_upload: " << last_upload << '\n';
+             //std::cerr << "Current iteration of model: " << last_iter << '\n';
+             //std::cerr << "timestep_interval: " << timestep_interval << '\n';
+             //std::cerr << "current_iter: " << current_iter << '\n';
+             //std::cerr << "last_upload: " << last_upload << '\n';
 
              // Upload a new upload file if the end of an upload_interval has been reached
              if((( current_iter - last_upload ) >= (upload_interval * timestep_interval)) && (current_iter < total_length_of_simulation)) {
                 // Create an intermediate results zip file
                 zfl.clear();
 
-                cerr << "End of upload interval reached, starting a new upload process" << std::endl;
+                std::cerr << "End of upload interval reached, starting a new upload process" << std::endl;
 
                 // *****  Critical section -- all returns must now call boinc_end_critical_section()  *****
                 boinc_begin_critical_section();
 
                 // Cycle through all the steps from the last upload to the current upload
                 for (i = (last_upload / timestep_interval); i < (current_iter / timestep_interval); i++) {
-                   //cerr << "last_upload/timestep_interval: " << (last_upload/timestep_interval) << '\n';
-                   //cerr << "current_iter/timestep_interval: " << (current_iter/timestep_interval) << '\n';
-                   //cerr << "i: " << (std::to_string(i)) << '\n';
+                   //std::cerr << "last_upload/timestep_interval: " << (last_upload/timestep_interval) << '\n';
+                   //std::cerr << "current_iter/timestep_interval: " << (current_iter/timestep_interval) << '\n';
+                   //std::cerr << "i: " << (std::to_string(i)) << '\n';
 
                    // Construct file name of the ICM result file
                    second_part = get_second_part(std::to_string(i), exptid);
@@ -688,7 +688,7 @@ int main(int argc, char** argv) {
                    for (const auto& part : icm) {
                       std::string fpath = temp_path + "/" + part + second_part;
                       if (file_exists(fpath)) {
-                         cerr << "Adding to the zip: " << fpath << '\n';
+                         std::cerr << "Adding to the zip: " << fpath << '\n';
                          zfl.push_back(fpath);
                       }
                    }
@@ -702,19 +702,19 @@ int main(int argc, char** argv) {
                       // Create the zipped upload file from the list of files added to zfl
                       upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
-                      cerr << "Compressing upload file: " << upload_file << '\n';
+                      std::cerr << "Compressing upload file: " << upload_file << '\n';
 
                       // Time the compression for diagnostics
-                      auto start = high_resolution_clock::now();
+                      auto start = chrono::high_resolution_clock::now();
                       auto outcome = cpdn_zip(upload_file, zfl);
-                      auto stop = high_resolution_clock::now();
-                      auto duration = duration_cast<milliseconds>(stop - start);
-                      cerr << "Time taken to compress upload file: " << duration.count() << " ms\n";
+                      auto stop = chrono::high_resolution_clock::now();
+                      auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
+                      std::cerr << "Time taken to compress upload file: " << duration.count() << " ms\n";
 
                       retval = outcome ? 0 : 1;
 
                       if (retval) {
-                         cerr << ".. compressing upload file failed" << std::endl;
+                         std::cerr << ".. compressing upload file failed" << std::endl;
                          boinc_end_critical_section();
                          return retval;
                       }
@@ -732,23 +732,23 @@ int main(int argc, char** argv) {
 
                       // Upload the file. In BOINC the upload file is the logical name, not the physical name
                       upload_file_name = "upload_file_" + std::to_string(upload_file_number) + ".zip";
-                      cerr << "Uploading the intermediate file: " << upload_file_name << '\n';
-                      sleep_until(system_clock::now() + seconds(20));
+                      std::cerr << "Uploading the intermediate file: " << upload_file_name << '\n';
+                      std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(20));
                       retval = boinc_upload_file(upload_file_name);
                       if (retval) {
-                         cerr << "..boinc_upload_file failed for file: " << upload_file_name << std::endl;
+                         std::cerr << "..boinc_upload_file failed for file: " << upload_file_name << std::endl;
                          boinc_end_critical_section();
                          return retval;
                       }
                       retval = boinc_upload_status(upload_file_name);
                       if (!retval) {
-                         cerr << "Finished the upload of the intermediate file: " << upload_file_name << '\n';
+                         std::cerr << "Finished the upload of the intermediate file: " << upload_file_name << '\n';
                       }
 
                       trickle_upload_count++;
                       if (trickle_upload_count == 10) {
                         // Produce trickle
-                        cerr << "Producing trickle" << std::endl;
+                        std::cerr << "Producing trickle" << std::endl;
                         process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
                         trickle_upload_count = 0;
                       }
@@ -761,7 +761,7 @@ int main(int argc, char** argv) {
                    upload_file_name = app_name + "_" + unique_member_id + "_" + start_date + "_" + \
                                std::to_string(num_days_trunc) + "_" + batchid + "_" + wuid + "_" + \
                                std::to_string(upload_file_number) + ".zip";
-                   cerr << "The current upload_file_name is: " << upload_file_name << '\n';
+                   std::cerr << "The current upload_file_name is: " << upload_file_name << '\n';
 
                    // Create the zipped upload file from the list of files added to zfl
                    upload_file = project_path + upload_file_name;
@@ -772,7 +772,7 @@ int main(int argc, char** argv) {
                       }
 
                       if (retval) {
-                         cerr << "..Creating the zipped upload file failed" << std::endl;
+                         std::cerr << "..Creating the zipped upload file failed" << std::endl;
                          boinc_end_critical_section();
                          return retval;
                       }
@@ -844,7 +844,7 @@ int main(int argc, char** argv) {
 
 
     // Time delay to ensure model files are all flushed to disk
-    sleep_until(system_clock::now() + seconds(60));
+    std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(60));
 
     // Print content of key model files to help with diagnosing problems
     print_last_lines("NODE.001_01", 70);    //  main model output log	
@@ -855,21 +855,21 @@ int main(int argc, char** argv) {
        std::string ifs_word="";
        fread_last_line(ifs_stat, stat_lastline);
        oifs_parse_stat(stat_lastline, ifs_word, 3);
-       cerr << "Last line of ifs.stat, ifs_word: " << stat_lastline << ", " << ifs_word << '\n';
+       std::cerr << "Last line of ifs.stat, ifs_word: " << stat_lastline << ", " << ifs_word << '\n';
        if (ifs_word!="CNT0") {
-         cerr << "CNT0 not found; string returned was: " << "'" << ifs_word << "'" << '\n';
+         std::cerr << "CNT0 not found; string returned was: " << "'" << ifs_word << "'" << '\n';
          // print extra files to help diagnose fail
          print_last_lines("ifs.stat",8);
          print_last_lines("rcf",11);              // openifs restart control
          print_last_lines("waminfo",17);          // wave model restart control
          print_last_lines(progress_file,8);
-         cerr << "..Failed, model did not complete successfully" << std::endl;
+         std::cerr << "..Failed, model did not complete successfully" << std::endl;
          return 1;
        }
     }
     // ifs.stat has not been produced, then model did not start
     else {
-       cerr << "..Failed, model did not start" << std::endl;
+       std::cerr << "..Failed, model did not start" << std::endl;
        return 1;	    
     }
 
@@ -884,7 +884,7 @@ int main(int argc, char** argv) {
     for (const auto& part : icm) {
        retval = move_result_file(slot_path, temp_path, part, second_part);    // GC. TODO: combine part with second_part and pass as single argument
        if (retval) {
-          cerr << "..Copying " << part << " result file to the temp folder in the projects directory failed" << "\n";
+          std::cerr << "..Copying " << part << " result file to the temp folder in the projects directory failed" << "\n";
           return retval;
        }
     }
@@ -898,19 +898,19 @@ int main(int argc, char** argv) {
     zfl.push_back(node_file);
     std::string ifsstat_file = slot_path + "/ifs.stat";
     zfl.push_back(ifsstat_file);
-    cerr << "Adding to the zip: " << node_file << '\n';
-    cerr << "Adding to the zip: " << ifsstat_file << '\n';
+    std::cerr << "Adding to the zip: " << node_file << '\n';
+    std::cerr << "Adding to the zip: " << ifsstat_file << '\n';
 
     // Read the remaining list of files from the slots directory and add the matching files to the list of files for the zip
     dirp = opendir(temp_path.c_str());
     if (dirp) {
         regcomp(&regex,"\\+",0);
         while ((dir = readdir(dirp)) != NULL) {
-          //cerr << "In temp folder: "<< dir->d_name << '\n';
+          //std::cerr << "In temp folder: "<< dir->d_name << '\n';
 
           if (!regexec(&regex,dir->d_name,(size_t) 0,NULL,0)) {
             zfl.push_back(temp_path + "/" + dir->d_name);
-            cerr << "Adding to the zip: " << (temp_path+"/" + dir->d_name) << '\n';
+            std::cerr << "Adding to the zip: " << (temp_path+"/" + dir->d_name) << '\n';
           }
         }
         regfree(&regex);
@@ -924,19 +924,19 @@ int main(int argc, char** argv) {
           // Create the zipped upload file from the list of files added to zfl
           upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
-          cerr << "Compressing final upload file: " << upload_file << '\n';
+          std::cerr << "Compressing final upload file: " << upload_file << '\n';
 
           // Time the compression for diagnostics
-          auto start = high_resolution_clock::now();
+          auto start = chrono::high_resolution_clock::now();
           auto outcome = cpdn_zip(upload_file, zfl);
-          auto stop = high_resolution_clock::now();
-          auto duration = duration_cast<milliseconds>(stop - start);
-          cerr << "Time taken to compress final upload file: " << duration.count() << " ms\n";
+          auto stop = chrono::high_resolution_clock::now();
+          auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
+          std::cerr << "Time taken to compress final upload file: " << duration.count() << " ms\n";
           
           retval = outcome ? 0 : 1;
 
           if (retval) {
-             cerr << "..compressing final upload file failed" << std::endl;
+             std::cerr << "..compressing final upload file failed" << std::endl;
              boinc_end_critical_section();
              return retval;
           }
@@ -954,17 +954,17 @@ int main(int argc, char** argv) {
 
           // Upload the file. In BOINC the upload file is the logical name, not the physical name
           upload_file_name = "upload_file_" + std::to_string(upload_file_number) + ".zip";
-          cerr << "Uploading the final file: " << upload_file_name << '\n';
-          sleep_until(system_clock::now() + seconds(20));
+          std::cerr << "Uploading the final file: " << upload_file_name << '\n';
+          std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(20));
           retval = boinc_upload_file(upload_file_name);
           if (retval) {
-             cerr << "..boinc_upload_file failed for file: " << upload_file_name << std::endl;
+             std::cerr << "..boinc_upload_file failed for file: " << upload_file_name << std::endl;
              boinc_end_critical_section();
              return retval;
           }
           retval = boinc_upload_status(upload_file_name);
           if (!retval) {
-             cerr << "Finished the upload of the final file" << '\n';
+             std::cerr << "Finished the upload of the final file" << '\n';
           }
 
 	       // Produce trickle
@@ -978,7 +978,7 @@ int main(int argc, char** argv) {
        upload_file_name = app_name + "_" + unique_member_id + "_" + start_date + "_" + \
                    std::to_string(num_days_trunc) + "_" + batchid + "_" + wuid + "_" + \
                    std::to_string(upload_file_number) + ".zip";
-       cerr << "The final upload_file_name is: " << upload_file_name << '\n';
+       std::cerr << "The final upload_file_name is: " << upload_file_name << '\n';
 
        // Create the zipped upload file from the list of files added to zfl
        upload_file = project_path + upload_file_name;
@@ -988,7 +988,7 @@ int main(int argc, char** argv) {
              retval = 1;
           }
           if (retval) {
-             cerr << "..Creating the compressed upload file failed" << std::endl;
+             std::cerr << "..Creating the compressed upload file failed" << std::endl;
              boinc_end_critical_section();
              return retval;
           }
@@ -1013,24 +1013,24 @@ int main(int argc, char** argv) {
     // Now that the task has finished, remove the temp folder
     std::filesystem::remove_all(temp_path);
 
-    sleep_until(system_clock::now() + seconds(120));
+    std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(120));
 
     // if finished normally
     if (process_status == 1){
       boinc_end_critical_section();
-      cerr << "Task finished" << std::endl;
+      std::cerr << "Task finished" << std::endl;
       boinc_finish(0);
       return 0;
     }
     else if (process_status == 2){
       boinc_end_critical_section();
-      cerr << "Task finished" << std::endl;
+      std::cerr << "Task finished" << std::endl;
       boinc_finish(0);
       return 0;
     }
     else {
       boinc_end_critical_section();
-      cerr << "Task finished" << std::endl;
+      std::cerr << "Task finished" << std::endl;
       boinc_finish(1);
       return 1;
     }	
