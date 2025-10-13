@@ -71,10 +71,12 @@ add_library(cpdn_zip cpdn_zip.cpp)
 # Link it against ZipLib to establish the dependency chain.
 target_link_libraries(cpdn_zip PUBLIC ZipLib)
 
-# --- Test Program ---
-# Define the test executable and link it against our library.
+# --- Test Programs ---
+# Define the test executables and link it against our library.
 add_executable(test_zip test_zip.cpp)
+add_executable(test_unzip test_unzip.cpp)
 target_link_libraries(test_zip PRIVATE cpdn_zip)
+target_link_libraries(test_unzip PRIVATE cpdn_zip)
 
 # --- Combined Library Creation ---
 # Add a custom command that runs AFTER the build is complete. 
