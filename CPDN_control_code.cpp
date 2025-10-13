@@ -23,10 +23,6 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     project_dir = dataBOINC.project_dir;
     version = std::to_string(dataBOINC.app_version);
 
-    //std::cerr << "wu_name: " << wu_name << '\n';
-    //std::cerr << "project_dir: " << project_dir << '\n';
-    //std::cerr << "version: " << version << '\n';
-
     // Set BOINC optional values
     BOINC_OPTIONS options;
     boinc_options_defaults(options);
@@ -50,6 +46,114 @@ bool set_env_var(const std::string& name, const std::string& val) {
 }
 
 
+// Next two functions allow the use of an override file to set environment variables for testing
+// on live tasks on remote machines.  The file is a simple text file with one variable per line in the format:
+// VAR=VALUE  or export VAR='VALUE'  (single or double quotes can be used, or no quotes)
+// e.g. export OMP_NUM_THREADS=6
+
+// GC. This function should be in a utility library eventually.
+/**
+ * @brief Attempts to parse a single line from the override file.
+ * * Handles common shell formats like "VAR=VALUE" or "export VAR='VALUE'".
+ *
+ * @param line The line of text to parse.
+ * @param name Output parameter for the variable name.
+ * @param value Output parameter for the variable value.
+ * @return true if successful, false if the line is empty, a comment, or invalid.
+ */
+bool parse_export(const std::string& line, std::string& name, std::string& value)
+{
+    std::string working_line = line;
+
+    // Trim leading whitespace
+    working_line.erase(0, working_line.find_first_not_of(" \t\n\r"));
+    
+    // Ignore comments and empty lines
+    if (working_line.empty() || working_line[0] == '#') {
+        return false;
+    }
+
+    // Strip 'export' keyword if present
+    const std::string export_prefix = "export ";
+    if (working_line.rfind(export_prefix, 0) == 0) {
+        working_line.erase(0, export_prefix.length());
+    }
+
+    // Find the '=' delimiter
+    auto eq_pos = working_line.find('=');
+    if (eq_pos == std::string::npos || eq_pos == 0) {
+        return false;
+    }
+
+    name = working_line.substr(0, eq_pos);
+    value = working_line.substr(eq_pos + 1);
+
+    // Tidy up the value (remove surrounding quotes if present)
+    value.erase(0, value.find_first_not_of(" \t\n\r")); // Trim leading whitespace
+    value.erase(value.find_last_not_of(" \t\n\r") + 1); // Trim trailing whitespace
+
+    if (value.length() >= 2 && 
+        ((value.front() == '"' && value.back() == '"') || 
+         (value.front() == '\'' && value.back() == '\''))) 
+    {
+        // Remove surrounding quotes
+        value = value.substr(1, value.length() - 2);
+    }
+    
+    // Tidy up the name (trimming is sufficient)
+    name.erase(name.find_last_not_of(" \t\n\r") + 1);
+    
+    return true;
+}
+
+
+/**
+ * @brief Checks for the override file and sets environment variables if found.
+ * * 
+ * @param project_path The base directory.
+ * @param filename The override environment filename.
+ * @return true if environment variables were successfully processed, false otherwise.
+ */
+bool process_env_overrides(const fs::path& override_envs)
+{
+    if (!fs::exists(override_envs)) {
+        // Fail silently to avoid highlighting existence of file
+        //std::cerr << "Override file not found: " << override_envs.string() << std::endl;
+        return false;
+    }
+
+    std::cerr << "Processing environment overrides from: " << override_envs.string() << std::endl;
+    
+    std::ifstream file(override_envs);
+    if (!file.is_open()) {
+        // Fail silently
+        //std::cerr << "Error: Could not open override file for reading." << std::endl;
+        return false;
+    }
+
+    std::string line;
+    bool success = true;
+    while (std::getline(file, line))
+    {
+        std::string var_name;
+        std::string var_value;
+
+        if (parse_export(line, var_name, var_value))
+        {
+            try {
+                set_env_var(var_name, var_value);
+            } 
+            catch (const std::exception& e) {
+                std::cerr << "Error setting variable: " << e.what() << std::endl;
+                success = false;       // Continue parsing, but mark as failure
+            }
+        }
+    }
+
+    return success;
+}
+
+
 // Move and unzip the app file
 int move_and_unzip_app_file(std::string app_name, std::string version, std::string project_path, std::string slot_path) {
    // GC. TODO. This code could be combined with copy_and_unzip() to avoid code duplication.
@@ -68,17 +172,17 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
     #endif
 
     // Copy the app file to the working directory
-    std::filesystem::path app_source = project_path;
+    fs::path app_source = project_path;
     app_source /= app_file;
-    std::filesystem::path app_destination = slot_path;
+    fs::path app_destination = slot_path;
     app_destination /= app_file;
     std::cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
 
     // GC. Replace boinc copy with modern C++17 filesystem copy.  Overwrite to match boinc_copy behaviour.
     try {
-      std::filesystem::copy_file(app_source, app_destination, std::filesystem::copy_options::overwrite_existing);
+       fs::copy_file(app_source, app_destination,  fs::copy_options::overwrite_existing);
     } 
-    catch (const std::filesystem::filesystem_error& e) {
+    catch (const  fs::filesystem_error& e) {
       std::cerr << "..move_and_unzip_app: Error copying file: " << app_source << " to: " << app_destination << ",\nError: " << e.what() << std::endl;
       return 1;
     }
@@ -93,8 +197,8 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
     }
     else {
        try {
-           std::filesystem::remove(app_destination);
-       } catch (const std::filesystem::filesystem_error& e) {
+            fs::remove(app_destination);
+       } catch (const  fs::filesystem_error& e) {
            std::cerr << "..move_and_unzip_app_file(). Error removing file: " << app_destination << ",\nError: " << e.what() << std::endl;
        }
     }
@@ -197,7 +301,8 @@ int check_boinc_status(long handleProcess, int process_status) {
 }
 
 
-long launch_process_oifs(const std::string slot_path, const std::string strCmd, const std::string exptid, const std::string app_name) {
+long launch_process_oifs(const std::string& project_path, const std::string& slot_path, 
+                         const std::string& strCmd, const std::string& exptid, const std::string& app_name) {
     int retval = 0;
     long handleProcess;
 
@@ -222,6 +327,16 @@ long launch_process_oifs(const std::string slot_path, const std::string strCmd, 
             std::cerr << "..Setting the GRIB_DEFINITION_PATH failed" << std::endl;
           }
           std::cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
+
+          // --------------------------------------
+          // Custom environmental variable overrides, if the override file exists.
+          // NOTE! This should only be used for testing and never advertised to users.
+          {
+            fs::path override_env_vars = project_path + "/oifs_override_env_vars";
+            process_env_overrides(override_env_vars);
+          }
+          //---------------------------------------
+
 
           if( (app_name == "openifs") || (app_name == "oifs_40r1")) { // OpenIFS 40r1
             std::cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";
@@ -451,7 +566,7 @@ bool file_exists(const std::string& filename) {
 // from: https://stackoverflow.com/questions/2390912/checking-for-an-empty-file-in-c
 // returns True if file is zero bytes, otherwise False.
 bool file_is_empty(const std::string& fpath) {
-   return (std::filesystem::file_size(fpath) == 0);
+   return ( fs::file_size(fpath) == 0);
 }
 
 
@@ -547,14 +662,14 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
     //std::cerr << "Checking for result file: " << result_file << "\n";
 
     if(file_exists(result_file)) {
-       std::cerr << "Moving result file: " << std::filesystem::path(result_file).filename() << " to projects directory.\n";
+       std::cerr << "Moving result file: " <<  fs::path(result_file).filename() << " to projects directory.\n";
        retval = boinc_copy( result_file.c_str(), temp_file.c_str() );
 
        // If result file has been successfully copied over, remove it from slots directory
        if (!retval) {
           try {
-              std::filesystem::remove(result_file);
-          } catch (const std::filesystem::filesystem_error& e) {
+               fs::remove(result_file);
+          } catch (const  fs::filesystem_error& e) {
               std::cerr << "..move_result_file(). Error removing file: " << result_file << ", error: " << e.what() << "\n";
           }
        }
@@ -777,7 +892,7 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
 
 
 // Takes the zip file, checks existence and whether empty and copies it to destination and unzips it
-// GC. TODO. Convert this to accept std::filesystem::path args.
+// GC. TODO. Convert this to accept  fs::path args.
 int copy_and_unzip(const std::string& zipfile, const std::string& destination, const std::string& unzip_path, const std::string& type) {
     int retval = 0;
 
@@ -803,9 +918,9 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
        if ( file_exists(source) ) {
           std::cerr << "Copying the " << type << " file from: " << source << " to: " << destination << '\n';
           try {
-             std::filesystem::copy_file(source, destination, std::filesystem::copy_options::overwrite_existing);
+              fs::copy_file(source, destination,  fs::copy_options::overwrite_existing);
           } 
-          catch (const std::filesystem::filesystem_error& e) {
+          catch (const  fs::filesystem_error& e) {
              std::cerr << "..copy_and_unzip: Error copying file: " << source << " to: " << destination << ",\nError: " << e.what() << "\n";
              return 1;
           }

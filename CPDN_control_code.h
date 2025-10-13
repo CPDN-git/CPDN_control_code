@@ -40,7 +40,7 @@ int initialise_boinc(std::string&, std::string&, std::string&, int&);
 int move_and_unzip_app_file(std::string, std::string, std::string, std::string);
 int check_child_status(long, int);
 int check_boinc_status(long, int);
-long launch_process_oifs(const std::string, const std::string, const std::string, const std::string);
+long launch_process_oifs(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&);
 long launch_process_wrf(const std::string, const char*);
 std::string get_tag(const std::string &str);
 void process_trickle(double, const std::string, const std::string, const std::string, int, int);
@@ -61,6 +61,12 @@ bool read_rcf_file(std::ifstream&, std::string&, std::string&);
 bool read_delimited_line(std::string&, std::string, std::string, int, std::string&);
 int copy_and_unzip(const std::string&, const std::string&, const std::string&, const std::string&);
 bool set_env_var(const std::string&, const std::string&);
+bool parse_export(const std::string&, std::string&, std::string&);
+bool process_env_overrides(const std::filesystem::path&);
+
+using namespace rapidxml;
 
 namespace chrono = std::chrono;
-using namespace rapidxml;
+namespace     fs = std::filesystem;
+
+

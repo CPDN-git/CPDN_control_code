@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     struct dirent *dir;
     regex_t regex;
     DIR *dirp=NULL;
-    std::vector<std::filesystem::path> zfl;
+    std::vector<fs::path> zfl;
     std::ifstream ifs_stat_file;
 
 
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
     int num_days_trunc = (int) num_days; // number of simulation days truncated to an integer
 
     // Get the slots path (the current working path)
-    std::string slot_path = std::filesystem::current_path();
+    std::string slot_path = fs::current_path();
     if (slot_path.empty()) {
       std::cerr << "..current_path() returned empty" << std::endl;
     }
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
     //------------------------------------------Process the namelist-----------------------------------------
     // GC. Note, this is not the 'model fort.4' namelist file being referred to here. Needs renaming to avoid confusion.
     
-   std::filesystem::path namelist_zip_path = slot_path;
+   fs::path namelist_zip_path = slot_path;
    namelist_zip_path /= std::string(app_name) + "_" +
                        unique_member_id + "_" +
                        start_date + "_" +
@@ -542,7 +542,7 @@ int main(int argc, char** argv) {
           return 1;
        }
 
-       result_base_name = std::filesystem::path(resolved_name).stem(); // returns filename without path nor '.zip'
+       result_base_name = fs::path(resolved_name).stem(); // returns filename without path nor '.zip'
        if ( result_base_name.length() > 2 ){
           result_base_name.erase( result_base_name.length() - 2 );     // remove the '_0'
        }
@@ -592,7 +592,7 @@ int main(int argc, char** argv) {
 
 
     // Start the OpenIFS job
-    handleProcess = launch_process_oifs(slot_path, strCmd, exptid, app_name);
+    handleProcess = launch_process_oifs(project_path, slot_path, strCmd, exptid, app_name);
     if (handleProcess > 0) process_status = 0;
 
     boinc_end_critical_section();
@@ -723,8 +723,8 @@ int main(int argc, char** argv) {
                          for (j = 0; j < (int) zfl.size(); ++j) {
                             // Delete the zipped file
                             try {
-                                std::filesystem::remove(zfl[j]);
-                            } catch (const std::filesystem::filesystem_error& e) {
+                                fs::remove(zfl[j]);
+                            } catch (const fs::filesystem_error& e) {
                                 std::cerr << "Error deleting file: " << zfl[j] << ", error: " << e.what() << '\n';
                             }
                          }
@@ -781,8 +781,8 @@ int main(int argc, char** argv) {
                          for (j = 0; j < (int) zfl.size(); ++j) {
                             // Delete the zipped file
                             try {
-                                std::filesystem::remove(zfl[j]);
-                            } catch (const std::filesystem::filesystem_error& e) {
+                                fs::remove(zfl[j]);
+                            } catch (const fs::filesystem_error& e) {
                                 std::cerr << "Error deleting file: " << zfl[j] << ", error: " << e.what() << '\n';
                             }
                          }
@@ -945,8 +945,8 @@ int main(int argc, char** argv) {
              for (j = 0; j < (int) zfl.size(); ++j) {
                 // Delete the zipped file
                 try {
-                    std::filesystem::remove(zfl[j]);
-                } catch (std::filesystem::filesystem_error& e) {
+                    fs::remove(zfl[j]);
+                } catch (fs::filesystem_error& e) {
                     std::cerr << "Error deleting file: " << zfl[j] << ", error: " << e.what() << '\n';
                 }
              }
@@ -997,8 +997,8 @@ int main(int argc, char** argv) {
              for (j = 0; j < (int) zfl.size(); ++j) {
                 // Delete the zipped file
                 try {
-                  std::filesystem::remove(zfl[j]);
-                } catch (const std::filesystem::filesystem_error& e) {
+                  fs::remove(zfl[j]);
+                } catch (const fs::filesystem_error& e) {
                   std::cerr << "Error deleting file: " << zfl[j] << ", error: " << e.what() << '\n';
                 }
              }
@@ -1011,7 +1011,7 @@ int main(int argc, char** argv) {
     //-------------------------------------------------------------------------------------------------------
 
     // Now that the task has finished, remove the temp folder
-    std::filesystem::remove_all(temp_path);
+    fs::remove_all(temp_path);
 
     std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(120));
 
