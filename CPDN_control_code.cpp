@@ -391,8 +391,9 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 // Open a file and return the "jf_*" string contained between the arrow tags else empty string
 // Explanation for Glenn's benefit :).  First run of task the filename contains a 'reference'
 // to the real zip file stored in the projects directory.  The reference is in the form of a
-// single line e.g. ">jf_ic_ancil_1234<". This function extracts the jf_ string so the real zip
-// file can be copied to overwrite the file containing the 'jf_' file reference. 
+// single line e.g. ">../../projects/climateprediction.net/jf_ic_ancil_1234<". 
+// This function extracts the strings between the delimiters, so the real zip
+// file can be copied to overwrite the file containing the 'jf_' file reference (yes, it's odd and not a good idea).
 // On the subsequent runs, what should happen is the client restores the original
 // 'reference' (jf_ic_ancil_1234) file. However, some clients do not do this which 
 // means the real zip file is there instead. In this case get_tag returns an empty string.
@@ -401,8 +402,8 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 //     Otherwise we end up with a very big string in memory!
 std::string get_tag(const std::string &filename) {
 
-    constexpr size_t MAX_READ_BYTES = 64;
-    std::string buffer(MAX_READ_BYTES, '\0'); // Initialize string with space for 64 chars
+    constexpr auto MAX_READ_BYTES = 256;
+    std::string buffer(MAX_READ_BYTES, '\0');
 
     std::ifstream file(filename, std::ios::in | std::ios::binary);
 
@@ -412,7 +413,7 @@ std::string get_tag(const std::string &filename) {
     }
 
     // Read up to MAX_READ_BYTES directly into the string's underlying buffer
-    file.read(buffer.data(), MAX_READ_BYTES);
+    file.read(buffer.data(), MAX_READ_BYTES-1);          // Leave space for final null terminator set above
     
     // Get the actual number of bytes read
     std::streamsize chars_read = file.gcount();
@@ -421,17 +422,16 @@ std::string get_tag(const std::string &filename) {
        return std::string(); // File is empty
     }
 
-    // Resize the string to the actual number of characters read
+    // Resize string to actual number of chars read
     buffer.resize(chars_read);
 
     const char START_TAG = '>';
     const char END_TAG = '<';
 
-    // Find the first occurrence of the start delimiter
+    // Find the delimiters
     auto start_pos = buffer.find(START_TAG);
 
     if (start_pos == std::string::npos) {
-        // '>' not found within the first 64 characters
         return std::string();
     }
 
@@ -439,7 +439,6 @@ std::string get_tag(const std::string &filename) {
     auto tag_end   = buffer.find(END_TAG, tag_start);
 
     if (tag_end == std::string::npos) {
-        // '<' not found after the '>'
         return std::string();
     }
 
@@ -926,8 +925,8 @@ int copy_and_unzip(const std::string& zipfile, const std::string& destination, c
           }
        }
        else {
-            std::cerr << "..The " << type << " file retrieved from get_tag does not exist: " << source << std::endl;
-            return 1;      // GC what should we do here -- return or carry on and check destination exists from a previous run?
+          std::cerr << "..The " << type << " file retrieved from get_tag does not exist: " << source << std::endl;
+          return 1;      // GC what should we do here -- return or carry on and check destination exists from a previous run?
        }
     }
 
