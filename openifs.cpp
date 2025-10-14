@@ -557,9 +557,6 @@ int main(int argc, char** argv) {
     // Determine which OpenIFS executable to run.
     // GC. This should be an input parameter on the command line.
 
-    // Bug workaround. The current cpdn_unzip function does not preserve executable permissions on Linux.
-    // Manually set the permissions on the OpenIFS executable before running.
-    // Use fs::path to benefit from cross-platform handling of dir paths.
     fs::path single_proc_exe = slot_path;
              single_proc_exe /= "oifs_43r3_model.exe";
     fs::path multi_proc_exe  = slot_path;
@@ -567,32 +564,26 @@ int main(int argc, char** argv) {
     fs::path test_proc_exe   = slot_path;
              test_proc_exe /= "oifs_43r3_test.exe";
     std::string exe_cmd{};
-    bool exe_perms = true;
 
     if ( file_exists(single_proc_exe.string()) ) {
        exe_cmd = single_proc_exe.string();
-       if ( !set_exec_perms(exe_cmd)) {
-          exe_perms = false;
-      }
     }
     else if ( file_exists(multi_proc_exe.string()) ) {
-      exe_cmd = multi_proc_exe.string();
-      if ( !set_exec_perms(exe_cmd)) {
-         exe_perms = false;
-      }
+       exe_cmd = multi_proc_exe.string();
     }
-    else if ( file_exists(test_proc_exe) ) {
-      exe_cmd = test_proc_exe;
-      if ( !set_exec_perms(exe_cmd)) {
-         exe_perms = false;
-      }
-    }
-    if (!exe_perms) {
-       std::cerr << "..Cannot start model. Setting execute permission for OpenIFS executable failed: " << exe_cmd << std::endl;
-       return 1;
+    else if ( file_exists(test_proc_exe.string()) ) {
+       exe_cmd = test_proc_exe.string();
     }
     if (exe_cmd.empty()) {
        std::cerr << "..No OpenIFS executable found, ending task." << std::endl;
+       return 1;
+    }
+
+    // Bug workaround. The current cpdn_unzip function does not preserve executable permissions on Linux.
+    // Manually set the permissions on the OpenIFS executable before running.
+
+    if ( !set_exec_perms(exe_cmd) ) {
+       std::cerr << "..Cannot start model. Setting execute permission for OpenIFS executable failed: " << exe_cmd << std::endl;
        return 1;
     }
 
@@ -1019,24 +1010,22 @@ int main(int argc, char** argv) {
     // Now that the task has finished, remove the temp folder
     fs::remove_all(temp_path);
 
+    boinc_end_critical_section();
+
+    // Delay to ensure all files are flushed to disk before exiting
     std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(120));
+    std::cerr << "Task finished." << std::endl;
 
     // if finished normally
     if (process_status == 1){
-      boinc_end_critical_section();
-      std::cerr << "Task finished" << std::endl;
-      boinc_finish(0);
+      boinc_finish(0);     // boinc_finish() exits, no further code executed after this call.
       return 0;
     }
     else if (process_status == 2){
-      boinc_end_critical_section();
-      std::cerr << "Task finished" << std::endl;
       boinc_finish(0);
       return 0;
     }
     else {
-      boinc_end_critical_section();
-      std::cerr << "Task finished" << std::endl;
       boinc_finish(1);
       return 1;
     }	
