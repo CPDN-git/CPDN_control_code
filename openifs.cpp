@@ -554,20 +554,6 @@ int main(int argc, char** argv) {
        }
     }
 
-    // Check for the existence of a Unix script file to override the environment variables
-    // Script file should be in projects folder
-    std::string override_env_vars = project_path + "override_env_variables";
-    if(file_exists(override_env_vars)) {
-       // If exists then run file
-       FILE* pipe = popen(override_env_vars.c_str(), "r");
-       if (!pipe) {
-          std::cerr << "..Failed to open environment variables override file" << std::endl;
-          return 1;
-       }
-       pclose(pipe);
-    }
-
-
     // Set the strCmd parameter
     // GC. This should be an input parameter on the command line.
     if( file_exists( slot_path + "/oifs_43r3_model.exe" ) ) {
