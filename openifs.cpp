@@ -558,17 +558,17 @@ int main(int argc, char** argv) {
     // GC. This should be an input parameter on the command line.
     if( file_exists( slot_path + "/oifs_43r3_model.exe" ) ) {
        // Launch single process executable if present
-       std::cerr << "Launching single process version of oifs_43r3" << std::endl;
+       std::cerr << "Launching single process OpenIFS executable: oifs_43r3_model.exe." << std::endl;
        strCmd = slot_path + "/oifs_43r3_model.exe";
 
     } else if( file_exists( slot_path + "/oifs_43r3_omp_model.exe" ) ) {
        // Launch multi process executable if present
-       std::cerr << "Launching multi process version of oifs_43r3" << std::endl;
+       std::cerr << "Launching multi process OpenIFS executable: oifs_43r3_omp_model.exe." << std::endl;
        strCmd = slot_path + "/oifs_43r3_omp_model.exe";
 
     } else if( file_exists( slot_path + "/oifs_43r3_test.exe" ) ) {
        // Launch test executable if present
-       std::cerr << "Launching test executable: oifs_43r3_test.exe" << std::endl;
+       std::cerr << "Launching test OpenIFS executable: oifs_43r3_test.exe" << std::endl;
        strCmd = slot_path + "/oifs_43r3_test.exe";
 
     } else {
