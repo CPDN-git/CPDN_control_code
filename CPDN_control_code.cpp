@@ -314,6 +314,9 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
        }
        case 0: { //The child process
 
+          // GC. All these, together with the envs in openifs.cpp, should be part of a 
+          //     OIFS specific function called here.
+
           // Set the GRIB_SAMPLES_PATH environmental variable
           std::string GRIB_SAMPLES_var = slot_path + "/eccodes/ifs_samples/grib1_mlgrib2";
           if ( !set_env_var("GRIB_SAMPLES_PATH", GRIB_SAMPLES_var) )  {
@@ -344,7 +347,7 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
           }
           else {  // OpenIFS 43r3 and above
             std::cerr << "Executing the command: " << strCmd << "\n";
-            retval = execl(strCmd.c_str(),strCmd.c_str(),NULL,NULL,NULL);
+            retval = execl(strCmd.c_str(),strCmd.c_str(),NULL);
           }
 
           // If execl returns then there was an error
