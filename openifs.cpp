@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     std::string project_path, tmpstr1, tmpstr2, tmpstr3, tmpstr4, tmpstr5;
     std::string ifs_line="", iter="0", second_part, first_part, upload_file_name;
     std::string resolved_name, upload_file, result_base_name;
-    std::string wu_name="", project_dir="", version="", strCmd="";
+    std::string wu_name="", project_dir="", version="";
     int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
     int last_cpu_time, upload_file_number, model_completed, restart_iter, standalone=0;
@@ -554,31 +554,47 @@ int main(int argc, char** argv) {
        }
     }
 
-    // Set the strCmd parameter
+    // Determine which OpenIFS executable to run.
     // GC. This should be an input parameter on the command line.
-    if( file_exists( slot_path + "/oifs_43r3_model.exe" ) ) {
-       // Launch single process executable if present
-       std::cerr << "Launching single process OpenIFS executable: oifs_43r3_model.exe." << std::endl;
-       strCmd = slot_path + "/oifs_43r3_model.exe";
 
-    } else if( file_exists( slot_path + "/oifs_43r3_omp_model.exe" ) ) {
-       // Launch multi process executable if present
-       std::cerr << "Launching multi process OpenIFS executable: oifs_43r3_omp_model.exe." << std::endl;
-       strCmd = slot_path + "/oifs_43r3_omp_model.exe";
+    // Bug workaround. The current cpdn_unzip function does not preserve executable permissions on Linux.
+    // Manually set the permissions on the OpenIFS executable before running.
+    fs::path single_proc_exe = slot_path / "oifs_43r3_model.exe";
+    fs::path multi_proc_exe  = slot_path / "oifs_43r3_omp_model.exe";
+    fs::path test_proc_exe   = slot_path / "oifs_43r3_test.exe";
+    std::string exe_cmd{};
+    bool exe_perms = true;
 
-    } else if( file_exists( slot_path + "/oifs_43r3_test.exe" ) ) {
-       // Launch test executable if present
-       std::cerr << "Launching test OpenIFS executable: oifs_43r3_test.exe" << std::endl;
-       strCmd = slot_path + "/oifs_43r3_test.exe";
-
-    } else {
-       std::cerr << "..No openifs executable present, ending task." << std::endl;
+    if ( file_exists(single_proc_exe.string()) ) {
+       exe_cmd = single_proc_exe.string();
+       if ( !set_exec_perms(exe_cmd)) {
+          exe_perms = false;
+      }
+    }
+    else if ( file_exists(multi_proc_exe.string()) ) {
+      exe_cmd = multi_proc_exe.string();
+      if ( !set_exec_perms(exe_cmd)) {
+         exe_perms = false;
+      }
+    }
+    else if ( file_exists(test_proc_exe) ) {
+      exe_cmd = test_proc_exe;
+      if ( !set_exec_perms(exe_cmd)) {
+         exe_perms = false;
+      }
+    }
+    if (!exe_perms) {
+       std::cerr << "..Cannot start model. Setting execute permission for OpenIFS executable failed: " << exe_cmd << std::endl;
+       return 1;
+    }
+    if (exe_cmd.empty()) {
+       std::cerr << "..No OpenIFS executable found, ending task." << std::endl;
        return 1;
     }
 
-
     // Start the OpenIFS job
-    handleProcess = launch_process_oifs(project_path, slot_path, strCmd, exptid, app_name);
+    std::cerr << "Launching OpenIFS executable: " << exe_cmd << std::endl;
+    handleProcess = launch_process_oifs(project_path, slot_path, exe_cmd, exptid, app_name);
     if (handleProcess > 0) process_status = 0;
 
     boinc_end_critical_section();

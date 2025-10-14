@@ -155,6 +155,24 @@ bool process_env_overrides(const fs::path& override_envs)
 }
 
 
+// Set executable permissions on a file
+// GC. this is a workaround currently as cpdn_unzip does not set unix permissions correctly.
+bool set_exec_perms(const std::string& filepath) {
+    // 0755 is a standard permission set:
+    // Owner: Read, Write, Execute
+    // Group: Read, Execute
+    // Others: Read, Execute
+
+    #if defined(__unix__) || defined(__APPLE__) || defined(__linux__)
+    if (chmod(filepath.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0 ) {
+        return false;
+    }
+    #endif
+
+    return true;
+}
+
+
 // Move and unzip the app file
 int move_and_unzip_app_file(std::string app_name, std::string version, std::string project_path, std::string slot_path) {
    // GC. TODO. This code could be combined with copy_and_unzip() to avoid code duplication.
