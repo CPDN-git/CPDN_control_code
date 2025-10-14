@@ -300,7 +300,8 @@ int check_boinc_status(long handleProcess, int process_status) {
     }
 }
 
-
+// GC. TODO. There does not need to be two separate functions for launching WRF and OpenIFS.
+//     This should be combined with more args to handle differences.
 long launch_process_oifs(const std::string& project_path, const std::string& slot_path, 
                          const std::string& strCmd, const std::string& exptid, const std::string& app_name) {
     int retval = 0;
@@ -315,24 +316,24 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
        case 0: { //The child process
 
           // GC. All these, together with the envs in openifs.cpp, should be part of a 
-          //     OIFS specific function called here.
+          //     OIFS specific function to set ALL the env vars and called here.
 
           // Set the GRIB_SAMPLES_PATH environmental variable
           std::string GRIB_SAMPLES_var = slot_path + "/eccodes/ifs_samples/grib1_mlgrib2";
           if ( !set_env_var("GRIB_SAMPLES_PATH", GRIB_SAMPLES_var) )  {
-            std::cerr << "..Setting the GRIB_SAMPLES_PATH failed" << std::endl;
+             std::cerr << "..Setting the GRIB_SAMPLES_PATH failed" << std::endl;
           }
           std::cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << getenv("GRIB_SAMPLES_PATH") << "\n";
 
           // Set the GRIB_DEFINITION_PATH environmental variable
           std::string GRIB_DEF_var = slot_path + "/eccodes/definitions";
           if ( !set_env_var("GRIB_DEFINITION_PATH", GRIB_DEF_var) )  {
-            std::cerr << "..Setting the GRIB_DEFINITION_PATH failed" << std::endl;
+             std::cerr << "..Setting the GRIB_DEFINITION_PATH failed" << std::endl;
           }
           std::cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
 
           // --------------------------------------
-          // Custom environmental variable overrides, if the override file exists.
+          // Custom environment variable overrides, if the override file exists.
           // NOTE! This should only be used for testing and never advertised to users.
           {
             fs::path override_env_vars = project_path + "/oifs_override_env_vars";
@@ -340,6 +341,8 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
           }
           //---------------------------------------
 
+          // Execute OpenIFS
+          // OpenIFS 40r1 requires the -e exptid argument, later versions do not.
 
           if( (app_name == "openifs") || (app_name == "oifs_40r1")) { // OpenIFS 40r1
             std::cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";
@@ -347,12 +350,17 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
           }
           else {  // OpenIFS 43r3 and above
             std::cerr << "Executing the command: " << strCmd << "\n";
-            retval = execl(strCmd.c_str(),strCmd.c_str(),NULL);
+            retval = execl(strCmd.c_str(),strCmd.c_str(),NULL);         // always returns -1 on failure
           }
 
           // If execl returns then there was an error
-          std::cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << ",exptid=" << exptid << std::endl;
-          exit(retval);
+          int syserr = errno;    // grab the error before any other system call.
+          const char* syserr_msg = strerror(syserr);
+
+          std::cerr << "..Launch process failed: execl - errno = " << syserr << ", " << syserr_msg
+                     << "\n slot_path=" << slot_path << ",strCmd=" << strCmd << ",exptid=" << exptid << std::endl;
+
+          exit(syserr);  // exit child process with system code for better remote diagnosis.
           break;
        }
        default: 
