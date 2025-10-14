@@ -122,7 +122,8 @@ bool process_env_overrides(const fs::path& override_envs)
         return false;
     }
 
-    std::cerr << "Processing environment overrides from: " << override_envs.string() << std::endl;
+    // debugging only. don't advertise existence of file
+    //std::cerr << "Processing environment overrides from: " << override_envs.string() << std::endl;
     
     std::ifstream file(override_envs);
     if (!file.is_open()) {
@@ -145,7 +146,7 @@ bool process_env_overrides(const fs::path& override_envs)
             } 
             catch (const std::exception& e) {
                 std::cerr << "Error setting variable: " << e.what() << std::endl;
-                success = false;       // Continue parsing, but mark as failure
+                success = false;
             }
         }
     }
@@ -342,6 +343,7 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
 
           // Execute OpenIFS
           // OpenIFS 40r1 requires the -e exptid argument, later versions do not.
+          // GC. TODO. This should be an input arg, not decided here.
 
           if( (app_name == "openifs") || (app_name == "oifs_40r1")) { // OpenIFS 40r1
             std::cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";
@@ -352,7 +354,7 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
             execl(strCmd.c_str(),strCmd.c_str(),NULL);         // always returns -1 on failure
           }
 
-          // If execl returns then there was an error
+          // If execl returns there was an error
           int syserr = errno;    // grab the error before any other system call.
           const char* syserr_msg = strerror(syserr);
 
