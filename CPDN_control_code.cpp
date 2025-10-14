@@ -304,7 +304,6 @@ int check_boinc_status(long handleProcess, int process_status) {
 //     This should be combined with more args to handle differences.
 long launch_process_oifs(const std::string& project_path, const std::string& slot_path, 
                          const std::string& strCmd, const std::string& exptid, const std::string& app_name) {
-    int retval = 0;
     long handleProcess;
 
     switch((handleProcess=fork())) {
@@ -346,11 +345,11 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
 
           if( (app_name == "openifs") || (app_name == "oifs_40r1")) { // OpenIFS 40r1
             std::cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";
-            retval = execl(strCmd.c_str(),strCmd.c_str(),"-e",exptid.c_str(),NULL);
+            execl(strCmd.c_str(),strCmd.c_str(),"-e",exptid.c_str(),NULL);
           }
           else {  // OpenIFS 43r3 and above
             std::cerr << "Executing the command: " << strCmd << "\n";
-            retval = execl(strCmd.c_str(),strCmd.c_str(),NULL);         // always returns -1 on failure
+            execl(strCmd.c_str(),strCmd.c_str(),NULL);         // always returns -1 on failure
           }
 
           // If execl returns then there was an error
