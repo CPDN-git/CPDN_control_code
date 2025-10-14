@@ -63,7 +63,7 @@ int copy_and_unzip(const std::string&, const std::string&, const std::string&, c
 bool set_env_var(const std::string&, const std::string&);
 bool parse_export(const std::string&, std::string&, std::string&);
 bool process_env_overrides(const std::filesystem::path&);
-bool set_exec_perms(const std::string&)
+bool set_exec_perms(const std::string&);
 
 using namespace rapidxml;
 

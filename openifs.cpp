@@ -559,9 +559,13 @@ int main(int argc, char** argv) {
 
     // Bug workaround. The current cpdn_unzip function does not preserve executable permissions on Linux.
     // Manually set the permissions on the OpenIFS executable before running.
-    fs::path single_proc_exe = slot_path / "oifs_43r3_model.exe";
-    fs::path multi_proc_exe  = slot_path / "oifs_43r3_omp_model.exe";
-    fs::path test_proc_exe   = slot_path / "oifs_43r3_test.exe";
+    // Use fs::path to benefit from cross-platform handling of dir paths.
+    fs::path single_proc_exe = slot_path;
+             single_proc_exe /= "oifs_43r3_model.exe";
+    fs::path multi_proc_exe  = slot_path;
+             multi_proc_exe /= "oifs_43r3_omp_model.exe";
+    fs::path test_proc_exe   = slot_path;
+             test_proc_exe /= "oifs_43r3_test.exe";
     std::string exe_cmd{};
     bool exe_perms = true;
 
