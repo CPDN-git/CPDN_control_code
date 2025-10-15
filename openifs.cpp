@@ -97,7 +97,7 @@ bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
 
 int main(int argc, char** argv) {
     std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;
-    std::string project_path, tmpstr1, tmpstr2, tmpstr3, tmpstr4, tmpstr5;
+    std::string project_path;
     std::string ifs_line="", iter="0", second_part, first_part, upload_file_name;
     std::string resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="";
@@ -117,12 +117,7 @@ int main(int argc, char** argv) {
     std::vector<fs::path> zfl;
     std::ifstream ifs_stat_file;
 
-
-    // Set defaults for input arguments
-    std::string OIFS_EXPID;           // model experiment id, must match string in filenames
-    const std::string namelist="fort.4";    // namelist file
-
-    // Initialise BOINC
+    // Initialise BOINC to get the project directory, workunit name and app version
     retval = initialise_boinc(wu_name, project_dir, version, standalone);
     if (retval) {
        std::cerr << "..BOINC initialisation failed" << "\n";
@@ -161,7 +156,7 @@ int main(int argc, char** argv) {
     std::string app_name = argv[7];   // CPDN app name
     std::string nthreads = argv[8];   // number of OPENMP threads
 
-    OIFS_EXPID = exptid;
+    const std::string namelist="fort.4";    // namelist file
 
     double num_days = atof(fclen.c_str()); // number of simulation days
     int num_days_trunc = (int) num_days; // number of simulation days truncated to an integer
@@ -310,29 +305,29 @@ int main(int argc, char** argv) {
           std::cerr << "grid_type: " << grid_type << '\n';
        }
        else if (nss.str().find("UPLOAD_INTERVAL") != std::string::npos) {
-          tmpstr1 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          std::string tmpstr1 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           tmpstr1.erase(std::remove(tmpstr1.begin(), tmpstr1.end(),' '), tmpstr1.end());
           upload_interval=std::stoi(tmpstr1);
           std::cerr << "upload_interval: " << upload_interval << '\n';
        }
        else if (nss.str().find("TRICKLE_UPLOAD_FREQUENCY") != std::string::npos) {
-          tmpstr2 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          std::string tmpstr2 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
           tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),' '), tmpstr2.end());
           trickle_upload_frequency=std::stoi(tmpstr2);
           std::cerr << "trickle_upload_frequency: " << trickle_upload_frequency << '\n';
        }
        else if (nss.str().find("UTSTEP") != std::string::npos) {
-          tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          std::string tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace
-	      tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
+	       tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
           tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
           timestep_interval = std::stoi(tmpstr3);
           std::cerr << "utstep: " << timestep_interval << '\n';
        }
        else if (nss.str().find("!NFRPOS") != std::string::npos) {
-          tmpstr4 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          std::string tmpstr4 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace and commas
           tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),','), tmpstr4.end());
           tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),' '), tmpstr4.end());
@@ -340,7 +335,7 @@ int main(int argc, char** argv) {
           std::cerr << "nfrpos: " << ICM_file_interval << '\n';
        }
        else if (nss.str().find("NFRRES") != std::string::npos) {     // frequency of model output: +ve steps, -ve in hours.
-          tmpstr5 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
+          std::string tmpstr5 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
           // Remove any whitespace and commas
           tmpstr5.erase(std::remove(tmpstr5.begin(), tmpstr5.end(),','), tmpstr5.end());
           tmpstr5.erase(std::remove(tmpstr5.begin(), tmpstr5.end(),' '), tmpstr5.end());
