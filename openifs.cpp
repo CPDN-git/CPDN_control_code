@@ -96,16 +96,13 @@ bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
 
 
 int main(int argc, char** argv) {
-    std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;
     std::string project_path;
-    std::string ifs_line="", iter="0", second_part, first_part, upload_file_name;
+    std::string second_part, first_part, upload_file_name;
     std::string resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="";
-    int upload_interval, trickle_upload_frequency, timestep_interval, ICM_file_interval, retval=0, i, j;
+    int retval=0;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
     int last_cpu_time, upload_file_number, model_completed, restart_iter, standalone=0;
-    int last_upload; // The time of the last upload file (in seconds)
-    std::string last_iter = "0";
     long handleProcess;
     double fraction_done = 0;
     double current_cpu_time = 0;
@@ -248,10 +245,23 @@ int main(int argc, char** argv) {
 
 
     // Parse the fort.4 namelist for the filenames and variables
+    std::string ifsdata_file;
+    std::string ic_ancil_file;
+    std::string climate_data_file;
     std::string namelist_file = slot_path + "/" + namelist;
     std::string namelist_line = "";
     std::string delimiter = "=";
+    std::string horiz_resolution;
+    std::string vert_resolution;
+    std::string grid_type;
+
     std::ifstream namelist_filestream;
+
+    int upload_interval;
+    int trickle_upload_frequency;
+    int timestep_interval;
+    int ICM_file_interval;
+    
 
     // Check for the existence of the namelist
     if( !file_exists(namelist_file) ) {
@@ -435,6 +445,9 @@ int main(int argc, char** argv) {
     // Define the name and location of the progress file and the rcf file
     std::string progress_file = slot_path + "/progress_file_" + wuid;
     std::string rcf_file = slot_path + "/rcf";
+
+    std::string last_iter = "0";
+    int last_upload; // The time of the last upload file (in seconds)
 
     // Check whether the rcf file and the progress file (contains model progress) are not already present from an unscheduled shutdown
     std::cerr << "Checking for rcf file and progress file: " << progress_file << '\n';
@@ -625,7 +638,10 @@ int main(int argc, char** argv) {
     std::string stat_lastline = "";
     std::string ifs_stat      = slot_path + "/ifs.stat";     // GC. TODO: should be std::filesystem path.
 
-    while (process_status == 0 && model_completed == 0) {
+    while (process_status == 0 && model_completed == 0)
+    {
+       std::string iter = "0";
+
        std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(1)); // Time gap of 1 second to reduce overhead of control code
 
        count++;
@@ -688,7 +704,7 @@ int main(int argc, char** argv) {
                 boinc_begin_critical_section();
 
                 // Cycle through all the steps from the last upload to the current upload
-                for (i = (last_upload / timestep_interval); i < (current_iter / timestep_interval); i++) {
+                for (auto i = (last_upload / timestep_interval); i < (current_iter / timestep_interval); i++) {
                    //std::cerr << "last_upload/timestep_interval: " << (last_upload/timestep_interval) << '\n';
                    //std::cerr << "current_iter/timestep_interval: " << (current_iter/timestep_interval) << '\n';
                    //std::cerr << "i: " << (std::to_string(i)) << '\n';
@@ -733,7 +749,7 @@ int main(int argc, char** argv) {
                       }
                       else {
                          // Files have been successfully zipped, they can now be deleted
-                         for (j = 0; j < (int) zfl.size(); ++j) {
+                         for (auto j = 0; j < (int) zfl.size(); ++j) {
                             // Delete the zipped file
                             try {
                                 fs::remove(zfl[j]);
@@ -791,7 +807,7 @@ int main(int argc, char** argv) {
                       }
                       else {
                          // Files have been successfully zipped, they can now be deleted
-                         for (j = 0; j < (int) zfl.size(); ++j) {
+                         for (auto j = 0; j < (int) zfl.size(); ++j) {
                             // Delete the zipped file
                             try {
                                 fs::remove(zfl[j]);
@@ -853,7 +869,7 @@ int main(int argc, char** argv) {
       process_status = check_child_status(handleProcess,process_status);
     }
 
-    //-------------------------------------------------------------------------------------------------------	
+    //----- End of main loop ---------------------------------------------------------------------------	
 
 
     // Time delay to ensure model files are all flushed to disk
@@ -955,7 +971,7 @@ int main(int argc, char** argv) {
           }
           else {
              // Files have been successfully zipped, they can now be deleted
-             for (j = 0; j < (int) zfl.size(); ++j) {
+             for (auto j = 0; j < (int) zfl.size(); ++j) {
                 // Delete the zipped file
                 try {
                     fs::remove(zfl[j]);
@@ -1007,7 +1023,7 @@ int main(int argc, char** argv) {
           }
           else {
              // Files have been successfully zipped, they can now be deleted
-             for (j = 0; j < (int) zfl.size(); ++j) {
+             for (auto j = 0; j < (int) zfl.size(); ++j) {
                 // Delete the zipped file
                 try {
                   fs::remove(zfl[j]);
