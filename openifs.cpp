@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
          version.insert(1, ".");
       }
       else if (vlen > 2 ) {
-         version.insert(len-2, ".");
+         version.insert(vlen-2, ".");
       }
 
       std::cerr << "app name: " << app_name << '\n'
