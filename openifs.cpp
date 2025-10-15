@@ -233,18 +233,18 @@ int main(int argc, char** argv) {
     std::string climate_data_file;
     std::string namelist_file = slot_path + "/" + namelist;
     std::string namelist_line;
-    std::string delimiter = "=";
     std::string horiz_resolution;
     std::string vert_resolution;
     std::string grid_type;
-
+    std::string tmpstr;
     std::ifstream namelist_filestream;
+    char equals = '=';
 
-    int upload_interval;
-    int trickle_upload_frequency;
-    int timestep_interval;
-    int ICM_file_interval;
-    int restart_interval;
+    int upload_interval = 0;
+    int trickle_upload_frequency = 0;
+    int timestep_interval = 0;
+    int ICM_file_interval = 0;
+    int restart_interval = 0;
     
 
     // Check for the existence of the namelist
@@ -259,89 +259,83 @@ int main(int argc, char** argv) {
     }
 
     // Read the namelist file
-    while(std::getline(namelist_filestream, namelist_line)) { //get 1 row as a string
-       std::istringstream nss(namelist_line);   //put line into stringstream
+    // GC. Recoded. Remove unneccesary use of istringstream and fix incorrect length of substr
+    // GC. TODO. add in code to deal with namelist variables NOT found.
+    while(std::getline(namelist_filestream, namelist_line))
+    {
+       tmpstr.clear();
 
-       if (nss.str().find("IFSDATA_FILE") != std::string::npos) {
-          ifsdata_file = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace
-          ifsdata_file.erase(std::remove(ifsdata_file.begin(), ifsdata_file.end(), ' '), ifsdata_file.end());
+       if ( extract_key_value( namelist_line,"IFSDATA_FILE", equals, ifsdata_file ) ) {
           std::cerr << "ifsdata_file: " << ifsdata_file << '\n';
        }
-       else if (nss.str().find("IC_ANCIL_FILE") != std::string::npos) {
-          ic_ancil_file = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace
-          ic_ancil_file.erase(std::remove(ic_ancil_file.begin(), ic_ancil_file.end(), ' '), ic_ancil_file.end());
+       else if ( extract_key_value( namelist_line, "IC_ANCIL_FILE", equals, ic_ancil_file ) ) {
           std::cerr << "ic_ancil_file: " << ic_ancil_file << '\n'; 
        }
-       else if (nss.str().find("CLIMATE_DATA_FILE") != std::string::npos) {
-          climate_data_file = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace
-          climate_data_file.erase(std::remove(climate_data_file.begin(),climate_data_file.end(),' '), climate_data_file.end());
+       else if ( extract_key_value( namelist_line, "CLIMATE_DATA_FILE", equals, climate_data_file ) ) {
           std::cerr << "climate_data_file: " << climate_data_file << '\n';
        }
-       else if (nss.str().find("HORIZ_RESOLUTION") != std::string::npos) {
-          horiz_resolution = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace
-          horiz_resolution.erase(std::remove(horiz_resolution.begin(),horiz_resolution.end(),' '), horiz_resolution.end());
+       else if ( extract_key_value( namelist_line, "HORIZ_RESOLUTION", equals, horiz_resolution ) ) {
           std::cerr << "horiz_resolution: " << horiz_resolution << '\n';
        }
-       else if (nss.str().find("VERT_RESOLUTION") != std::string::npos) {
-          vert_resolution = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace
-          vert_resolution.erase(std::remove(vert_resolution.begin(), vert_resolution.end(), ' '), vert_resolution.end());
+       else if ( extract_key_value( namelist_line, "VERT_RESOLUTION", equals, vert_resolution ) ) {
           std::cerr << "vert_resolution: " << vert_resolution << '\n';
        }
-       else if (nss.str().find("GRID_TYPE") != std::string::npos) {
-          grid_type = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace
-          grid_type.erase(std::remove(grid_type.begin(), grid_type.end(),' '), grid_type.end());
+       else if ( extract_key_value( namelist_line, "GRID_TYPE", equals, grid_type ) ) {
           std::cerr << "grid_type: " << grid_type << '\n';
        }
-       else if (nss.str().find("UPLOAD_INTERVAL") != std::string::npos) {
-          std::string tmpstr1 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace
-          tmpstr1.erase(std::remove(tmpstr1.begin(), tmpstr1.end(),' '), tmpstr1.end());
-          upload_interval=std::stoi(tmpstr1);
-          std::cerr << "upload_interval: " << upload_interval << '\n';
+       else if ( extract_key_value( namelist_line, "UPLOAD_INTERVAL", equals, tmpstr ) ) {
+          try {
+            upload_interval=std::stoi(tmpstr);
+          }
+          catch (...) {
+            std::cerr << ".. Warning, unable to read upload interval, setting to zero, got string: " << tmpstr << std::endl;
+          }
        }
-       else if (nss.str().find("TRICKLE_UPLOAD_FREQUENCY") != std::string::npos) {
-          std::string tmpstr2 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace
-          tmpstr2.erase(std::remove(tmpstr2.begin(), tmpstr2.end(),' '), tmpstr2.end());
-          trickle_upload_frequency=std::stoi(tmpstr2);
-          std::cerr << "trickle_upload_frequency: " << trickle_upload_frequency << '\n';
+       else if ( extract_key_value( namelist_line, "TRICKLE_UPLOAD_FREQUENCY", equals, tmpstr ) ) {
+          try {
+            trickle_upload_frequency=std::stoi(tmpstr);
+          }
+          catch (...) {
+            std::cerr << ".. Warning, unable to read trickle upload frequency, setting to zero, got string: " << tmpstr << std::endl;
+          }
        }
-       else if (nss.str().find("UTSTEP") != std::string::npos) {
-          std::string tmpstr3 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace
-	       tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),','), tmpstr3.end());
-          tmpstr3.erase(std::remove(tmpstr3.begin(), tmpstr3.end(),' '), tmpstr3.end());
-          timestep_interval = std::stoi(tmpstr3);
-          std::cerr << "utstep: " << timestep_interval << '\n';
+       else if ( extract_key_value( namelist_line, "UTSTEP", equals, tmpstr) ) {
+          try {
+            timestep_interval = std::stoi(tmpstr);
+          }
+          catch (...) {
+            std::cerr << ".. Warning, unable to read timestep interval, setting to zero, got string: " << tmpstr << std::endl;
+            timestep_interval = 0;
+          }
        }
-       else if (nss.str().find("!NFRPOS") != std::string::npos) {
-          std::string tmpstr4 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace and commas
-          tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),','), tmpstr4.end());
-          tmpstr4.erase(std::remove(tmpstr4.begin(), tmpstr4.end(),' '), tmpstr4.end());
-          ICM_file_interval = std::stoi(tmpstr4);
-          std::cerr << "nfrpos: " << ICM_file_interval << '\n';
+       else if ( extract_key_value( namelist_line, "NFRPOS", equals, tmpstr) ) {   // frequency of model OUTPUT file creation (for upload); +ve model steps, -ve hours.
+          try {
+            ICM_file_interval = std::stoi(tmpstr);
+          }
+          catch (...) {
+            std::cerr << ".. Warning, unable to read ICM model output interval, setting to zero, got string: " << tmpstr << std::endl;
+            ICM_file_interval = 0;
+          }
        }
-       else if (nss.str().find("NFRRES") != std::string::npos) {     // frequency of model output: +ve steps, -ve in hours.
-          std::string tmpstr5 = nss.str().substr(nss.str().find(delimiter)+1, nss.str().length()-1);
-          // Remove any whitespace and commas
-          tmpstr5.erase(std::remove(tmpstr5.begin(), tmpstr5.end(),','), tmpstr5.end());
-          tmpstr5.erase(std::remove(tmpstr5.begin(), tmpstr5.end(),' '), tmpstr5.end());
-          if ( check_stoi(tmpstr5) ) {
-            restart_interval = stoi(tmpstr5);
-          } else {
-            std::cerr << "..Warning, unable to read restart interval, setting to zero, got string: " << tmpstr5 << std::endl;
+       else if ( extract_key_value( namelist_line, "NFRRES", equals, tmpstr) ) {     // frequency of model RESTART file creation: +ve model steps, -ve hours.
+          try {
+            restart_interval = stoi(tmpstr);
+          }
+          catch (...) {
+            std::cerr << "..Warning, unable to read restart interval, setting to zero, got string: " << tmpstr << std::endl;
             restart_interval = 0;
           }
        }
     }
     namelist_filestream.close();
+
+
+    std::cerr << "Values read from model namelist are: \n"
+               << " Upload_interval: " << upload_interval << '\n'
+               << " Trickle_upload_frequency: " << trickle_upload_frequency << '\n'
+               << " UTSTEP: " << timestep_interval << '\n'
+               << " NFRPOS: " << ICM_file_interval << '\n'
+               << " NFFRES: " << restart_interval << '\n';
 
     //-------------------------------------------------------------------------------------------------------
 
