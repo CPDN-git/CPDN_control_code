@@ -97,17 +97,12 @@ bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
 
 int main(int argc, char** argv) {
     std::string project_path;
-    std::string second_part, first_part, upload_file_name;
     std::string resolved_name, upload_file, result_base_name;
     std::string wu_name="", project_dir="", version="";
     int retval=0;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
     int last_cpu_time, upload_file_number, model_completed, restart_iter, standalone=0;
     long handleProcess;
-    double fraction_done = 0;
-    double current_cpu_time = 0;
-    double restart_cpu_time = 0;
-    double total_nsteps = 0;
     struct dirent *dir;
     regex_t regex;
     DIR *dirp=NULL;
@@ -366,7 +361,7 @@ int main(int argc, char** argv) {
     std::cerr << "nfrres: restart dump frequency (steps) " << restart_interval << '\n';
 
     // this should match CUSTEP in fort.4. If it doesn't we have a problem
-    total_nsteps = (num_days * 86400.0) / (double) timestep_interval;
+    double total_nsteps = (num_days * 86400.0) / (double) timestep_interval;
 
     // Process the ic_ancil_file:
     std::string ic_ancil_zip = slot_path + "/" + ic_ancil_file + ".zip";
@@ -542,10 +537,13 @@ int main(int argc, char** argv) {
     }
 
     // Update progress file with current values
+    double current_cpu_time = 0;
+    double fraction_done = 0;
+
+    trickle_upload_count = 0;
+
     update_progress_file(progress_file, current_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
-    fraction_done = 0;
-    trickle_upload_count = 0;
 
     // seconds between upload files: upload_interval
     // seconds between ICM files: ICM_file_interval * timestep_interval
@@ -637,6 +635,7 @@ int main(int argc, char** argv) {
     // Periodically check the process status and the BOINC client status
     std::string stat_lastline = "";
     std::string ifs_stat      = slot_path + "/ifs.stat";     // GC. TODO: should be std::filesystem path.
+    std::string second_part   = "";
 
     while (process_status == 0 && model_completed == 0)
     {
@@ -760,7 +759,7 @@ int main(int argc, char** argv) {
                       }
 
                       // Upload the file. In BOINC the upload file is the logical name, not the physical name
-                      upload_file_name = "upload_file_" + std::to_string(upload_file_number) + ".zip";
+                      std::string upload_file_name = "upload_file_" + std::to_string(upload_file_number) + ".zip";
                       std::cerr << "Uploading the intermediate file: " << upload_file_name << '\n';
                       std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(20));
                       retval = boinc_upload_file(upload_file_name);
@@ -787,9 +786,9 @@ int main(int argc, char** argv) {
 
                 // Else running in standalone
                 else {
-                   upload_file_name = app_name + "_" + unique_member_id + "_" + start_date + "_" + \
-                               std::to_string(num_days_trunc) + "_" + batchid + "_" + wuid + "_" + \
-                               std::to_string(upload_file_number) + ".zip";
+                   std::string upload_file_name = app_name + "_" + unique_member_id + "_" + start_date + "_" + \
+                                                  std::to_string(num_days_trunc) + "_" + batchid + "_" + wuid + "_" + \
+                                                  std::to_string(upload_file_number) + ".zip";
                    std::cerr << "The current upload_file_name is: " << upload_file_name << '\n';
 
                    // Create the zipped upload file from the list of files added to zfl
@@ -851,8 +850,11 @@ int main(int argc, char** argv) {
       //fprintf(stderr,"fraction done: %.6f\n", fraction_done);
 
       if (!standalone) {
-         // If the current iteration is at a restart iteration     
-         if (!(std::stoi(iter)%restart_interval)) restart_cpu_time = current_cpu_time;
+         // If the current iteration is at a restart iteration
+         double restart_cpu_time = 0;
+         if ( !(std::stoi(iter)%restart_interval)) {
+            restart_cpu_time = current_cpu_time;
+         }
 
          // Provide the current cpu_time to the BOINC server (note: this is deprecated in BOINC)
          boinc_report_app_status(current_cpu_time, restart_cpu_time, fraction_done);
@@ -982,7 +984,7 @@ int main(int argc, char** argv) {
           }
 
           // Upload the file. In BOINC the upload file is the logical name, not the physical name
-          upload_file_name = "upload_file_" + std::to_string(upload_file_number) + ".zip";
+          std::string upload_file_name = "upload_file_" + std::to_string(upload_file_number) + ".zip";
           std::cerr << "Uploading the final file: " << upload_file_name << '\n';
           std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(20));
           retval = boinc_upload_file(upload_file_name);
@@ -1004,9 +1006,9 @@ int main(int argc, char** argv) {
 
     // Else running in standalone
     else {
-       upload_file_name = app_name + "_" + unique_member_id + "_" + start_date + "_" + \
-                   std::to_string(num_days_trunc) + "_" + batchid + "_" + wuid + "_" + \
-                   std::to_string(upload_file_number) + ".zip";
+       std::string upload_file_name = app_name + "_" + unique_member_id + "_" + start_date + "_" + \
+                                      std::to_string(num_days_trunc) + "_" + batchid + "_" + wuid + "_" + \
+                                      std::to_string(upload_file_number) + ".zip";
        std::cerr << "The final upload_file_name is: " << upload_file_name << '\n';
 
        // Create the zipped upload file from the list of files added to zfl
