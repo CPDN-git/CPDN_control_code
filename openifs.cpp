@@ -97,16 +97,12 @@ bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
 
 int main(int argc, char** argv) {
     std::string project_path;
-    std::string wu_name, project_dir, version;
+    std::string wu_name;
+    std::string project_dir;
+    std::string version;
+    int standalone=0;
+
     int retval=0;
-    int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
-    int last_cpu_time, upload_file_number, model_completed, restart_iter, standalone=0;
-    long handleProcess;
-    struct dirent *dir;
-    regex_t regex;
-    DIR *dirp=NULL;
-    std::vector<fs::path> zfl;
-    std::ifstream ifs_stat_file;
 
     // Initialise BOINC to get the project directory, workunit name and app version
     retval = initialise_boinc(wu_name, project_dir, version, standalone);
@@ -255,6 +251,7 @@ int main(int argc, char** argv) {
     int trickle_upload_frequency;
     int timestep_interval;
     int ICM_file_interval;
+    int restart_interval;
     
 
     // Check for the existence of the namelist
@@ -356,7 +353,9 @@ int main(int argc, char** argv) {
     //-------------------------------------------------------------------------------------------------------
 
     // restart frequency might be in units of hrs, convert to model steps
-    if ( restart_interval < 0 )   restart_interval = abs(restart_interval)*3600 / timestep_interval;
+    if ( restart_interval < 0 ) {
+       restart_interval = abs(restart_interval)*3600 / timestep_interval;
+    }
     std::cerr << "nfrres: restart dump frequency (steps) " << restart_interval << '\n';
 
     // this should match CUSTEP in fort.4. If it doesn't we have a problem
@@ -441,7 +440,11 @@ int main(int argc, char** argv) {
     std::string rcf_file = slot_path + "/rcf";
 
     std::string last_iter = "0";
-    int last_upload; // The time of the last upload file (in seconds)
+
+    int model_completed = 0;  // Indicates model state; 0=not completed, 1=completed
+    int last_upload;          // The time of the last upload file (in seconds)
+    int upload_file_number = 0;
+    int last_cpu_time = 0;
 
     // Check whether the rcf file and the progress file (contains model progress) are not already present from an unscheduled shutdown
     std::cerr << "Checking for rcf file and progress file: " << progress_file << '\n';
@@ -531,7 +534,7 @@ int main(int argc, char** argv) {
 
        std::cerr << "-- Model is restarting --\n";
        std::cerr << "Adjusting last_iter, " << last_iter << ", to previous model restart step.\n";
-       restart_iter = stoi(last_iter);
+       int restart_iter = stoi(last_iter);
        restart_iter = restart_iter - ((restart_iter % restart_interval) - 1);   // -1 because the model will continue from restart_iter.
        last_iter = std::to_string(restart_iter); 
     }
@@ -540,7 +543,7 @@ int main(int argc, char** argv) {
     double current_cpu_time = 0;
     double fraction_done = 0;
 
-    trickle_upload_count = 0;
+    int trickle_upload_count = 0;
 
     update_progress_file(progress_file, current_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
@@ -618,8 +621,10 @@ int main(int argc, char** argv) {
     }
 
     // Start the OpenIFS job
+    int process_status=1;
+
     std::cerr << "Launching OpenIFS executable: " << exe_cmd << std::endl;
-    handleProcess = launch_process_oifs(project_path, slot_path, exe_cmd, nthreads, exptid, app_name);
+    long handleProcess = launch_process_oifs(project_path, slot_path, exe_cmd, nthreads, exptid, app_name);
     if (handleProcess > 0) process_status = 0;     //GC TODO. Need to handle when handleProcess =-1, i.e. launch failed (see code in launch_process_oifs)
 
     boinc_end_critical_section();
@@ -639,6 +644,11 @@ int main(int argc, char** argv) {
     std::string stat_lastline;
     std::string second_part;
     std::string ifs_stat = slot_path + "/ifs.stat";     // GC. TODO: should be std::filesystem path.
+
+    std::vector<fs::path> zfl;
+
+    int count = 0;
+    int current_iter = 0;
 
     while (process_status == 0 && model_completed == 0)
     {
@@ -936,19 +946,24 @@ int main(int argc, char** argv) {
     std::cerr << "Adding to the zip: " << ifsstat_file << '\n';
 
     // Read the remaining list of files from the slots directory and add the matching files to the list of files for the zip
-    dirp = opendir(temp_path.c_str());
-    if (dirp) {
-        regcomp(&regex,"\\+",0);
-        while ((dir = readdir(dirp)) != NULL) {
-          //std::cerr << "In temp folder: "<< dir->d_name << '\n';
+    // GC. TODO. Update to C++ 17.
+    DIR *dirp = opendir(temp_path.c_str());
+    if (dirp)
+    {
+      regex_t regex;
+      regcomp(&regex,"\\+",0);
 
-          if (!regexec(&regex,dir->d_name,(size_t) 0,NULL,0)) {
+      struct dirent *dir;
+      while ((dir = readdir(dirp)) != NULL) {
+         //std::cerr << "In temp folder: "<< dir->d_name << '\n';
+
+         if (!regexec(&regex,dir->d_name,(size_t) 0,NULL,0)) {
             zfl.push_back(temp_path + "/" + dir->d_name);
             std::cerr << "Adding to the zip: " << (temp_path+"/" + dir->d_name) << '\n';
-          }
-        }
-        regfree(&regex);
-        closedir(dirp);
+         }
+      }
+      regfree(&regex);
+      closedir(dirp);
     }
 
     // If running under a BOINC client
