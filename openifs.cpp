@@ -165,21 +165,13 @@ int main(int argc, char** argv) {
       std::cerr << "Project directory is: " << project_path << '\n';
 
       // Get the app version and re-parse to add a dot
-      if (version.length()==2) {
-         version = version.insert(0,".");
-         //std::cerr << "version: " << version << '\n';
+      // GC. This assumes version is X.Y, X.YY or XX.YY format, will get it wrong if not.
+      auto vlen = version.length();
+      if ( vlen == 2 ) {
+         version.insert(1, ".");
       }
-      else if (version.length()==3) {
-         version = version.insert(1,".");
-         //std::cerr << "version: " << version << '\n';
-      }
-      else if (version.length()==4) {
-         version = version.insert(2,".");
-         //std::cerr << "version: " << version << '\n';
-      }
-      else {
-         std::cerr << "..Error with the length of app_version, length is: " << version.length() << '\n';
-         return 1;
+      else if (vlen > 2 ) {
+         version.insert(len-2, ".");
       }
 
       std::cerr << "app name: " << app_name << '\n'
