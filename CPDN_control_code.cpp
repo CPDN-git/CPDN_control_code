@@ -7,6 +7,7 @@
 
 #include <iomanip>
 #include "CPDN_control_code.h"
+#include "openifs.h"
 
 // Initialise BOINC and set the options
 int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {
@@ -321,34 +322,26 @@ int check_boinc_status(long handleProcess, int process_status) {
 
 // GC. TODO. There does not need to be two separate functions for launching WRF and OpenIFS.
 //     This should be combined with more args to handle differences.
+// Returns process id on success, -1 on failure.
 long launch_process_oifs(const std::string& project_path, const std::string& slot_path, 
-                         const std::string& strCmd, const std::string& exptid, const std::string& app_name) {
+                         const std::string& strCmd, const std::string& nthreads,
+                         const std::string& exptid, const std::string& app_name)
+{
     long handleProcess;
 
     switch((handleProcess=fork())) {
        case -1: {
           std::cerr << "..Unable to start a new child process" << "\n";
-          exit(0);
+          return -1;      // Don't exit() here, return as this is the parent process.
           break;
        }
-       case 0: { //The child process
+       case 0: { // The child process
 
-          // GC. All these, together with the envs in openifs.cpp, should be part of a 
-          //     OIFS specific function to set ALL the env vars and called here.
-
-          // Set the GRIB_SAMPLES_PATH environmental variable
-          std::string GRIB_SAMPLES_var = slot_path + "/eccodes/ifs_samples/grib1_mlgrib2";
-          if ( !set_env_var("GRIB_SAMPLES_PATH", GRIB_SAMPLES_var) )  {
-             std::cerr << "..Setting the GRIB_SAMPLES_PATH failed" << std::endl;
+           // Set the environment variables for the executable.
+           if ( !oifs_setenvs(slot_path, nthreads) ) {
+             std::cerr << "..Setting the OpenIFS environmental variables failed" << std::endl;
+             exit(1);   // Can't continue child process so exit to end child process.
           }
-          std::cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << getenv("GRIB_SAMPLES_PATH") << "\n";
-
-          // Set the GRIB_DEFINITION_PATH environmental variable
-          std::string GRIB_DEF_var = slot_path + "/eccodes/definitions";
-          if ( !set_env_var("GRIB_DEFINITION_PATH", GRIB_DEF_var) )  {
-             std::cerr << "..Setting the GRIB_DEFINITION_PATH failed" << std::endl;
-          }
-          std::cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
 
           // --------------------------------------
           // Custom environment variable overrides, if the override file exists.

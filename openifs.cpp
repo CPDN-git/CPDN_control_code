@@ -7,6 +7,94 @@
 
 #include "CPDN_control_code.h"
 
+
+// Set the required OpenIFS environment variables
+bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
+
+    // For memory safety, keep env strings static so they persist for the life of the program.
+
+    // Set the OIFS_DUMMY_ACTION environmental variable, this controls what OpenIFS does if it goes into a dummy subroutine
+    // Possible values are: 'quiet', 'verbose' or 'abort'
+    if ( !set_env_var("OIFS_DUMMY_ACTION", "abort") ) {
+      std::cerr << "..Setting the OIFS_DUMMY_ACTION environmental variable failed" << std::endl;
+      return false;
+    }
+
+    // Set the OMP_NUM_THREADS environmental variable; nthreads must be a positive integer string
+    if ( !set_env_var("OMP_NUM_THREADS", nthreads) ) {
+      std::cerr << "..Setting the OMP_NUM_THREADS environmental variable failed" << std::endl;
+      return false;
+    }
+
+    // Set the OMP_SCHEDULE environmental variable, this enforces static thread scheduling
+    if ( !set_env_var("OMP_SCHEDULE", "STATIC") ) {
+      std::cerr << "..Setting the OMP_SCHEDULE environmental variable failed" << std::endl;
+      return false;
+    }
+
+    // Set the DR_HOOK environmental variable, this controls the tracing facility in OpenIFS, off=0 and on=1
+    if ( !set_env_var("DR_HOOK", "1") ) {
+      std::cerr << "..Setting the DR_HOOK environmental variable failed" << std::endl;
+      return false;
+    }
+
+    // Set the DR_HOOK_HEAPCHECK environmental variable, this ensures the heap size statistics are reported
+    if ( !set_env_var("DR_HOOK_HEAPCHECK", "no") ) {
+      std::cerr << "..Setting the DR_HOOK_HEAPCHECK environmental variable failed" << std::endl;
+      return false;
+    }
+
+    // Set the DR_HOOK_STACKCHECK environmental variable, this ensures the stack size statistics are reported
+    if ( !set_env_var("DR_HOOK_STACKCHECK", "no") ) {
+      std::cerr << "..Setting the DR_HOOK_STACKCHECK environmental variable failed" << std::endl;
+      return false;
+    }
+
+    // Set the EC_MEMINFO environment variable, only applies to OpenIFS 43r3.
+    // Disable EC_MEMINFO to remove the useless EC_MEMINFO messages to the stdout file to reduce filesize.
+    if ( !set_env_var("EC_MEMINFO", "0") ) {
+       std::cerr << "..Setting the EC_MEMINFO environment variable failed" << std::endl;
+       return false;
+    }
+
+    // Disable Heap memory stats at end of run; does not work for CPDN version of OpenIFS
+    if ( !set_env_var("EC_PROFILE_HEAP", "0") ) {
+       std::cerr << "..Setting the EC_PROFILE_HEAP environment variable failed" << std::endl;
+       return false;
+    }
+
+    // Disable all memory stats at end of run; does not work for CPDN version of OpenIFS
+    if ( !set_env_var("EC_PROFILE_MEM", "0") ) {
+       std::cerr << "..Setting the EC_PROFILE_MEM environment variable failed" << std::endl;
+       return false;
+    }
+
+    // Set the OMP_STACKSIZE environmental variable, OpenIFS needs more stack memory per process
+    if ( !set_env_var("OMP_STACKSIZE", "128M") ) {
+      std::cerr << "..Setting the OMP_STACKSIZE environmental variable failed" << std::endl;
+      return false;
+    }
+
+    // Set the GRIB_SAMPLES_PATH environmental variable
+    std::string GRIB_SAMPLES_var = slot_path + "/eccodes/ifs_samples/grib1_mlgrib2";
+    if ( !set_env_var("GRIB_SAMPLES_PATH", GRIB_SAMPLES_var) )  {
+      std::cerr << "..Setting the GRIB_SAMPLES_PATH failed" << std::endl;
+      return false;
+    }
+    std::cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << getenv("GRIB_SAMPLES_PATH") << "\n";
+
+    // Set the GRIB_DEFINITION_PATH environmental variable
+    std::string GRIB_DEF_var = slot_path + "/eccodes/definitions";
+    if ( !set_env_var("GRIB_DEFINITION_PATH", GRIB_DEF_var) )  {
+      std::cerr << "..Setting the GRIB_DEFINITION_PATH failed" << std::endl;
+      return false;
+    }
+    std::cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << getenv("GRIB_DEFINITION_PATH") << "\n";
+
+    return true;
+}
+
+
 int main(int argc, char** argv) {
     std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;
     std::string project_path, tmpstr1, tmpstr2, tmpstr3, tmpstr4, tmpstr5;
@@ -327,73 +415,6 @@ int main(int argc, char** argv) {
        return 1;        // should terminate, the model won't run.
     }
 
-
-    //------------------------------------Set the environmental variables------------------------------------
-
-    // For memory safety, keep env strings static so they persist for the life of the program.
-
-    // Set the OIFS_DUMMY_ACTION environmental variable, this controls what OpenIFS does if it goes into a dummy subroutine
-    // Possible values are: 'quiet', 'verbose' or 'abort'
-    if ( !set_env_var("OIFS_DUMMY_ACTION", "abort") ) {
-      std::cerr << "..Setting the OIFS_DUMMY_ACTION environmental variable failed" << std::endl;
-      return 1;
-    }
-
-    // Set the OMP_NUM_THREADS environmental variable; nthreads must be a positive integer string
-    if ( !set_env_var("OMP_NUM_THREADS", nthreads) ) {
-      std::cerr << "..Setting the OMP_NUM_THREADS environmental variable failed" << std::endl;
-      return 1;
-    }
-
-    // Set the OMP_SCHEDULE environmental variable, this enforces static thread scheduling
-    if ( !set_env_var("OMP_SCHEDULE", "STATIC") ) {
-      std::cerr << "..Setting the OMP_SCHEDULE environmental variable failed" << std::endl;
-      return 1;
-    }
-
-    // Set the DR_HOOK environmental variable, this controls the tracing facility in OpenIFS, off=0 and on=1
-    if ( !set_env_var("DR_HOOK", "1") ) {
-      std::cerr << "..Setting the DR_HOOK environmental variable failed" << std::endl;
-      return 1;
-    }
-
-    // Set the DR_HOOK_HEAPCHECK environmental variable, this ensures the heap size statistics are reported
-    if ( !set_env_var("DR_HOOK_HEAPCHECK", "no") ) {
-      std::cerr << "..Setting the DR_HOOK_HEAPCHECK environmental variable failed" << std::endl;
-      return 1;
-    }
-
-    // Set the DR_HOOK_STACKCHECK environmental variable, this ensures the stack size statistics are reported
-    if ( !set_env_var("DR_HOOK_STACKCHECK", "no") ) {
-      std::cerr << "..Setting the DR_HOOK_STACKCHECK environmental variable failed" << std::endl;
-      return 1;
-    }
-
-    // Set the EC_MEMINFO environment variable, only applies to OpenIFS 43r3.
-    // Disable EC_MEMINFO to remove the useless EC_MEMINFO messages to the stdout file to reduce filesize.
-    if ( !set_env_var("EC_MEMINFO", "0") ) {
-       std::cerr << "..Setting the EC_MEMINFO environment variable failed" << std::endl;
-       return 1;
-    }
-
-    // Disable Heap memory stats at end of run; does not work for CPDN version of OpenIFS
-    if ( !set_env_var("EC_PROFILE_HEAP", "0") ) {
-       std::cerr << "..Setting the EC_PROFILE_HEAP environment variable failed" << std::endl;
-       return 1;
-    }
-
-    // Disable all memory stats at end of run; does not work for CPDN version of OpenIFS
-    if ( !set_env_var("EC_PROFILE_MEM", "0") ) {
-       std::cerr << "..Setting the EC_PROFILE_MEM environment variable failed" << std::endl;
-       return 1;
-    }
-
-    // Set the OMP_STACKSIZE environmental variable, OpenIFS needs more stack memory per process
-    if ( !set_env_var("OMP_STACKSIZE", "128M") ) {
-      std::cerr << "..Setting the OMP_STACKSIZE environmental variable failed" << std::endl;
-      return 1;
-    }
-
     //-------------------------------------------------------------------------------------------------------
 
     // Set the core dump size to 0
@@ -589,8 +610,8 @@ int main(int argc, char** argv) {
 
     // Start the OpenIFS job
     std::cerr << "Launching OpenIFS executable: " << exe_cmd << std::endl;
-    handleProcess = launch_process_oifs(project_path, slot_path, exe_cmd, exptid, app_name);
-    if (handleProcess > 0) process_status = 0;
+    handleProcess = launch_process_oifs(project_path, slot_path, exe_cmd, nthreads, exptid, app_name);
+    if (handleProcess > 0) process_status = 0;     //GC TODO. Need to handle when handleProcess =-1, i.e. launch failed (see code in launch_process_oifs)
 
     boinc_end_critical_section();
 
