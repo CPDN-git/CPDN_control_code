@@ -97,8 +97,7 @@ bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
 
 int main(int argc, char** argv) {
     std::string project_path;
-    std::string resolved_name, upload_file, result_base_name;
-    std::string wu_name="", project_dir="", version="";
+    std::string wu_name, project_dir, version;
     int retval=0;
     int process_status=1, restart_interval, current_iter=0, count=0, trickle_upload_count;
     int last_cpu_time, upload_file_number, model_completed, restart_iter, standalone=0;
@@ -244,8 +243,8 @@ int main(int argc, char** argv) {
     std::string ic_ancil_file;
     std::string climate_data_file;
     std::string namelist_file = slot_path + "/" + namelist;
-    std::string namelist_line = "";
-    std::string delimiter = "=";
+    std::string namelist_line;
+    std::string delimiter;
     std::string horiz_resolution;
     std::string vert_resolution;
     std::string grid_type;
@@ -493,7 +492,8 @@ int main(int argc, char** argv) {
     else if ( (file_exists(progress_file) && !file_is_empty(progress_file)) && file_exists(rcf_file) ) {
        // If progress file exists and is not empty and rcf file exists, then read rcf file and progress file
        std::ifstream rcf_file_stream;
-       std::string ctime_value = "", cstep_value = "";
+       std::string ctime_value;
+       std::string cstep_value;
 
        // Read the rcf file
        if( file_exists( rcf_file ) ) {
@@ -562,7 +562,10 @@ int main(int argc, char** argv) {
     // Get result_base_name to construct upload file names using 
     // the first upload as an example and then stripping off '_0.zip'
 
+    std::string result_base_name;
+
     if (!standalone) {
+       std::string resolved_name;
        retval = boinc_resolve_filename_s("upload_file_0.zip", resolved_name);
        if (retval) {
           std::cerr << "..boinc_resolve_filename failed" << std::endl;
@@ -633,9 +636,9 @@ int main(int argc, char** argv) {
     //----------------------------------------Main loop------------------------------------------------------
 
     // Periodically check the process status and the BOINC client status
-    std::string stat_lastline = "";
-    std::string ifs_stat      = slot_path + "/ifs.stat";     // GC. TODO: should be std::filesystem path.
-    std::string second_part   = "";
+    std::string stat_lastline;
+    std::string second_part;
+    std::string ifs_stat = slot_path + "/ifs.stat";     // GC. TODO: should be std::filesystem path.
 
     while (process_status == 0 && model_completed == 0)
     {
@@ -728,7 +731,7 @@ int main(int argc, char** argv) {
                    if (zfl.size() > 0)
                    {
                       // Create the zipped upload file from the list of files added to zfl
-                      upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
+                      std::string upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
                       std::cerr << "Compressing upload file: " << upload_file << '\n';
 
@@ -792,7 +795,7 @@ int main(int argc, char** argv) {
                    std::cerr << "The current upload_file_name is: " << upload_file_name << '\n';
 
                    // Create the zipped upload file from the list of files added to zfl
-                   upload_file = project_path + upload_file_name;
+                   std::string upload_file = project_path + upload_file_name;
 
                    if (zfl.size() > 0){
                       if (!cpdn_zip(upload_file, zfl)) {
@@ -953,7 +956,7 @@ int main(int argc, char** argv) {
        if (zfl.size() > 0){
 
           // Create the zipped upload file from the list of files added to zfl
-          upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
+          std::string upload_file = project_path + result_base_name + "_" + std::to_string(upload_file_number) + ".zip";
 
           std::cerr << "Compressing final upload file: " << upload_file << '\n';
 
@@ -1012,7 +1015,7 @@ int main(int argc, char** argv) {
        std::cerr << "The final upload_file_name is: " << upload_file_name << '\n';
 
        // Create the zipped upload file from the list of files added to zfl
-       upload_file = project_path + upload_file_name;
+       std::string upload_file = project_path + upload_file_name;
 
        if (zfl.size() > 0) {
           if (!cpdn_zip(upload_file, zfl)) {
