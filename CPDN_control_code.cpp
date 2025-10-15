@@ -714,8 +714,7 @@ bool check_stoi(std::string& cin) {
     //  check stoi standard exceptions
     //  n.b. still need to check step <= max_step
     try {
-        auto step = std::stoi(cin);
-        //std::cerr << "step converted is : " << step << "\n";
+        std::stoi(cin);
         return true;
     }
     catch (const std::invalid_argument &excep) {
