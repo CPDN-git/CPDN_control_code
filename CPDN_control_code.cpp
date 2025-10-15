@@ -914,6 +914,43 @@ bool read_delimited_line(std::string file_line, const std::string& delimiter, co
 }
 
 
+/**
+ * @brief Searches a line for a specific key and extracts the value substring.
+ * 
+ * This function is designed to extract the value of an input 'key' in a typical
+ * key=value pair contained in the input line.
+ * NOTE! It is similar to read_delimited_line but that functions works by a 
+ * positional search of a delimiter, rather than expecting a key/value pair.
+ * 
+ * @param line The input string to search (e.g., the line read from a file).
+ * @param key The substring to look for (e.g., "IFSDATA_FILE").
+ * @param delimiter The character separating the key from the value (e.g., '=' or ':').
+ * @param out_value Reference to a string where the extracted and stripped value will be stored.
+ * @return true if the key was found and a value successfully extracted; false otherwise.
+ */
+bool extract_key_value( const std::string& line, const std::string& key, char delimiter, std::string& out_value ) 
+{
+    if (line.find(key) == std::string::npos) {
+        return false;
+    }
+
+    auto pos = line.find(delimiter);
+    if (pos == std::string::npos) {
+        return false;
+    }
+
+    // Extract the substring (the value part)
+    // substr(pos + 1) takes the rest of the string after the delimiter.
+    out_value = line.substr(pos + 1);
+
+    // Remove space and trailing commas (as in a namelist entry).
+    out_value.erase( std::remove(out_value.begin(), out_value.end(), ','), out_value.end() );
+    out_value.erase( std::remove(out_value.begin(), out_value.end(), ' '), out_value.end() );
+
+    return true;
+}
+
+
 // Takes the zip file, checks existence and whether empty and copies it to destination and unzips it
 // GC. TODO. Convert this to accept  fs::path args.
 int copy_and_unzip(const std::string& zipfile, const std::string& destination, const std::string& unzip_path, const std::string& type) {
