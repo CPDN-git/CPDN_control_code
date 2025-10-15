@@ -25,6 +25,7 @@ bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
       std::cerr << "..Setting the OMP_NUM_THREADS environmental variable failed" << std::endl;
       return false;
     }
+    std::cerr << "Info: OMP_NUM_THREADS is set to: " << getenv("OMP_NUM_THREADS") << "\n";
 
     // Set the OMP_SCHEDULE environmental variable, this enforces static thread scheduling
     if ( !set_env_var("OMP_SCHEDULE", "STATIC") ) {
