@@ -112,27 +112,27 @@ int main(int argc, char** argv) {
        return retval;
     }
 
-    std::cerr << "Control Code version: " << CODE_VERSION << '\n'; // CODE_VERSION is a macro set at compile time
-    std::cerr << "wu_name: " << wu_name << '\n';
-    std::cerr << "project_dir: " << project_dir << '\n';
-    std::cerr << "version: " << version << '\n';
+    std::cerr << "Control Code version: " << CODE_VERSION << '\n' // CODE_VERSION is a macro set at compile time
+              << "wu_name: " << wu_name << '\n'
+              << "project_dir: " << project_dir << '\n'
+              << "version: " << version << '\n';
 
     // Check for required command line arguments
     if (argc < 9) {
-        std::cerr << "Control code error: Not enough command line arguments provided.\n";
-        std::cerr << "Usage: " << argv[0] << " <start_date> <exptid> <unique_member_id> <batchid> <wuid> <fclen> <app_name> <nthreads> [app_version]\n";
+        std::cerr << "Control code error: Not enough command line arguments provided.\n"
+                  << "Usage: " << argv[0] << " <start_date> <exptid> <unique_member_id> <batchid> <wuid> <fclen> <app_name> <nthreads> [app_version]\n";
         return 1;
     }
 
-    std::cerr << "(argv0) " << argv[0] << '\n';
-    std::cerr << "(argv1) start_date: " << argv[1] << '\n';
-    std::cerr << "(argv2) exptid: " << argv[2] << '\n';
-    std::cerr << "(argv3) unique_member_id: " << argv[3] << '\n';
-    std::cerr << "(argv4) batchid: " << argv[4] << '\n';
-    std::cerr << "(argv5) wuid: " << argv[5] << '\n';
-    std::cerr << "(argv6) fclen: " << argv[6] << '\n';
-    std::cerr << "(argv7) app_name: " << argv[7] << '\n';
-    std::cerr << "(argv8) nthreads: " << argv[8] << std::endl;
+    std::cerr << "(argv0) " << argv[0] << '\n'
+              << "(argv1) start_date: " << argv[1] << '\n'
+              << "(argv2) exptid: " << argv[2] << '\n'
+              << "(argv3) unique_member_id: " << argv[3] << '\n'
+              << "(argv4) batchid: " << argv[4] << '\n'
+              << "(argv5) wuid: " << argv[5] << '\n'
+              << "(argv6) fclen: " << argv[6] << '\n'
+              << "(argv7) app_name: " << argv[7] << '\n'
+              << "(argv8) nthreads: " << argv[8] << std::endl;
 
     // Read the exptid, umid, batchid, wuid, fclen, app_name, number of threads from the command line
     std::string start_date = argv[1]; // simulation start date
@@ -182,8 +182,8 @@ int main(int argc, char** argv) {
          return 1;
       }
 
-      std::cerr << "app name: " << app_name << '\n';
-      std::cerr << "version: " << version << '\n';
+      std::cerr << "app name: " << app_name << '\n'
+                << "version: " << version << '\n';
     }
     // Running in standalone
     else {
@@ -194,8 +194,8 @@ int main(int argc, char** argv) {
 
       // In standalone get the app version from the command line
       version = argv[9];
-      std::cerr << "app name: " << app_name << '\n'; 
-      std::cerr << "(argv9) app_version: " << argv[9] << '\n'; 
+      std::cerr << "app name: " << app_name << '\n'
+                << "(argv9) app_version: " << argv[9] << '\n'; 
     }
 
     boinc_begin_critical_section();
