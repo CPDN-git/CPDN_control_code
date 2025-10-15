@@ -241,7 +241,7 @@ int main(int argc, char** argv) {
     std::string climate_data_file;
     std::string namelist_file = slot_path + "/" + namelist;
     std::string namelist_line;
-    std::string delimiter;
+    std::string delimiter = "=";
     std::string horiz_resolution;
     std::string vert_resolution;
     std::string grid_type;
