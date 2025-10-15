@@ -58,7 +58,7 @@ int  print_last_lines(std::string filename, int nlines);
 void read_progress_file(std::string, int&, int&, std::string&, int&, int&);
 void update_progress_file(std::string, int, int, std::string, int, int);
 bool read_rcf_file(std::ifstream&, std::string&, std::string&);
-bool read_delimited_line(std::string&, std::string, std::string, int, std::string&);
+bool read_delimited_line(std::string, const std::string&, const std::string&, int, std::string&);
 int copy_and_unzip(const std::string&, const std::string&, const std::string&, const std::string&);
 bool set_env_var(const std::string&, const std::string&);
 bool parse_export(const std::string&, std::string&, std::string&);

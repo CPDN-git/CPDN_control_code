@@ -875,10 +875,10 @@ bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::strin
     //std::cerr << "rcf file CSTEP: " << cstep_value << '\n';
     //std::cerr << "rcf file CTIME: " << ctime_value << '\n';
 
-    if (cstep_value == "") {
+    if (cstep_value.empty()) {
        std::cerr << "CSTEP value not present in rcf file" << '\n';
        return false;
-    } else if (ctime_value == "") {
+    } else if (ctime_value.empty()) {
        std::cerr << "CTIME value not present in rcf file" << '\n';
        return false;
     } else {
@@ -887,14 +887,16 @@ bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::strin
 }
 
 
-bool read_delimited_line(std::string& file_line, std::string delimiter, std::string string_to_find, int position, std::string& returned_value)
+bool read_delimited_line(std::string file_line, const std::string& delimiter, const std::string& to_find, int position, std::string& returned_value)
 {
-    // Extracts a value from a delimited position on a line of a file
+    // Extracts a substring following a positional delimiter if found.
 
     size_t pos = 0;
     int count = 0;
 
-    if (file_line.find(string_to_find) != std::string::npos ) {
+    returned_value.clear();
+
+    if (file_line.find(to_find) != std::string::npos ) {
        // From the file line take the field specified by the position
        while ((pos = file_line.find(delimiter)) != std::string::npos) {
           count = count + 1;
