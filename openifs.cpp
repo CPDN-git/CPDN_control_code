@@ -98,7 +98,20 @@ bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
 
 int main(int argc, char** argv)
 {
+    std::string project_path;
+    std::string wu_name;
+    std::string project_dir;
+    std::string version;
+    int standalone=0;
     int retval=0;
+
+    // Initialise BOINC to get the project directory, workunit name and app version
+    // Note this redirects stderr output to stderr.txt in slot dir.
+    retval = initialise_boinc(wu_name, project_dir, version, standalone);
+    if (retval) {
+       std::cerr << "..BOINC initialisation failed" << "\n";
+       return retval;
+    }
 
     // Argument processing; at least 9 args always.
     if (argc < 9) {
@@ -160,19 +173,6 @@ int main(int argc, char** argv)
             std::cerr << "Warning. --nthreads argument must be a valid integer! Ignoring.\n";
          }
       }
-    }
-
-    // Initialise BOINC to get the project directory, workunit name and app version
-    std::string project_path;
-    std::string wu_name;
-    std::string project_dir;
-    std::string version;
-    int standalone=0;
-
-    retval = initialise_boinc(wu_name, project_dir, version, standalone);
-    if (retval) {
-       std::cerr << "..BOINC initialisation failed" << "\n";
-       return retval;
     }
 
     std::cerr << "Control Code version: " << CODE_VERSION << '\n' // CODE_VERSION is a macro set at compile time
