@@ -175,7 +175,7 @@ int main(int argc, char** argv)
       }
     }
 
-    std::cerr << "Control Code version: " << CODE_VERSION << '\n' // CODE_VERSION is a macro set at compile time
+    std::cerr << "\nControl Code version: " << CODE_VERSION << '\n' // CODE_VERSION is a macro set at compile time
               << "wu_name: " << wu_name << '\n'
               << "project_dir: " << project_dir << '\n'
               << "version: " << version << '\n';
@@ -236,13 +236,12 @@ int main(int argc, char** argv)
       if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) std::cerr << "..mkdir for temp folder for results failed" << std::endl;
     }
 
-    // Move and unzip app file
+    //  Unpack application into slot
     retval = move_and_unzip_app_file(app_name, version, project_path, slot_path);
     if (retval) {
       std::cerr << "..move_and_unzip_app_file failed" << "\n";
       return retval;
     }
-
 
     //------------------------------------------Process the namelist-----------------------------------------
     // GC. Note, this is not the 'model fort.4' namelist file being referred to here. Needs renaming to avoid confusion.
@@ -391,9 +390,9 @@ int main(int argc, char** argv)
                << " grid_type: " << grid_type << '\n'
                << " Upload_interval: " << upload_interval << '\n'
                << " Trickle_upload_frequency: " << trickle_upload_frequency << '\n'
-               << " UTSTEP: " << timestep_interval << '\n'
-               << " NFRPOS: " << ICM_file_interval << '\n'
-               << " NFFRES: " << restart_interval << std::endl;
+               << " UTSTEP (timestep interval): " << timestep_interval << '\n'
+               << " NFRPOS (frequency of model output): " << ICM_file_interval << '\n'
+               << " NFFRES (frequency of restarts/checkpoints): " << restart_interval << std::endl;
 
     //-------------------------------------------------------------------------------------------------------
 
