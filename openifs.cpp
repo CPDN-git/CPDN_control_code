@@ -259,36 +259,38 @@ int main(int argc, char** argv) {
     }
 
     // Read the namelist file
-    // GC. Recoded. Remove unneccesary use of istringstream and fix incorrect length of substr
-    // GC. TODO. add in code to deal with namelist variables NOT found.
+    // GC. Recoded. Removed unneccesary use of istringstream, moved code to new function, and fixed incorrect length used in substr().
+    //     Also fixed bug reading string '!NFRPOS', should have been 'NFRPOS', meaning it was never assigned correct value.
+    // GC. TODO. add in code to deal with namelist variables NOT found. We should probably abort.
     while(std::getline(namelist_filestream, namelist_line))
     {
        tmpstr.clear();
 
-       if ( extract_key_value( namelist_line,"IFSDATA_FILE", equals, ifsdata_file ) ) {
-          std::cerr << "ifsdata_file: " << ifsdata_file << '\n';
+       if ( ! extract_key_value( namelist_line,"IFSDATA_FILE", equals, ifsdata_file ) ) {
+          std::cerr << ".. Warning, unable to parse ifsdata_file from namelist, got string: " << ifsdata_file << '\n';
        }
-       else if ( extract_key_value( namelist_line, "IC_ANCIL_FILE", equals, ic_ancil_file ) ) {
-          std::cerr << "ic_ancil_file: " << ic_ancil_file << '\n'; 
+       else if ( ! extract_key_value( namelist_line, "IC_ANCIL_FILE", equals, ic_ancil_file ) ) {
+          std::cerr << ".. Warning, unable to parse ic_ancil_file from namelist, got string: " << ic_ancil_file << '\n'; 
        }
-       else if ( extract_key_value( namelist_line, "CLIMATE_DATA_FILE", equals, climate_data_file ) ) {
-          std::cerr << "climate_data_file: " << climate_data_file << '\n';
+       else if ( ! extract_key_value( namelist_line, "CLIMATE_DATA_FILE", equals, climate_data_file ) ) {
+          std::cerr << ".. Warning, unable to parse climate_data_file from namelist, got string: " << climate_data_file << '\n';
        }
-       else if ( extract_key_value( namelist_line, "HORIZ_RESOLUTION", equals, horiz_resolution ) ) {
-          std::cerr << "horiz_resolution: " << horiz_resolution << '\n';
+       else if ( ! extract_key_value( namelist_line, "HORIZ_RESOLUTION", equals, horiz_resolution ) ) {
+          std::cerr << ".. Warning, unable to parse horiz_resolution from namelist, got string: " << horiz_resolution << '\n';
        }
-       else if ( extract_key_value( namelist_line, "VERT_RESOLUTION", equals, vert_resolution ) ) {
-          std::cerr << "vert_resolution: " << vert_resolution << '\n';
+       else if ( ! extract_key_value( namelist_line, "VERT_RESOLUTION", equals, vert_resolution ) ) {
+          std::cerr << ".. Warning, unable to parse vert_resolution from namelist, got string: " << vert_resolution << '\n';
        }
-       else if ( extract_key_value( namelist_line, "GRID_TYPE", equals, grid_type ) ) {
-          std::cerr << "grid_type: " << grid_type << '\n';
+       else if ( ! extract_key_value( namelist_line, "GRID_TYPE", equals, grid_type ) ) {
+          std::cerr << ".. Warning, unable to parse grid_type from namelist, got string: " << grid_type << '\n';
        }
        else if ( extract_key_value( namelist_line, "UPLOAD_INTERVAL", equals, tmpstr ) ) {
           try {
             upload_interval=std::stoi(tmpstr);
           }
           catch (...) {
-            std::cerr << ".. Warning, unable to read upload interval, setting to zero, got string: " << tmpstr << std::endl;
+            std::cerr << ".. Warning, unable to read upload interval, setting to zero, got string: " << tmpstr << '\n';
+            upload_interval = 0;
           }
        }
        else if ( extract_key_value( namelist_line, "TRICKLE_UPLOAD_FREQUENCY", equals, tmpstr ) ) {
@@ -296,7 +298,8 @@ int main(int argc, char** argv) {
             trickle_upload_frequency=std::stoi(tmpstr);
           }
           catch (...) {
-            std::cerr << ".. Warning, unable to read trickle upload frequency, setting to zero, got string: " << tmpstr << std::endl;
+            std::cerr << ".. Warning, unable to read trickle upload frequency, setting to zero, got string: " << tmpstr << '\n';
+            trickle_upload_frequency = 0;
           }
        }
        else if ( extract_key_value( namelist_line, "UTSTEP", equals, tmpstr) ) {
@@ -304,7 +307,7 @@ int main(int argc, char** argv) {
             timestep_interval = std::stoi(tmpstr);
           }
           catch (...) {
-            std::cerr << ".. Warning, unable to read timestep interval, setting to zero, got string: " << tmpstr << std::endl;
+            std::cerr << ".. Warning, unable to read timestep interval, setting to zero, got string: " << tmpstr << '\n';
             timestep_interval = 0;
           }
        }
@@ -329,13 +332,18 @@ int main(int argc, char** argv) {
     }
     namelist_filestream.close();
 
-
     std::cerr << "Values read from model namelist are: \n"
+               << " ifsdata_file: " << ifsdata_file << '\n'
+               << " ic_ancil_file: " << ic_ancil_file << '\n'
+               << " climate_data_file: " << climate_data_file << '\n'
+               << " horiz_resolution: " << horiz_resolution << '\n'
+               << " vert_resolution: " << vert_resolution << '\n'
+               << " grid_type: " << grid_type << '\n'
                << " Upload_interval: " << upload_interval << '\n'
                << " Trickle_upload_frequency: " << trickle_upload_frequency << '\n'
                << " UTSTEP: " << timestep_interval << '\n'
                << " NFRPOS: " << ICM_file_interval << '\n'
-               << " NFFRES: " << restart_interval << '\n';
+               << " NFFRES: " << restart_interval << std::endl;
 
     //-------------------------------------------------------------------------------------------------------
 
