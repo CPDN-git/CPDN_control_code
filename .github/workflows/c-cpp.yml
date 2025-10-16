@@ -18,7 +18,7 @@ jobs:
     - name: Run make install
       run: cd boinc && make install
     - name: List contents of boinc-install
-      run: cd boinc-install/include/boinc && ls -lt
+      run: ls -lt boinc-install/include/boinc > stdout_and_stderr
     - name: Build cpdn-zip library
       run:  cd zip && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=../install .. && make && make install
     - name: Build the OpenIFS control code executable
@@ -44,7 +44,7 @@ jobs:
     - name: Build c++ test executable
       run: g++ oifs_43r3_test.cpp -std=c++17 -o oifs_43r3_test.exe
     - name: List contents of the root folder
-      run: ls -lt > stdout_and_stderr
+      run: ls -lt >> stdout_and_stderr
     - name: List contents of projects folder
       run: cd projects/ && ls -lt >> ../stdout_and_stderr
     - name: move oifs_43r3_test.exe to slots
@@ -52,7 +52,7 @@ jobs:
     - name: List contents of slots folder
       run: cd slots/ && ls -lt >> ../stdout_and_stderr
     - name: change directory to slots and run test
-      run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 &>> ../stdout_and_stderr
+      run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 && cat stderr.txt >> ../stdout_and_stderr
     - name: Upload test log
       if: ${{ failure() }}
       uses: actions/upload-artifact@v4
