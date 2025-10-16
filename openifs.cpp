@@ -361,24 +361,24 @@ int main(int argc, char** argv)
     namelist_filestream.close();
 
     // Check for any empty variables in case parsing failed.
-    // These might case the task to fail. Integer values checked above.
+    // These might cause the task to fail later, or they might be deliberate for testing.
     if ( ifsdata_file.empty() ) {
-      std::cerr << ".. Warning. Unable to parse ifs_data_file from namelist." << '\n';
+      std::cerr << ".. Warning. Unable to parse ifs_data_file from namelist.\n";
     }
     if ( ic_ancil_file.empty() ) {
-      std::cerr << ".. Warning. Unable to parse ic_ancil_file from namelist." << '\n';
+      std::cerr << ".. Warning. Unable to parse ic_ancil_file from namelist.\n";
     }
     if ( climate_data_file.empty() ) {
-      std::cerr << ".. Warning. Unable to parse climate_data_file from namelist." << '\n';
+      std::cerr << ".. Warning. Unable to parse climate_data_file from namelist.\n";
     }
     if ( horiz_resolution.empty() ) {
-      std::cerr << ".. Warning. Unable to parse horiz_resolution from namelist." << '\n';
+      std::cerr << ".. Warning. Unable to parse horiz_resolution from namelist.\n";
     }
     if ( vert_resolution.empty() ) {
-      std::cerr << ".. Warning. Unable to parse vert_resolution from namelist." << '\n';
+      std::cerr << ".. Warning. Unable to parse vert_resolution from namelist.\n";
     }
     if ( grid_type.empty() ) {
-      std::cerr << ".. Warning. Unable to parse grid_type from namelist." << '\n';
+      std::cerr << ".. Warning. Unable to parse grid_type from namelist.\n";
     }
 
     std::cerr << "Values read from model namelist are: \n"
@@ -400,9 +400,9 @@ int main(int argc, char** argv)
     if ( restart_interval < 0 ) {
        restart_interval = abs(restart_interval)*3600 / timestep_interval;
     }
-    std::cerr << "nfrres: restart dump frequency (steps) " << restart_interval << '\n';
+    std::cerr << "NFRRES: restart dump frequency (in steps) " << restart_interval << '\n';
 
-    // this should match CUSTEP in fort.4. If it doesn't we have a problem
+    // this should match CUSTOP in fort.4. If it doesn't we have a problem.
     double total_nsteps = (num_days * 86400.0) / (double) timestep_interval;
 
     // Process the ic_ancil_file:
@@ -435,7 +435,6 @@ int main(int argc, char** argv)
        std::cerr << "..Copying and unzipping the ifsdata_zip failed: " << ifsdata_zip << std::endl;
        return 1;        // should terminate, the model won't run.
     }
-
 
     // Process the climate_data_file:
     // Make the climate data directory and set the required paths
@@ -771,8 +770,9 @@ int main(int argc, char** argv)
                    // Add ICM result files to zip to be uploaded
                    std::vector<std::string> icm = {"ICMGG", "ICMSH", "ICMUA"};
                    for (const auto& part : icm) {
-                      std::string fpath = temp_path + "/" + part + second_part;
-                      if (file_exists(fpath)) {
+                      fs::path  fpath = temp_path;
+                                fpath /= part + second_part;
+                      if (file_exists(fpath.string())) {
                          std::cerr << "Adding to the zip: " << fpath << '\n';
                          zfl.push_back(fpath);
                       }
