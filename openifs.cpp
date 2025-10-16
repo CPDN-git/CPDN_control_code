@@ -96,34 +96,16 @@ bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
 }
 
 
-int main(int argc, char** argv) {
-    std::string project_path;
-    std::string wu_name;
-    std::string project_dir;
-    std::string version;
-    int standalone=0;
-
+int main(int argc, char** argv)
+{
     int retval=0;
 
-    // Initialise BOINC to get the project directory, workunit name and app version
-    retval = initialise_boinc(wu_name, project_dir, version, standalone);
-    if (retval) {
-       std::cerr << "..BOINC initialisation failed" << "\n";
-       return retval;
-    }
-
-    std::cerr << "Control Code version: " << CODE_VERSION << '\n' // CODE_VERSION is a macro set at compile time
-              << "wu_name: " << wu_name << '\n'
-              << "project_dir: " << project_dir << '\n'
-              << "version: " << version << '\n';
-
-    // Check for required command line arguments
+    // Argument processing; at least 9 args always.
     if (argc < 9) {
         std::cerr << "Control code error: Not enough command line arguments provided.\n"
                   << "Usage: " << argv[0] << " <start_date> <exptid> <unique_member_id> <batchid> <wuid> <fclen> <app_name> <nthreads> [app_version]\n";
         return 1;
     }
-
     std::cerr << "(argv0) " << argv[0] << '\n'
               << "(argv1) start_date: " << argv[1] << '\n'
               << "(argv2) exptid: " << argv[2] << '\n'
@@ -135,6 +117,7 @@ int main(int argc, char** argv) {
               << "(argv8) nthreads: " << argv[8] << std::endl;
 
     // Read the exptid, umid, batchid, wuid, fclen, app_name, number of threads from the command line
+    // argv[9] if present, is assigned below
     std::string start_date = argv[1]; // simulation start date
     std::string exptid = argv[2];     // OpenIFS experiment id
     std::string unique_member_id = argv[3];  // umid
@@ -142,7 +125,60 @@ int main(int argc, char** argv) {
     std::string wuid = argv[5];       // workunit id
     std::string fclen = argv[6];      // number of simulation days
     std::string app_name = argv[7];   // CPDN app name
-    std::string nthreads = argv[8];   // number of OPENMP threads
+    std::string nthreads = argv[8];   // number of OPENMP threads.
+    std::string app_config_nthreads;  // blank initially.
+
+    // Check for optional '--nthreads <value>' at end of arg list, optionally set by app_config.xml on user's machine.
+    if ( std::string(argv[argc - 2]) == "--nthreads" ) {
+      app_config_nthreads = argv[argc-1];
+
+      if ( app_config_nthreads.empty() ) {
+         std::cerr << "Warning. --nthreads argument present but has no value! Ignoring.\n";
+      }
+      else {
+         try {
+            int max_nthreads = 8;      // GC. This is the best maximum as T319 parallel efficiency markedly drops after this many threads.
+            int min_nthreads = 2;
+            int i_nthreads = -1;
+
+            i_nthreads = std::stoi(app_config_nthreads);
+            if ( i_nthreads > max_nthreads ) {
+               std::cerr << "Warning. --nthreads value is too high. Setting to max number of threads : " << max_nthreads << '\n';
+               i_nthreads = max_nthreads;
+            }
+            else if ( i_nthreads < min_nthreads ) {
+               std::cerr << "Warning. --nthreads is too low for this configuration. Minimum #threads is 2. Resetting.\n";
+               i_nthreads = min_nthreads;
+            }
+            else {
+               //*****************************************************
+               // Uncomment this line to enable the --nthreads argument
+               //nthreads = i_nthreads
+            }
+         }
+         catch (...) {
+            std::cerr << "Warning. --nthreads argument must be a valid integer! Ignoring.\n";
+         }
+      }
+    }
+
+    // Initialise BOINC to get the project directory, workunit name and app version
+    std::string project_path;
+    std::string wu_name;
+    std::string project_dir;
+    std::string version;
+    int standalone=0;
+
+    retval = initialise_boinc(wu_name, project_dir, version, standalone);
+    if (retval) {
+       std::cerr << "..BOINC initialisation failed" << "\n";
+       return retval;
+    }
+
+    std::cerr << "Control Code version: " << CODE_VERSION << '\n' // CODE_VERSION is a macro set at compile time
+              << "wu_name: " << wu_name << '\n'
+              << "project_dir: " << project_dir << '\n'
+              << "version: " << version << '\n';
 
     const std::string namelist="fort.4";    // namelist file
 
