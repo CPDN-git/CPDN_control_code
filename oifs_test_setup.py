@@ -3,6 +3,7 @@
 # Script to setup the file structure required to run a test of new checked in code using GitHub Action 
 
 # This script has been written by Andy Bowery (Oxford University, 2024)
+# Modifications by Glenn Carver (CPDN)
 
 if __name__ == "__main__":
 
@@ -84,10 +85,11 @@ if __name__ == "__main__":
                          "!GRID_TYPE=l_2\n" +\
                          "!UPLOAD_INTERVAL=288.0\n" +\
                          "!TRICKLE_UPLOAD_FREQUENCY=1\n" +\
-                         "!TSTEP=1\n" +\
-                         "&NAMCT0"+\
-                         " NFRPOS=1\n" +\
-                         " NFRRES=1\n"
+                         "!TSTEP=3600\n" +\
+                         "&NAMCT0\n"+\
+                         " UTSTEP=3600.0,\n" +\
+                         " NFRPOS=1,\n" +\
+                         " NFRRES=1,\n"
 
       fort_file=open("fort.4","w")
       fort_file.write(fort_file_string)
