@@ -261,35 +261,28 @@ int main(int argc, char** argv) {
     // Read the namelist file
     // GC. Recoded. Removed unneccesary use of istringstream, moved code to new function, and fixed incorrect length used in substr().
     //     Also fixed bug reading string '!NFRPOS', should have been 'NFRPOS', meaning it was never assigned correct value.
-    // GC. TODO. add in code to deal with namelist variables NOT found. We should probably abort.
     while(std::getline(namelist_filestream, namelist_line))
     {
        tmpstr.clear();
 
-       if ( ! extract_key_value( namelist_line,"IFSDATA_FILE", equals, ifsdata_file ) ) {
-          std::cerr << ".. Warning, unable to parse ifsdata_file from namelist, got string: " << ifsdata_file << '\n';
+       if ( extract_key_value( namelist_line,"IFSDATA_FILE", equals, ifsdata_file ) ) {
        }
-       else if ( ! extract_key_value( namelist_line, "IC_ANCIL_FILE", equals, ic_ancil_file ) ) {
-          std::cerr << ".. Warning, unable to parse ic_ancil_file from namelist, got string: " << ic_ancil_file << '\n'; 
+       else if ( extract_key_value( namelist_line, "IC_ANCIL_FILE", equals, ic_ancil_file ) ) {
        }
-       else if ( ! extract_key_value( namelist_line, "CLIMATE_DATA_FILE", equals, climate_data_file ) ) {
-          std::cerr << ".. Warning, unable to parse climate_data_file from namelist, got string: " << climate_data_file << '\n';
+       else if ( extract_key_value( namelist_line, "CLIMATE_DATA_FILE", equals, climate_data_file ) ) {
        }
-       else if ( ! extract_key_value( namelist_line, "HORIZ_RESOLUTION", equals, horiz_resolution ) ) {
-          std::cerr << ".. Warning, unable to parse horiz_resolution from namelist, got string: " << horiz_resolution << '\n';
+       else if ( extract_key_value( namelist_line, "HORIZ_RESOLUTION", equals, horiz_resolution ) ) {
        }
-       else if ( ! extract_key_value( namelist_line, "VERT_RESOLUTION", equals, vert_resolution ) ) {
-          std::cerr << ".. Warning, unable to parse vert_resolution from namelist, got string: " << vert_resolution << '\n';
+       else if ( extract_key_value( namelist_line, "VERT_RESOLUTION", equals, vert_resolution ) ) {
        }
-       else if ( ! extract_key_value( namelist_line, "GRID_TYPE", equals, grid_type ) ) {
-          std::cerr << ".. Warning, unable to parse grid_type from namelist, got string: " << grid_type << '\n';
+       else if ( extract_key_value( namelist_line, "GRID_TYPE", equals, grid_type ) ) {
        }
        else if ( extract_key_value( namelist_line, "UPLOAD_INTERVAL", equals, tmpstr ) ) {
           try {
             upload_interval=std::stoi(tmpstr);
           }
           catch (...) {
-            std::cerr << ".. Warning, unable to read upload interval, setting to zero, got string: " << tmpstr << '\n';
+            std::cerr << ".. Warning, unable to parse upload interval from namelist, setting to zero, got string: " << tmpstr << '\n';
             upload_interval = 0;
           }
        }
@@ -298,7 +291,7 @@ int main(int argc, char** argv) {
             trickle_upload_frequency=std::stoi(tmpstr);
           }
           catch (...) {
-            std::cerr << ".. Warning, unable to read trickle upload frequency, setting to zero, got string: " << tmpstr << '\n';
+            std::cerr << ".. Warning, unable to parse trickle upload frequency from namelist, setting to zero, got string: " << tmpstr << '\n';
             trickle_upload_frequency = 0;
           }
        }
@@ -307,7 +300,7 @@ int main(int argc, char** argv) {
             timestep_interval = std::stoi(tmpstr);
           }
           catch (...) {
-            std::cerr << ".. Warning, unable to read timestep interval, setting to zero, got string: " << tmpstr << '\n';
+            std::cerr << ".. Warning, unable to parse timestep interval from namelist, setting to zero, got string: " << tmpstr << '\n';
             timestep_interval = 0;
           }
        }
@@ -316,7 +309,7 @@ int main(int argc, char** argv) {
             ICM_file_interval = std::stoi(tmpstr);
           }
           catch (...) {
-            std::cerr << ".. Warning, unable to read ICM model output interval, setting to zero, got string: " << tmpstr << std::endl;
+            std::cerr << ".. Warning, unable to parse ICM model output interval from namelist, setting to zero, got string: " << tmpstr << std::endl;
             ICM_file_interval = 0;
           }
        }
@@ -325,12 +318,33 @@ int main(int argc, char** argv) {
             restart_interval = stoi(tmpstr);
           }
           catch (...) {
-            std::cerr << "..Warning, unable to read restart interval, setting to zero, got string: " << tmpstr << std::endl;
+            std::cerr << "..Warning, unable to parse restart interval from namelist, setting to zero, got string: " << tmpstr << std::endl;
             restart_interval = 0;
           }
        }
     }
     namelist_filestream.close();
+
+    // Check for any empty variables in case parsing failed.
+    // These might case the task to fail. Integer values checked above.
+    if ( ifsdata_file.empty() ) {
+      std::cerr << ".. Warning. Unable to parse ifs_data_file from namelist." << '\n';
+    }
+    if ( ic_ancil_file.empty() ) {
+      std::cerr << ".. Warning. Unable to parse ic_ancil_file from namelist." << '\n';
+    }
+    if ( climate_data_file.empty() ) {
+      std::cerr << ".. Warning. Unable to parse climate_data_file from namelist." << '\n';
+    }
+    if ( horiz_resolution.empty() ) {
+      std::cerr << ".. Warning. Unable to parse horiz_resolution from namelist." << '\n';
+    }
+    if ( vert_resolution.empty() ) {
+      std::cerr << ".. Warning. Unable to parse vert_resolution from namelist." << '\n';
+    }
+    if ( grid_type.empty() ) {
+      std::cerr << ".. Warning. Unable to parse grid_type from namelist." << '\n';
+    }
 
     std::cerr << "Values read from model namelist are: \n"
                << " ifsdata_file: " << ifsdata_file << '\n'
