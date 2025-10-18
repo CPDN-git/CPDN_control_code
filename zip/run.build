@@ -1,0 +1,21 @@
+#! /usr/bin/env bash
+#
+#  Runs the commands to build the cpdn_zip library,
+#  ready for linking against CPDN_control_code.
+
+set -x
+set -e
+if [ -d build ]; then
+   echo "build directory already exists, please delete it and the install dir first."
+   exit
+fi
+
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=../install ..
+make
+make install
+
+# run the short test
+echo "Running short test of cpdn_zip..."
+./test_zip
