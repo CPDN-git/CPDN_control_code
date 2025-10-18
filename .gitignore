@@ -1,4 +1,5 @@
-# Ignore binaries in zip code
+# Ignore binaries 
+build
 zip/build
 zip/install
 
