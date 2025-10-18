@@ -144,6 +144,7 @@ bool process_env_overrides(const fs::path& override_envs)
         {
             try {
                 set_env_var(var_name, var_value);
+                std::cerr << "Overriding env var: " << var_name << " = " << var_value << '\n';
             } 
             catch (const std::exception& e) {
                 std::cerr << "Error setting variable: " << e.what() << std::endl;
@@ -474,53 +475,47 @@ std::string get_tag(const std::string &filename) {
 
 
 // Read the progress file
-void read_progress_file(std::string progress_file, int& last_cpu_time, int& upload_file_number, std::string& last_iter, int& last_upload, int& model_completed) {
+void read_progress_file(std::string progress_file, int& last_cpu_time, int& upload_file_number, 
+                        std::string& last_iter, int& last_upload, int& model_completed) {
 
     // Parse the progress_file
-    std::string progress_file_line = "";
+    std::string progress_line = "";
     std::string delimiter = "=";
-    std::ifstream progress_file_filestream;
+    std::ifstream progress_filestream;
     
     // Open the progress_file file
-    if(!(progress_file_filestream.is_open())) {
-       progress_file_filestream.open(progress_file);
+    if(!(progress_filestream.is_open())) {
+       progress_filestream.open(progress_file);
     } 
     
     // Read the namelist file
-    while(std::getline(progress_file_filestream, progress_file_line)) { //get 1 row as a string
-       std::istringstream pfs(progress_file_line);   //put line into stringstream
+    while(std::getline(progress_filestream, progress_line)) { //get 1 row as a string
 
-       if (pfs.str().find("last_cpu_time") != std::string::npos) {
-          last_cpu_time = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //std::cerr << "last_cpu_time: " << std::to_string(last_cpu_time) << '\n';
+       if (progress_line.find("last_cpu_time") != std::string::npos) {
+          last_cpu_time = std::stoi(progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1));
        }
-       else if (pfs.str().find("upload_file_number") != std::string::npos) {
-          upload_file_number = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //std::cerr << "upload_file_number: " << std::to_string(upload_file_number) << '\n';
+       else if (progress_line.find("upload_file_number") != std::string::npos) {
+          upload_file_number = std::stoi(progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1));
        }
-       else if (pfs.str().find("last_iter") != std::string::npos) {
-          last_iter = pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1);
-          //std::cerr << "last_iter: " << last_iter << '\n';
+       else if (progress_line.find("last_iter") != std::string::npos) {
+          last_iter = progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1);
        }
-       else if (pfs.str().find("last_upload") != std::string::npos) {
-          last_upload = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //std::cerr << "last_upload: " << std::to_string(last_upload) << '\n';
+       else if (progress_line.find("last_upload") != std::string::npos) {
+          last_upload = std::stoi(progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1));
        }
-       else if (pfs.str().find("model_completed") != std::string::npos) {
-          model_completed = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //std::cerr << "model_completed: " << std::to_string(model_completed) << '\n';
+       else if (progress_line.find("model_completed") != std::string::npos) {
+          model_completed = std::stoi(progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1));
        }
     }
-    progress_file_filestream.close();
+    progress_filestream.close();
 }
 
 
 // Update the progress file
 void update_progress_file(std::string progress_file, int last_cpu_time, int upload_file_number,
-                          std::string last_iter, int last_upload, int model_completed) {
-
+                          std::string last_iter, int last_upload, int model_completed)
+{
     std::ofstream progress_file_out(progress_file);
-    //std::cerr << "Writing to progress file: " << progress_file << "\n";
 
     // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
     progress_file_out << "last_cpu_time=" << std::to_string(last_cpu_time) << '\n';
@@ -529,29 +524,16 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
     progress_file_out << "last_upload=" << std::to_string(last_upload) << '\n';
     progress_file_out << "model_completed="<< std::to_string(model_completed) << std::endl;
     progress_file_out.close();
-
-    //std::cerr << "last_cpu_time: " << last_cpu_time << "\n";
-    //std::cerr << "upload_file_number: " << upload_file_number << "\n";
-    //std::cerr << "last_iter: " << last_iter << "\n";
-    //std::cerr << "last_upload: " << last_upload << "\n";
-    //std::cerr << "model_completed: " << model_completed << "\n";
 }
 
 
 // Produce the trickle and either upload to the project server or as a physical file
 void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) 
 {
-    //std::cerr << "current_cpu_time: " << current_cpu_time << "\n";
-    //std::cerr << "wu_name: " << wu_name << "\n";
-    //std::cerr << "result_base_name: " << result_base_name << "\n";
-    //std::cerr << "slot_path: " << slot_path << "\n";
-    //std::cerr << "timestep: " << timestep << "\n";
-
     std::stringstream trickle_buffer;
     trickle_buffer << "<wu>" << wu_name << "</wu>\n<result>" << result_base_name << "</result>\n<ph></ph>\n<ts>" \
                    << timestep << "</ts>\n<cp>" << current_cpu_time << "</cp>\n<vr></vr>\n";
     std::string trickle = trickle_buffer.str();
-    //std::cerr << "Contents of trickle: \n" << trickle << "\n";
 
     // Create null terminated, non-const char buffers for the boinc_send_trickle_up call
     // to avoid possible memory faults (as seen in the past).
@@ -853,27 +835,26 @@ int print_last_lines(std::string filename, int maxlines) {
    return count;
 }
 
-
+/**
+ * @brief Read the rcf_file line by line and extract CTIME and CSTEP variables.
+ *        The input stream rcf_file must be at file start and ctime_value & cstep_value
+ *        must be empty strings.
+ */
 bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::string& cstep_value)
 {
-    // Read the rcf_file if it exists and extract the CTIME and CSTEP variables
-    
     std::string delimiter = "\"";
     std::string rcf_file_line;
     int position = 2;
 
     // Extract the values of CSTEP and CTIME from the rcf file
-    while ( std::getline( rcf_file, rcf_file_line )) {
-
+    while ( std::getline( rcf_file, rcf_file_line ))
+    {
        // Check for CSTEP, if present return value
        read_delimited_line(rcf_file_line, delimiter, "CSTEP", position, cstep_value);
 
        // Check for CTIME, if present return value
        read_delimited_line(rcf_file_line, delimiter, "CTIME", position, ctime_value);
-
     }
-    //std::cerr << "rcf file CSTEP: " << cstep_value << '\n';
-    //std::cerr << "rcf file CTIME: " << ctime_value << '\n';
 
     if (cstep_value.empty()) {
        std::cerr << "CSTEP value not present in rcf file" << '\n';
@@ -894,14 +875,13 @@ bool read_delimited_line(std::string file_line, const std::string& delimiter, co
     size_t pos = 0;
     int count = 0;
 
-    returned_value.clear();
-
     if (file_line.find(to_find) != std::string::npos ) {
        // From the file line take the field specified by the position
        while ((pos = file_line.find(delimiter)) != std::string::npos) {
           count = count + 1;
           if (count == position) {  
              returned_value = file_line.substr(0,pos);
+
              // Remove whitespace
              returned_value.erase( std::remove_if( returned_value.begin(), \
                                    returned_value.end(), ::isspace ), returned_value.end() );
@@ -909,7 +889,6 @@ bool read_delimited_line(std::string file_line, const std::string& delimiter, co
           file_line.erase(0, pos + delimiter.length());
        }
     }
-
     return !returned_value.empty();
 }
 
