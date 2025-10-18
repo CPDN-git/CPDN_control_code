@@ -549,8 +549,6 @@ int main(int argc, char** argv)
          if( rcf_file_stream.is_open() ) {
             if (read_rcf_file(rcf_file_stream, ctime_value, cstep_value)) {
                std::cerr << "Read the rcf file" << '\n';
-               //std::cerr << "rcf file CSTEP: " << cstep_value << '\n';
-               //std::cerr << "rcf file CTIME: " << ctime_value << '\n';
             }
             else {
                // Reading the rcf file failed, then kill model run
