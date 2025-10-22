@@ -275,7 +275,7 @@ int main(int argc, char** argv)
     char equals = '=';
 
     int upload_interval = 0;
-    int trickle_upload_frequency = 0;
+    int trickle_freq = 0;
     int timestep_interval = 0;
     int ICM_file_interval = 0;
     int restart_interval = 0;
@@ -320,13 +320,13 @@ int main(int argc, char** argv)
             upload_interval = 0;
           }
        }
-       else if ( extract_key_value( namelist_line, "TRICKLE_UPLOAD_FREQUENCY", equals, tmpstr ) ) {
+       else if ( extract_key_value( namelist_line, "TRICKLE_FREQUENCY", equals, tmpstr ) ) {
           try {
-            trickle_upload_frequency=std::stoi(tmpstr);
+            trickle_freq=std::stoi(tmpstr);
           }
           catch (...) {
             std::cerr << ".. Warning, unable to parse trickle upload frequency from namelist, setting to 240, got string: " << tmpstr << '\n';
-            trickle_upload_frequency = 240;   // assume 1hr timestep and trickle every 10 days.
+            trickle_freq = 240;   // assume 1hr timestep and trickle every 10 days.
           }
        }
        else if ( extract_key_value( namelist_line, "UTSTEP", equals, tmpstr) ) {
@@ -388,7 +388,7 @@ int main(int argc, char** argv)
                << " vert_resolution: " << vert_resolution << '\n'
                << " grid_type: " << grid_type << '\n'
                << " Upload_interval: " << upload_interval << '\n'
-               << " Default trickle_upload_frequency: " << trickle_upload_frequency << '\n'
+               << " Default trickle frequency: " << trickle_freq << '\n'
                << " UTSTEP (timestep interval): " << timestep_interval << '\n'
                << " NFRPOS (frequency of model output): " << ICM_file_interval << '\n'
                << " NFFRES (frequency of restarts/checkpoints): " << restart_interval << std::endl;
@@ -399,8 +399,8 @@ int main(int argc, char** argv)
     // restart frequency might be in units of hrs, convert to model steps
     if ( restart_interval < 0 ) {
        restart_interval = abs(restart_interval)*3600 / timestep_interval;
+       std::cerr << " NFRRES: restart dump frequency (in steps) " << restart_interval << '\n';
     }
-    std::cerr << "NFRRES: restart dump frequency (in steps) " << restart_interval << '\n';
 
     // this should match CUSTOP in fort.4. If it doesn't we have a problem.
     double total_nsteps = (num_days * 86400.0) / (double) timestep_interval;     //GC. why is this a double? it's always an int.
@@ -408,9 +408,9 @@ int main(int argc, char** argv)
     //GC. Oct/25. Trickles are now fixed at every 10% of the model run for runs over 10 days (see default value above)
     //            with a final trickle at the end of the run.
     if ( num_days > 10.) {
-      trickle_upload_frequency = int(total_nsteps) / 10;
-      std::cerr << "Adjusted trickle frequency is every : " << trickle_upload_frequency << " model steps, "
-                << ((float)trickle_upload_frequency*(float)timestep_interval)/86400 << " days.\n";
+      trickle_freq = int(total_nsteps) / 10;
+      std::cerr << "Adjusted trickle frequency is every : " << trickle_freq << " model steps, "
+                << ((float)trickle_freq*(float)timestep_interval)/86400 << " days.\n";
     }
 
     //-------------------------------------------------------------------------------------------------------
@@ -609,7 +609,7 @@ int main(int argc, char** argv)
     }
 
     int total_length_of_simulation = (int) (num_days * 86400);
-    std::cerr << "total_length_of_simulation: " << total_length_of_simulation << '\n';
+    std::cerr << "Total_length_of_simulation: " << total_length_of_simulation << '\n';
 
     // Get result_base_name to construct upload file names using 
     // the first upload as an example and then stripping off '_0.zip'
@@ -673,8 +673,8 @@ int main(int argc, char** argv)
     int process_status=1;
 
     std::cerr << "Launching OpenIFS executable: " << exe_cmd << std::endl;
-    long handleProcess = launch_process_oifs(project_path, slot_path, exe_cmd, nthreads, exptid, app_name);
-    if (handleProcess > 0) process_status = 0;     //GC TODO. Need to handle when handleProcess =-1, i.e. launch failed (see code in launch_process_oifs)
+    long model_process = launch_process_oifs(project_path, slot_path, exe_cmd, nthreads, exptid, app_name);
+    if (model_process > 0) process_status = 0;     //GC TODO. Need to handle when model_process =-1, i.e. launch failed (see code in launch_process_oifs)
 
     boinc_end_critical_section();
 
@@ -880,7 +880,7 @@ int main(int argc, char** argv)
              }                            // end of upload new output file block.
 
              // Trickle every required fraction of the model run
-             if ( (std::stoi(iter) % trickle_upload_frequency) == 0 ) {
+             if ( (std::stoi(iter) % trickle_freq) == 0 ) {
                std::cerr << "Sending progress trickle message to CPDN server at step: " << iter << '\n';
                process_trickle(current_cpu_time, wu_name, result_base_name, slot_path, current_iter, standalone );
              }
@@ -893,14 +893,12 @@ int main(int argc, char** argv)
        }
 
        // Calculate current_cpu_time, only update if cpu_time returns a value
-       if (cpu_time(handleProcess)) {
-          current_cpu_time = last_cpu_time + cpu_time(handleProcess);
-          //fprintf(stderr,"current_cpu_time: %1.5f\n",current_cpu_time);
+       if (cpu_time(model_process)) {
+          current_cpu_time = last_cpu_time + cpu_time(model_process);
        }
 
       // Calculate the fraction done
       fraction_done = model_frac_done( atof(iter.c_str()), total_nsteps, atoi(nthreads.c_str()) );
-      //fprintf(stderr,"fraction done: %.6f\n", fraction_done);
 
       if (!standalone) {
          // If the current iteration is at a restart iteration
@@ -912,16 +910,13 @@ int main(int argc, char** argv)
          // Provide the current cpu_time to the BOINC server (note: this is deprecated in BOINC)
          boinc_report_app_status(current_cpu_time, restart_cpu_time, fraction_done);
 
-         // Provide the fraction done to the BOINC client, 
-         // this is necessary for the percentage bar on the client
+         // Provide the fraction done to the BOINC client, necessary for the percentage bar on the client
          boinc_fraction_done(fraction_done);
-
-         // Check the status of the client if not in standalone mode     
-         process_status = check_boinc_status(handleProcess,process_status);
+    
+         process_status = check_boinc_status(model_process,process_status);
       }
-
-      // Check the status of the child process    
-      process_status = check_child_status(handleProcess,process_status);
+   
+      process_status = check_child_status(model_process,process_status);
     }
 
     //----- End of main loop ---------------------------------------------------------------------------	
@@ -935,7 +930,8 @@ int main(int argc, char** argv)
 
     // To check whether model completed successfully, look for 'CNT0' in 3rd column of ifs.stat
     // This will always be the last line of a successful model forecast.
-    if (file_exists(ifs_stat)) {
+    if (file_exists(ifs_stat))
+    {
        std::string ifs_word="";
        fread_last_line(ifs_stat, stat_lastline);
        oifs_parse_stat(stat_lastline, ifs_word, 3);
