@@ -271,15 +271,16 @@ int main(int argc, char** argv)
     std::string vert_resolution;
     std::string grid_type;
     std::string tmpstr;
+
     std::ifstream namelist_filestream;
+
     char equals = '=';
 
     int upload_interval = 0;
     int trickle_freq = 0;
-    int timestep_interval = 0;
+    int timestep = 0;
     int ICM_file_interval = 0;
     int restart_interval = 0;
-    
 
     // Check for the existence of the namelist
     if( !file_exists(namelist_file) ) {
@@ -331,11 +332,11 @@ int main(int argc, char** argv)
        }
        else if ( extract_key_value( namelist_line, "UTSTEP", equals, tmpstr) ) {
           try {
-            timestep_interval = std::stoi(tmpstr);
+            timestep = std::stoi(tmpstr);
           }
           catch (...) {
             std::cerr << ".. Warning, unable to parse timestep interval from namelist, setting to zero, got string: " << tmpstr << '\n';
-            timestep_interval = 0;
+            timestep = 0;
           }
        }
        else if ( extract_key_value( namelist_line, "NFRPOS", equals, tmpstr) ) {   // frequency of model OUTPUT file creation (for upload); +ve model steps, -ve hours.
@@ -389,7 +390,7 @@ int main(int argc, char** argv)
                << " grid_type: " << grid_type << '\n'
                << " Upload_interval: " << upload_interval << '\n'
                << " Default trickle frequency: " << trickle_freq << '\n'
-               << " UTSTEP (timestep interval): " << timestep_interval << '\n'
+               << " UTSTEP (timestep interval): " << timestep << '\n'
                << " NFRPOS (frequency of model output): " << ICM_file_interval << '\n'
                << " NFFRES (frequency of restarts/checkpoints): " << restart_interval << std::endl;
 
@@ -398,22 +399,23 @@ int main(int argc, char** argv)
 
     // restart frequency might be in units of hrs, convert to model steps
     if ( restart_interval < 0 ) {
-       restart_interval = abs(restart_interval)*3600 / timestep_interval;
+       restart_interval = abs(restart_interval)*3600 / timestep;
        std::cerr << " NFRRES: restart dump frequency (in steps) " << restart_interval << '\n';
     }
 
     // this should match CUSTOP in fort.4. If it doesn't we have a problem.
-    double total_nsteps = (num_days * 86400.0) / (double) timestep_interval;     //GC. why is this a double? it's always an int.
+    double total_nsteps = (num_days * 86400.0) / (double) timestep;     //GC. why is this a double? it's always an int.
 
     //GC. Oct/25. Trickles are now fixed at every 10% of the model run for runs over 10 days (see default value above)
     //            with a final trickle at the end of the run.
     if ( num_days > 10.) {
       trickle_freq = int(total_nsteps) / 10;
       std::cerr << "Adjusted trickle frequency is every : " << trickle_freq << " model steps, "
-                << ((float)trickle_freq*(float)timestep_interval)/86400 << " days.\n";
+                << ((float)trickle_freq*(float)timestep)/86400 << " days.\n";
     }
 
     //-------------------------------------------------------------------------------------------------------
+    //    Unpack the task's input files into the slot directory
 
     // Process the ic_ancil_file:
     std::string ic_ancil_zip = slot_path + "/" + ic_ancil_file + ".zip";
@@ -519,7 +521,6 @@ int main(int argc, char** argv)
        return 1;
     }
     else if ( file_exists(progress_file) && !file_exists(rcf_file) ) {
-       // Read contents of progress file
        read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
        // If last_iter less than the restart interval, then model is at beginning and rcf has yet to be produced then continue
        if (std::stoi(last_iter) >= restart_interval) {
@@ -571,7 +572,6 @@ int main(int argc, char** argv)
        }
        rcf_file_stream.close();
 
-       // Read the progress file
        read_progress_file(progress_file, last_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
        // Check if the CSTEP variable from rcf is greater than the last_iter, if so then quit model run
@@ -596,15 +596,14 @@ int main(int argc, char** argv)
 
     update_progress_file(progress_file, current_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
-
     // seconds between upload files: upload_interval
-    // seconds between ICM files: ICM_file_interval * timestep_interval
-    // upload interval in steps = upload_interval / timestep_interval
-    //cerr "upload_interval: "<< upload_interval << ", timestep_interval: " << timestep_interval << '\n';
+    // seconds between ICM files: ICM_file_interval * timestep
+    // upload interval in steps = upload_interval / timestep
+    //cerr "upload_interval: "<< upload_interval << ", timestep: " << timestep << '\n';
 
-    // Check if upload_interval x timestep_interval equal to zero
-    if (upload_interval * timestep_interval == 0) {
-       std::cerr << "..upload_interval x timestep_interval equals zero" << std::endl;
+    // Check if upload_interval x timestep equal to zero
+    if (upload_interval * timestep == 0) {
+       std::cerr << "..upload_interval x timestep equals zero" << std::endl;
        return 1;
     }
 
@@ -746,15 +745,15 @@ int main(int argc, char** argv)
              }
 
              // Convert iteration number to seconds
-             current_iter = (std::stoi(last_iter)) * timestep_interval;
+             current_iter = (std::stoi(last_iter)) * timestep;
 
              //std::cerr << "Current iteration of model: " << last_iter << '\n';
-             //std::cerr << "timestep_interval: " << timestep_interval << '\n';
+             //std::cerr << "timestep: " << timestep << '\n';
              //std::cerr << "current_iter: " << current_iter << '\n';
              //std::cerr << "last_upload: " << last_upload << '\n';
 
              // Upload a new upload file if the end of an upload_interval has been reached
-             if((( current_iter - last_upload ) >= (upload_interval * timestep_interval)) && (current_iter < total_length_of_simulation)) {
+             if((( current_iter - last_upload ) >= (upload_interval * timestep)) && (current_iter < total_length_of_simulation)) {
                 // Create an intermediate results zip file
                 zfl.clear();
 
@@ -764,9 +763,9 @@ int main(int argc, char** argv)
                 boinc_begin_critical_section();
 
                 // Cycle through all the steps from the last upload to the current upload
-                for (auto i = (last_upload / timestep_interval); i < (current_iter / timestep_interval); i++) {   //  current_iter/timestep is just last_iter!
-                   //std::cerr << "last_upload/timestep_interval: " << (last_upload/timestep_interval) << '\n';
-                   //std::cerr << "current_iter/timestep_interval: " << (current_iter/timestep_interval) << '\n';
+                for (auto i = (last_upload / timestep); i < (current_iter / timestep); i++) {   //  current_iter/timestep is just last_iter!
+                   //std::cerr << "last_upload/timestep: " << (last_upload/timestep) << '\n';
+                   //std::cerr << "current_iter/timestep: " << (current_iter/timestep) << '\n';
                    //std::cerr << "i: " << (std::to_string(i)) << '\n';
 
                    // Construct file name of the ICM result file
@@ -881,7 +880,7 @@ int main(int argc, char** argv)
 
              // Trickle every required fraction of the model run
              if ( (std::stoi(iter) % trickle_freq) == 0 ) {
-               std::cerr << "Sending progress trickle message to CPDN server at step: " << iter << '\n';
+               std::cerr << "Sending progress trickle message to CPDN for step: " << iter << '\n';
                process_trickle(current_cpu_time, wu_name, result_base_name, slot_path, current_iter, standalone );
              }
           }                               // end of if it's a new timestep block.
