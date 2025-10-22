@@ -183,7 +183,6 @@ int main(int argc, char** argv)
     const std::string namelist="fort.4";    // namelist file
 
     double num_days = atof(fclen.c_str()); // number of simulation days
-    int num_days_trunc = (int) num_days; // number of simulation days truncated to an integer
 
     // Get the slots path (the current working path)
     std::string slot_path = fs::current_path();
@@ -250,7 +249,7 @@ int main(int argc, char** argv)
    namelist_zip_path /= std::string(app_name) + "_" +
                        unique_member_id + "_" +
                        start_date + "_" +
-                       std::to_string(num_days_trunc) + "_" +
+                       std::to_string((int)num_days) + "_" +
                        batchid + "_" +
                        wuid + ".zip";
    std::string namelist_zip = namelist_zip_path.string();      // nb this is a const string.
@@ -326,8 +325,8 @@ int main(int argc, char** argv)
             trickle_upload_frequency=std::stoi(tmpstr);
           }
           catch (...) {
-            std::cerr << ".. Warning, unable to parse trickle upload frequency from namelist, setting to zero, got string: " << tmpstr << '\n';
-            trickle_upload_frequency = 0;
+            std::cerr << ".. Warning, unable to parse trickle upload frequency from namelist, setting to 240, got string: " << tmpstr << '\n';
+            trickle_upload_frequency = 240;   // assume 1hr timestep and trickle every 10 days.
           }
        }
        else if ( extract_key_value( namelist_line, "UTSTEP", equals, tmpstr) ) {
@@ -389,12 +388,13 @@ int main(int argc, char** argv)
                << " vert_resolution: " << vert_resolution << '\n'
                << " grid_type: " << grid_type << '\n'
                << " Upload_interval: " << upload_interval << '\n'
-               << " Trickle_upload_frequency: " << trickle_upload_frequency << '\n'
+               << " Default trickle_upload_frequency: " << trickle_upload_frequency << '\n'
                << " UTSTEP (timestep interval): " << timestep_interval << '\n'
                << " NFRPOS (frequency of model output): " << ICM_file_interval << '\n'
                << " NFFRES (frequency of restarts/checkpoints): " << restart_interval << std::endl;
 
-    //-------------------------------------------------------------------------------------------------------
+
+    //   Secondary run parameters
 
     // restart frequency might be in units of hrs, convert to model steps
     if ( restart_interval < 0 ) {
@@ -403,7 +403,17 @@ int main(int argc, char** argv)
     std::cerr << "NFRRES: restart dump frequency (in steps) " << restart_interval << '\n';
 
     // this should match CUSTOP in fort.4. If it doesn't we have a problem.
-    double total_nsteps = (num_days * 86400.0) / (double) timestep_interval;
+    double total_nsteps = (num_days * 86400.0) / (double) timestep_interval;     //GC. why is this a double? it's always an int.
+
+    //GC. Oct/25. Trickles are now fixed at every 10% of the model run for runs over 10 days (see default value above)
+    //            with a final trickle at the end of the run.
+    if ( num_days > 10.) {
+      trickle_upload_frequency = int(total_nsteps) / 10;
+      std::cerr << "Adjusted trickle frequency is every : " << trickle_upload_frequency << " model steps, "
+                << ((float)trickle_upload_frequency*(float)timestep_interval)/86400 << " days.\n";
+    }
+
+    //-------------------------------------------------------------------------------------------------------
 
     // Process the ic_ancil_file:
     std::string ic_ancil_zip = slot_path + "/" + ic_ancil_file + ".zip";
@@ -693,7 +703,7 @@ int main(int argc, char** argv)
     {
        std::string iter = "0";
 
-       std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(1)); // Time gap of 1 second to reduce overhead of control code
+       std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(1)); // Time delay to reduce overhead
 
        count++;
 
@@ -720,13 +730,12 @@ int main(int argc, char** argv)
              }
           }
 
-          //std::cerr << "Checking whether a new set of ICM files have been generated: iter, last_iter = " << iter << ", " << last_iter << std::endl;
-
           if (std::stoi(iter) != std::stoi(last_iter)) {
              // Construct file name of the ICM result file
              second_part = get_second_part(last_iter, exptid);
 
              // Move the ICMGG, ICMSH & ICMUA result files to the task folder in the project directory
+             // GC. Why do this every timestep? This should be done at same frequency as NFRPOS.
              std::vector<std::string> icm = {"ICMGG", "ICMSH", "ICMUA"};
              for (const auto& part : icm) {
                   retval = move_result_file(slot_path, temp_path, part, second_part);
@@ -832,7 +841,7 @@ int main(int argc, char** argv)
                 // Else running in standalone
                 else {
                    std::string upload_file_name = app_name + "_" + unique_member_id + "_" + start_date + "_" + \
-                                                  std::to_string(num_days_trunc) + "_" + batchid + "_" + wuid + "_" + \
+                                                  std::to_string((int)num_days) + "_" + batchid + "_" + wuid + "_" + \
                                                   std::to_string(upload_file_number) + ".zip";
                    std::cerr << "The current upload_file_name is: " << upload_file_name << '\n';
 
@@ -868,8 +877,14 @@ int main(int argc, char** argv)
                 // *****  Normal end of critical section  *****
                 boinc_end_critical_section();
                 upload_file_number++;
+             }                            // end of upload new output file block.
+
+             // Trickle every required fraction of the model run
+             if ( (std::stoi(iter) % trickle_upload_frequency) == 0 ) {
+               std::cerr << "Sending progress trickle message to CPDN server at step: " << iter << '\n';
+               process_trickle(current_cpu_time, wu_name, result_base_name, slot_path, current_iter, standalone );
              }
-          }
+          }                               // end of if it's a new timestep block.
           last_iter = iter;
           count = 0;
 
@@ -1041,7 +1056,7 @@ int main(int argc, char** argv)
              std::cerr << "Finished the upload of the final file" << '\n';
           }
 
-	       // Produce trickle
+	       // Produce final trickle
           process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
        }
        boinc_end_critical_section();
@@ -1050,7 +1065,7 @@ int main(int argc, char** argv)
     // Else running in standalone
     else {
        std::string upload_file_name = app_name + "_" + unique_member_id + "_" + start_date + "_" + \
-                                      std::to_string(num_days_trunc) + "_" + batchid + "_" + wuid + "_" + \
+                                      std::to_string((int)num_days) + "_" + batchid + "_" + wuid + "_" + \
                                       std::to_string(upload_file_number) + ".zip";
        std::cerr << "The final upload_file_name is: " << upload_file_name << '\n';
 
@@ -1077,7 +1092,7 @@ int main(int argc, char** argv)
                 }
              }
          }
-         // Produce trickle
+         // Produce final trickle
          process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
        }
     }
