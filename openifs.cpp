@@ -584,8 +584,6 @@ int main(int argc, char** argv)
     double current_cpu_time = 0;
     double fraction_done = 0;
 
-    int trickle_upload_count = 0;
-
     update_progress_file(progress_file, current_cpu_time, upload_file_number, last_iter, last_upload, model_completed);
 
 
@@ -757,7 +755,7 @@ int main(int argc, char** argv)
                 boinc_begin_critical_section();
 
                 // Cycle through all the steps from the last upload to the current upload
-                for (auto i = (last_upload / timestep_interval); i < (current_iter / timestep_interval); i++) {
+                for (auto i = (last_upload / timestep_interval); i < (current_iter / timestep_interval); i++) {   //  current_iter/timestep is just last_iter!
                    //std::cerr << "last_upload/timestep_interval: " << (last_upload/timestep_interval) << '\n';
                    //std::cerr << "current_iter/timestep_interval: " << (current_iter/timestep_interval) << '\n';
                    //std::cerr << "i: " << (std::to_string(i)) << '\n';
@@ -826,14 +824,6 @@ int main(int argc, char** argv)
                       retval = boinc_upload_status(upload_file_name);
                       if (!retval) {
                          std::cerr << "Finished the upload of the intermediate file: " << upload_file_name << '\n';
-                      }
-
-                      trickle_upload_count++;
-                      if (trickle_upload_count == 10) {
-                        // Produce trickle
-                        std::cerr << "Producing trickle" << std::endl;
-                        process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
-                        trickle_upload_count = 0;
                       }
                    }
                    last_upload = current_iter; 
