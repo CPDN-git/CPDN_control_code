@@ -23,10 +23,12 @@ using namespace std;
 using namespace std::chrono;
 
 
-int main() {
-
+int main()
+{
     std::string second_part, exptid = "EXPT";
-    int i, j, iteration = 0, max_iter = 24, iteration2 = 0;
+    int iteration = 0;
+    int iteration2 = 0;
+    int max_iter = 24;     // max number of timesteps  !! TODO: These need to come from a mock namelist !!!
 
     int nfrres = 2; // restart interval
     int upload_interval = 4;
@@ -54,7 +56,7 @@ int main() {
        }
 
        // Write to the ifs.stat file
-       for (i=0; i < iteration2; i++) {
+       for (auto i=0; i < iteration2; i++) {
           if ( to_string(iteration).length() == 1) {
              ifs_stat_file_out <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA STEPO       " << to_string(iteration) << std::endl;
              cerr              <<" "<< std::put_time(&tm, "%H:%M:%S") << " 0AAA00AAA STEPO       " << to_string(iteration) << std::endl;
@@ -84,15 +86,15 @@ int main() {
           std::ofstream ICMUA_file_out(ICMUA_file);
 
           // Write to the ICMGG
-          for (j=0; j<4000; j++) { ICMGG_file_out << rand() % 10; };
+          for (auto j=0; j<4000; j++) { ICMGG_file_out << rand() % 10; };
           ICMGG_file_out << std::endl;
 
           // Write to the ICMSH
-          for (j=0; j<4000; j++) { ICMSH_file_out << rand() % 10; };
+          for (auto j=0; j<4000; j++) { ICMSH_file_out << rand() % 10; };
           ICMSH_file_out << std::endl;
 
           // Write to the ICMUA
-          for (j=0; j<4000; j++) { ICMUA_file_out << rand() % 10; };
+          for (auto j=0; j<4000; j++) { ICMUA_file_out << rand() % 10; };
           ICMUA_file_out << std::endl;
 
           // Close the ICM file streams
@@ -123,7 +125,7 @@ int main() {
     // Produce the NODE file
     std::string NODE_file = slot_path + std::string("/NODE.001_01");
     std::ofstream NODE_file_out(NODE_file);
-    for (j=0; j<4000; j++) {
+    for (auto j=0; j<4000; j++) {
       NODE_file_out << rand() % 10 << '\n';
     }
     NODE_file_out << std::endl;
