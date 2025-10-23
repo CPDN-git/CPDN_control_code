@@ -429,7 +429,7 @@ std::string get_tag(const std::string &filename) {
     constexpr auto MAX_READ_BYTES = 256;
     std::string buffer(MAX_READ_BYTES, '\0');
 
-    std::ifstream file(filename, std::ios::in | std::ios::binary);
+    std::ifstream file(filename, std::ios::in);
 
     if (!file.is_open()) {
          std::cerr << "..get_tag. Failed to open file: " << filename << std::endl;
@@ -446,13 +446,20 @@ std::string get_tag(const std::string &filename) {
        return std::string(); // File is empty
     }
 
+    // Check for the "magic number" for zipfiles in case zipfile has already been copied.
+    if (chars_read > 2 && buffer[0] == 'P' && buffer[1] == 'K' ) {
+       return std::string();
+    }
+
     // Resize string to actual number of chars read
     buffer.resize(chars_read);
 
+    // Look for the delimiters to find the file reference
+    // We could still be unlucky here and have a binary file which might just
+    // have a > and < in our buffer with garbage in. Negligible risk.
     const char START_TAG = '>';
     const char END_TAG = '<';
 
-    // Find the delimiters
     auto start_pos = buffer.find(START_TAG);
 
     if (start_pos == std::string::npos) {
@@ -466,7 +473,7 @@ std::string get_tag(const std::string &filename) {
         return std::string();
     }
 
-    // Extract the substring
+    // Extract the file reference
     // The length is (position of '<') - (position after '>')
     auto length = tag_end - tag_start;
     
