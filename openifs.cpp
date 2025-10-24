@@ -700,6 +700,7 @@ int main(int argc, char** argv)
 
     int count = 0;
     int current_iter = 0;
+    int last_trickle_iter = 0;
 
     while (process_status == 0 && model_completed == 0)
     {
@@ -885,6 +886,7 @@ int main(int argc, char** argv)
              if ( (std::stoi(iter) % trickle_freq) == 0 ) {
                std::cerr << "Sending progress trickle message to CPDN for step: " << iter << '\n';
                process_trickle(current_cpu_time, wu_name, result_base_name, slot_path, current_iter, standalone );
+               last_trickle_iter = current_iter;
              }
           }                               // end of if it's a new timestep block.
           last_iter = iter;
@@ -1054,8 +1056,10 @@ int main(int argc, char** argv)
              std::cerr << "Finished the upload of the final file" << '\n';
           }
 
-	       // Produce final trickle
-          process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
+	       // Produce final trickle it's the same timestep as the last main loop trickle
+          if ( current_iter > last_trickle_iter ) {
+            process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
+          }
        }
        boinc_end_critical_section();
     }
