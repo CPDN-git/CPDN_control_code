@@ -406,13 +406,16 @@ int main(int argc, char** argv)
     // this should match CUSTOP in fort.4. If it doesn't we have a problem.
     double total_nsteps = (num_days * 86400.0) / (double) timestep;     //GC. why is this a double? it's always an int.
 
-    //GC. Oct/25. Trickles are now fixed at every 10% of the model run for runs over 10 days (see default value above)
-    //            with a final trickle at the end of the run.
-    if ( num_days > 10.) {
-      trickle_freq = int(total_nsteps) / 10;
-      std::cerr << "Adjusted trickle frequency is every : " << trickle_freq << " model steps, "
-                << ((float)trickle_freq*(float)timestep)/86400 << " days.\n";
+    //GC. Oct/25. Trickles are now fixed at every 10% of the model run with a final trickle at the end of the run.
+    //    Value read from fort.4 namelist is ignored and should be removed.
+
+    int freq_min = 24*3600/timestep;         // minimum of a trickle every 24 model hrs.
+    trickle_freq = int(total_nsteps) / 10;
+    if ( trickle_freq < freq_min ) {
+      trickle_freq = freq_min;
     }
+    std::cerr << "Adjusted trickle frequency is every : " << trickle_freq << " model steps, "
+                << ((float)trickle_freq*(float)timestep)/86400.0 << " days.\n";
 
     //-------------------------------------------------------------------------------------------------------
     //    Unpack the task's input files into the slot directory

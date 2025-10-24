@@ -165,11 +165,11 @@ bool set_exec_perms(const std::string& filepath) {
     // Group: Read, Execute
     // Others: Read, Execute
 
-    #if defined(__unix__) || defined(__APPLE__) || defined(__linux__)
+#if defined(__unix__) || defined(__APPLE__) || defined(__linux__)
     if (chmod(filepath.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0 ) {
         return false;
     }
-    #endif
+#endif
 
     return true;
 }
