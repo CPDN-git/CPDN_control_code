@@ -701,11 +701,10 @@ int main(int argc, char** argv)
     int count = 0;
     int current_iter = 0;
     int last_trickle_iter = 0;
+    std::string iter = "0";
 
     while (process_status == 0 && model_completed == 0)
     {
-       std::string iter = "0";
-
        std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(1)); // Time delay to reduce overhead
 
        count++;
@@ -902,7 +901,7 @@ int main(int argc, char** argv)
        }
 
       // Calculate the fraction done
-      fraction_done = model_frac_done( atof(iter.c_str()), total_nsteps, atoi(nthreads.c_str()) );
+      fraction_done = model_frac_done( std::stof(iter), total_nsteps, std::stoi(nthreads) );
 
       if (!standalone) {
          // If the current iteration is at a restart iteration
