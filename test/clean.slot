@@ -8,4 +8,5 @@ set -x
 /bin/rm progress_file*
 /bin/rm stderr.txt
 /bin/rm -rf ifsdata
+/bin/rm ICM*+*
 set +x
