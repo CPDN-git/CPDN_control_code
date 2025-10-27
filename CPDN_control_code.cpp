@@ -518,18 +518,24 @@ void read_progress_file(std::string progress_file, int& last_cpu_time, int& uplo
 }
 
 
-// Update the progress file
-void update_progress_file(std::string progress_file, int last_cpu_time, int upload_file_number,
-                          std::string last_iter, int last_upload, int model_completed)
+/**
+ * @brief Store task progress in progress_file
+ */
+void update_progress_file(std::string& progress_file, int last_cpu_time, int upload_file_number,
+                          std::string& last_iter, int last_upload, int model_completed)
 {
     std::ofstream progress_file_out(progress_file);
 
     // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
-    progress_file_out << "last_cpu_time=" << std::to_string(last_cpu_time) << '\n';
-    progress_file_out << "upload_file_number=" << std::to_string(upload_file_number) << '\n';
-    progress_file_out << "last_iter=" << last_iter << '\n';
-    progress_file_out << "last_upload=" << std::to_string(last_upload) << '\n';
-    progress_file_out << "model_completed="<< std::to_string(model_completed) << std::endl;
+    // GC Oct/2025. Make progress file a fortran namelist, so the models can easily read it to check the control process is still running.
+    progress_file_out << "! CPDN controller progress file & fortran namelist\n"
+                      << "&CPDN\n"
+                      << "last_cpu_time=" << std::to_string(last_cpu_time) << '\n'
+                      << "upload_file_number=" << std::to_string(upload_file_number) << '\n'
+                      << "last_iter=" << last_iter << '\n'
+                      << "last_upload=" << std::to_string(last_upload) << '\n'
+                      << "model_completed="<< std::to_string(model_completed) << '\n'
+                      << "/" << std::endl;
     progress_file_out.close();
 }
 
@@ -818,7 +824,6 @@ int print_last_lines(std::string filename, int maxlines) {
    //  Glenn
 
    int     count = 0;
-   int     start, end;
    std::string  lines[maxlines];
    std::ifstream filein(filename);
 
@@ -829,8 +834,8 @@ int print_last_lines(std::string filename, int maxlines) {
 
    if ( count > 0 ) {
       // find the oldest lines first in the buffer, will not be at start if count > maxlines
-      start = count > maxlines ? (count%maxlines) : 0;
-      end   = std::min(maxlines,count);
+      int start = count > maxlines ? (count%maxlines) : 0;
+      int end   = std::min(maxlines,count);
 
       std::cerr << ">>> Printing last " << end << " lines from file: " << filename << '\n';
       for ( int i=0; i<end; i++ ) {
