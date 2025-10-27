@@ -2,10 +2,12 @@
 // Control code functions for the climateprediction.net project (CPDN)
 //
 // Written by Andy Bowery (Oxford eResearch Centre, Oxford University) May 2023
-// Contributions from Glenn Carver (ex-ECMWF), 2022->
+// Further development: Glenn Carver, CPDN, 2022->
 //
 
+#include <iomanip>
 #include "CPDN_control_code.h"
+#include "openifs.h"
 
 // Initialise BOINC and set the options
 int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {
@@ -21,10 +23,6 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     wu_name = dataBOINC.wu_name;
     project_dir = dataBOINC.project_dir;
     version = std::to_string(dataBOINC.app_version);
-
-    //cerr << "wu_name: " << wu_name << '\n';
-    //cerr << "project_dir: " << project_dir << '\n';
-    //cerr << "version: " << version << '\n';
 
     // Set BOINC optional values
     BOINC_OPTIONS options;
@@ -42,100 +40,190 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     return boinc_init_options(&options);
 }
 
-// Wrappers for BOINC APIs calls, calls to APIs need to be in the same scope as the call to boinc_init()
-void call_boinc_begin_critical_section() {
-    boinc_begin_critical_section();
+
+// GC. recoded from original. do not use putenv, it stores the pointer of memory passed in (see multiple stackexchange posts on this issue)
+bool set_env_var(const std::string& name, const std::string& val) {
+    return (setenv(name.c_str(), val.c_str(), 1) == 0);     // 1 = overwrite existing value, true on success.
 }
 
-void call_boinc_end_critical_section() {
-    boinc_begin_critical_section();
+
+// Next two functions allow the use of an override file to set environment variables for testing
+// on live tasks on remote machines.  The file is a simple text file with one variable per line in the format:
+// VAR=VALUE  or export VAR='VALUE'  (single or double quotes can be used, or no quotes)
+// e.g. export OMP_NUM_THREADS=6
+
+// GC. This function should be in a utility library eventually.
+/**
+ * @brief Attempts to parse a single line from the override file.
+ * * Handles common shell formats like "VAR=VALUE" or "export VAR='VALUE'".
+ *
+ * @param line The line of text to parse.
+ * @param name Output parameter for the variable name.
+ * @param value Output parameter for the variable value.
+ * @return true if successful, false if the line is empty, a comment, or invalid.
+ */
+bool parse_export(const std::string& line, std::string& name, std::string& value)
+{
+    std::string working_line = line;
+
+    // Trim leading whitespace
+    working_line.erase(0, working_line.find_first_not_of(" \t\n\r"));
+    
+    // Ignore comments and empty lines
+    if (working_line.empty() || working_line[0] == '#') {
+        return false;
+    }
+
+    // Strip 'export' keyword if present
+    const std::string export_prefix = "export ";
+    if (working_line.rfind(export_prefix, 0) == 0) {
+        working_line.erase(0, export_prefix.length());
+    }
+
+    // Find the '=' delimiter
+    auto eq_pos = working_line.find('=');
+    if (eq_pos == std::string::npos || eq_pos == 0) {
+        return false;
+    }
+
+    name = working_line.substr(0, eq_pos);
+    value = working_line.substr(eq_pos + 1);
+
+    // Tidy up the value (remove surrounding quotes if present)
+    value.erase(0, value.find_first_not_of(" \t\n\r")); // Trim leading whitespace
+    value.erase(value.find_last_not_of(" \t\n\r") + 1); // Trim trailing whitespace
+
+    if (value.length() >= 2 && 
+        ((value.front() == '"' && value.back() == '"') || 
+         (value.front() == '\'' && value.back() == '\''))) 
+    {
+        // Remove surrounding quotes
+        value = value.substr(1, value.length() - 2);
+    }
+    
+    // Tidy up the name (trimming is sufficient)
+    name.erase(name.find_last_not_of(" \t\n\r") + 1);
+    
+    return true;
 }
 
-int call_boinc_unzip(const std::string& zip_to_unzip, const std::string& path) {
-    return boinc_zip(UNZIP_IT, zip_to_unzip.c_str(), path);
+
+/**
+ * @brief Checks for the override file and sets environment variables if found.
+ * * 
+ * @param project_path The base directory.
+ * @param filename The override environment filename.
+ * @return true if environment variables were successfully processed, false otherwise.
+ */
+bool process_env_overrides(const fs::path& override_envs)
+{
+    if (!fs::exists(override_envs)) {
+        // Fail silently to avoid highlighting existence of file
+        //std::cerr << "Override file not found: " << override_envs.string() << std::endl;
+        return false;
+    }
+
+    // debugging only. don't advertise existence of file
+    //std::cerr << "Processing environment overrides from: " << override_envs.string() << std::endl;
+    
+    std::ifstream file(override_envs);
+    if (!file.is_open()) {
+        // Fail silently
+        //std::cerr << "Error: Could not open override file for reading." << std::endl;
+        return false;
+    }
+
+    std::string line;
+    bool success = true;
+    while (std::getline(file, line))
+    {
+        std::string var_name;
+        std::string var_value;
+
+        if (parse_export(line, var_name, var_value))
+        {
+            try {
+                set_env_var(var_name, var_value);
+                std::cerr << "Overriding env var: " << var_name << " = " << var_value << '\n';
+            } 
+            catch (const std::exception& e) {
+                std::cerr << "Error setting variable: " << e.what() << std::endl;
+                success = false;
+            }
+        }
+    }
+
+    return success;
 }
 
-int call_boinc_zip(const std::string& file_to_zip, const ZipFileList* zfl) {
-    return boinc_zip(ZIP_IT, file_to_zip, zfl);
-}
 
-int call_boinc_copy(std::string source, std::string destination) {
-    return boinc_copy(source.c_str(), destination.c_str());
-}
+// Set executable permissions on a file
+// GC. this is a workaround currently as cpdn_unzip does not set unix permissions correctly.
+bool set_exec_perms(const std::string& filepath) {
+    // 0755 is a standard permission set:
+    // Owner: Read, Write, Execute
+    // Group: Read, Execute
+    // Others: Read, Execute
 
-int call_boinc_resolve_filename_s(std::string logical_file_name, std::string& resolved_name) {
-    return boinc_resolve_filename_s(logical_file_name.c_str(), resolved_name);
-}
+#if defined(__unix__) || defined(__APPLE__) || defined(__linux__)
+    if (chmod(filepath.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0 ) {
+        return false;
+    }
+#endif
 
-void call_boinc_upload_file(std::string upload_file_name) {
-    boinc_upload_file(upload_file_name);
+    return true;
 }
-
-int call_boinc_upload_status(std::string upload_file_name) {
-    return boinc_upload_status(upload_file_name);
-}
-
-void call_boinc_report_app_status(double current_cpu_time, int restart_cpu_time, double fraction_done) {
-    boinc_report_app_status(current_cpu_time,restart_cpu_time,fraction_done);
-}
-
-void call_boinc_fraction_done(double fraction_done) {
-    boinc_fraction_done(fraction_done);
-}
-
-void call_boinc_finish(int status) {
-    boinc_finish(status);
-}
-
 
 
 // Move and unzip the app file
 int move_and_unzip_app_file(std::string app_name, std::string version, std::string project_path, std::string slot_path) {
+   // GC. TODO. This code could be combined with copy_and_unzip() to avoid code duplication.
+
     int retval = 0;
 
     // macOS
     #if defined (__APPLE__)
-       std::string app_file = app_name + std::string("_app_") + version + std::string("_x86_64-apple-darwin.zip");
+       std::string app_file = app_name + "_app_" + version + "_x86_64-apple-darwin.zip";
     // ARM
     #elif defined (_ARM) 
-       std::string app_file = app_name + std::string("_app_") + version + std::string("_aarch64-poky-linux.zip");
+       std::string app_file = app_name + "_app_" + version + "_aarch64-poky-linux.zip";
     // Linux
     #else
-       std::string app_file = app_name + std::string("_app_") + version + std::string("_x86_64-pc-linux-gnu.zip");
+       std::string app_file = app_name + "_app_" + version + "_x86_64-pc-linux-gnu.zip";
     #endif
 
     // Copy the app file to the working directory
-    std::string app_source = project_path + app_file;
-    std::string app_destination = slot_path + std::string("/") + app_file;
-    cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
-    retval = boinc_copy(app_source.c_str(), app_destination.c_str());
-    if (retval) {
-       cerr << "..Copying the app file to the working directory failed: error " << retval << "\n";
-       return retval;
+    fs::path app_source = project_path;
+    app_source /= app_file;
+    fs::path app_destination = slot_path;
+    app_destination /= app_file;
+    std::cerr << "Copying: " << app_source << " to: " << app_destination << "\n";
+
+    // GC. Replace boinc copy with modern C++17 filesystem copy.  Overwrite to match boinc_copy behaviour.
+    try {
+       fs::copy_file(app_source, app_destination,  fs::copy_options::overwrite_existing);
+    } 
+    catch (const  fs::filesystem_error& e) {
+      std::cerr << "..move_and_unzip_app: Error copying file: " << app_source << " to: " << app_destination << ",\nError: " << e.what() << std::endl;
+      return 1;
     }
 
-    // Unzip the app zip file
-    std::string app_zip = slot_path + std::string("/") + app_file;
-    cerr << "Unzipping the app zip file: " << app_zip << "\n";
-    retval = boinc_zip(UNZIP_IT, app_zip.c_str(), slot_path);
+    // Unzip the app zipfile
+    std::cerr << "Extracting the app zipfile: " << app_destination << "\n";
 
-    if (retval) {
-       cerr << "..Unzipping the app file failed" << "\n";
+    if (!cpdn_unzip(app_destination, slot_path)){
+       retval = 1;
+       std::cerr << "..Extracting the app zipfile failed" << "\n";
        return retval;
     }
-    // Remove the zip file
     else {
-       std::remove(app_zip.c_str());       
+       try {
+            fs::remove(app_destination);
+       } catch (const  fs::filesystem_error& e) {
+           std::cerr << "..move_and_unzip_app_file(). Error removing file: " << app_destination << ",\nError: " << e.what() << std::endl;
+       }
     }
     return retval;
-}
-
-
-const char* strip_path(const char* path) {
-    int jj;
-    for (jj = (int) strlen(path);
-    jj > 0 && path[jj-1] != '/' && path[jj-1] != '\\'; jj--);
-    return (const char*) path+jj;
 }
 
 
@@ -149,24 +237,24 @@ int check_child_status(long handleProcess, int process_status) {
        // Child exited normally but model might still have failed
        if (WIFEXITED(stat)) {
           process_status = 1;
-          cerr << "..The child process terminated with status: " << WEXITSTATUS(stat) << '\n';
+          std::cerr << "..The child process terminated with status: " << WEXITSTATUS(stat) << '\n';
        }
        // Child process has exited due to signal that was not caught
        // n.b. OpenIFS has its own signal handler.
        else if (WIFSIGNALED(stat)) {
           process_status = 3;
-          cerr << "..The child process has been killed with signal: " << WTERMSIG(stat) << '\n';
+          std::cerr << "..The child process has been killed with signal: " << WTERMSIG(stat) << '\n';
        }
        // Child is stopped
        else if (WIFSTOPPED(stat)) {
           process_status = 4;
-          cerr << "..The child process has stopped with signal: " << WSTOPSIG(stat) << '\n';
+          std::cerr << "..The child process has stopped with signal: " << WSTOPSIG(stat) << '\n';
        }
     }
     else if ( pid == -1) {
       // should not get here, it means the child could not be found
       process_status = 5;
-      cerr << "..Unable to retrieve status of child process " << '\n';
+      std::cerr << "..Unable to retrieve status of child process " << '\n';
       perror("waitpid() error");
     }
     return process_status;
@@ -179,19 +267,19 @@ int check_boinc_status(long handleProcess, int process_status) {
 
     // If a quit, abort or no heartbeat has been received from the BOINC client, end child process
     if (status.quit_request) {
-       cerr << "Quit request received from BOINC client, ending the child process" << '\n';
+       std::cerr << "Quit request received from BOINC client, ending the child process" << '\n';
        kill(handleProcess, SIGKILL);
        process_status = 2;
        return process_status;
     }
     else if (status.abort_request) {
-       cerr << "Abort request received from BOINC client, ending the child process" << '\n';
+       std::cerr << "Abort request received from BOINC client, ending the child process" << '\n';
        kill(handleProcess, SIGKILL);
        process_status = 1;
        return process_status;
     }
     else if (status.no_heartbeat) {
-       cerr << "No heartbeat received from BOINC client, ending the child process" << '\n';
+       std::cerr << "No heartbeat received from BOINC client, ending the child process" << '\n';
        kill(handleProcess, SIGKILL);
        process_status = 1;
        return process_status;
@@ -199,33 +287,33 @@ int check_boinc_status(long handleProcess, int process_status) {
     // Else if BOINC client is suspended, suspend child process and periodically check BOINC client status
     else {
        if (status.suspended) {
-          cerr << "Suspend request received from the BOINC client, suspending the child process" << '\n';
+          std::cerr << "Suspend request received from the BOINC client, suspending the child process" << '\n';
           kill(handleProcess, SIGSTOP);
 
           while (status.suspended) {
              boinc_get_status(&status);
              if (status.quit_request) {
-                cerr << "Quit request received from the BOINC client, ending the child process" << '\n';
+                std::cerr << "Quit request received from the BOINC client, ending the child process" << '\n';
                 kill(handleProcess, SIGKILL);
                 process_status = 2;
                 return process_status;
              }
              else if (status.abort_request) {
-                cerr << "Abort request received from the BOINC client, ending the child process" << '\n';
+                std::cerr << "Abort request received from the BOINC client, ending the child process" << '\n';
                 kill(handleProcess, SIGKILL);
                 process_status = 1;
                 return process_status;
              }
              else if (status.no_heartbeat) {
-                cerr << "No heartbeat received from the BOINC client, ending the child process" << '\n';
+                std::cerr << "No heartbeat received from the BOINC client, ending the child process" << '\n';
                 kill(handleProcess, SIGKILL);
                 process_status = 1;
                 return process_status;
              }
-             sleep_until(system_clock::now() + seconds(1));
+             std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(1));
           }
           // Resume child process
-          cerr << "Resuming the child process" << "\n";
+          std::cerr << "Resuming the child process" << "\n";
           kill(handleProcess, SIGCONT);
           process_status = 0;
        }
@@ -233,57 +321,63 @@ int check_boinc_status(long handleProcess, int process_status) {
     }
 }
 
-
-long launch_process_oifs(const std::string slot_path, const char* strCmd, const char* exptid, const std::string app_name) {
-    int retval = 0;
+// GC. TODO. There does not need to be two separate functions for launching WRF and OpenIFS.
+//     This should be combined with more args to handle differences.
+// Returns process id on success, -1 on failure.
+long launch_process_oifs(const std::string& project_path, const std::string& slot_path, 
+                         const std::string& strCmd, const std::string& nthreads,
+                         const std::string& exptid, const std::string& app_name)
+{
     long handleProcess;
-
-    //cerr << "slot_path: " << slot_path << "\n";
-    //cerr << "strCmd: " << strCmd << "\n";
-    //cerr << "exptid: " << exptid << "\n";
 
     switch((handleProcess=fork())) {
        case -1: {
-          cerr << "..Unable to start a new child process" << "\n";
-          exit(0);
+          std::cerr << "..Unable to start a new child process" << "\n";
+          return -1;      // Don't exit() here, return as this is the parent process.
           break;
        }
-       case 0: { //The child process
-          char *pathvar=NULL;
-          // Set the GRIB_SAMPLES_PATH environmental variable
-          std::string GRIB_SAMPLES_var = std::string("GRIB_SAMPLES_PATH=") + slot_path + \
-                                         std::string("/eccodes/ifs_samples/grib1_mlgrib2");
-          if (putenv((char *)GRIB_SAMPLES_var.c_str())) {
-            cerr << "..Setting the GRIB_SAMPLES_PATH failed" << "\n";
-          }
-          pathvar = getenv("GRIB_SAMPLES_PATH");
-          cerr << "The GRIB_SAMPLES_PATH environmental variable is: " << pathvar << "\n";
+       case 0: { // The child process
 
-          // Set the GRIB_DEFINITION_PATH environmental variable
-          std::string GRIB_DEF_var = std::string("GRIB_DEFINITION_PATH=") + slot_path + \
-                                     std::string("/eccodes/definitions");
-          if (putenv((char *)GRIB_DEF_var.c_str())) {
-            cerr << "..Setting the GRIB_DEFINITION_PATH failed" << "\n";
+           // Set the environment variables for the executable.
+           if ( !oifs_setenvs(slot_path, nthreads) ) {
+             std::cerr << "..Setting the OpenIFS environmental variables failed" << std::endl;
+             exit(1);   // Can't continue child process so exit to end child process.
           }
-          pathvar = getenv("GRIB_DEFINITION_PATH");
-          cerr << "The GRIB_DEFINITION_PATH environmental variable is: " << pathvar << "\n";
 
-          if((app_name=="openifs") || (app_name=="oifs_40r1")) { // OpenIFS 40r1
-            cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";
-            retval = execl(strCmd,strCmd,"-e",exptid,NULL);
+          // --------------------------------------
+          // Custom environment variable overrides, if the override file exists.
+          // NOTE! This should only be used for testing and never advertised to users.
+          {
+            fs::path override_env_vars = project_path + "/oifs_override_env_vars";
+            process_env_overrides(override_env_vars);
+          }
+          //---------------------------------------
+
+          // Execute OpenIFS
+          // OpenIFS 40r1 requires the -e exptid argument, later versions do not.
+          // GC. TODO. This should be an input arg, not decided here.
+
+          if( (app_name == "openifs") || (app_name == "oifs_40r1")) { // OpenIFS 40r1
+            std::cerr << "Executing the command: " << strCmd << " -e " << exptid << "\n";
+            execl(strCmd.c_str(),strCmd.c_str(),"-e",exptid.c_str(),NULL);
           }
           else {  // OpenIFS 43r3 and above
-            cerr << "Executing the command: " << strCmd << "\n";
-            retval = execl(strCmd,strCmd,NULL,NULL,NULL);
+            std::cerr << "Executing the command: " << strCmd << "\n";
+            execl(strCmd.c_str(),strCmd.c_str(),NULL);         // always returns -1 on failure
           }
 
-          // If execl returns then there was an error
-          cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << ",exptid=" << exptid << "\n";
-          exit(retval);
+          // If execl returns there was an error
+          int syserr = errno;    // grab the error before any other system call.
+          const char* syserr_msg = strerror(syserr);
+
+          std::cerr << "..Launch process failed: execl - errno = " << syserr << ", " << syserr_msg
+                     << "\n slot_path=" << slot_path << ",strCmd=" << strCmd << ",exptid=" << exptid << std::endl;
+
+          exit(syserr);  // exit child process with system code for better remote diagnosis.
           break;
        }
        default: 
-          cerr << "The child process has been launched with process id: " << handleProcess << "\n";
+          std::cerr << "The child process has been launched with process id: " << handleProcess << "\n";
     }
     return handleProcess;
 }
@@ -295,98 +389,140 @@ long launch_process_wrf(const std::string slot_path, const char* strCmd) {
 
     switch((handleProcess=fork())) {
        case -1: {
-          cerr << "..Unable to start a new child process" << "\n";
+          std::cerr << "..Unable to start a new child process" << std::endl;
           exit(0);
           break;
        }
        case 0: { //The child process
-          cerr << "Executing the command: " << strCmd << "\n";
+          std::cerr << "Executing the command: " << strCmd << "\n";
           retval = execl(strCmd,strCmd,NULL,NULL,NULL);
 
           // If execl returns then there was an error
           if (retval) {
-             cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << "\n";
+             std::cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << std::endl;
              exit(retval);
              break;
           }
        }
        default: 
-          cerr << "The child process has been launched with process id: " << handleProcess << "\n";
+          std::cerr << "The child process has been launched with process id: " << handleProcess << std::endl;
     }
     return handleProcess;
 }
 
 
-// Open a file and return the string contained between the arrow tags
+
+// Open a file and return the "jf_*" string contained between the arrow tags else empty string
+// Explanation for Glenn's benefit :).  First run of task the filename contains a 'reference'
+// to the real zip file stored in the projects directory.  The reference is in the form of a
+// single line e.g. ">../../projects/climateprediction.net/jf_ic_ancil_1234<". 
+// This function extracts the strings between the delimiters, so the real zip
+// file can be copied to overwrite the file containing the 'jf_' file reference (yes, it's odd and not a good idea).
+// On the subsequent runs, what should happen is the client restores the original
+// 'reference' (jf_ic_ancil_1234) file. However, some clients do not do this which 
+// means the real zip file is there instead. In this case get_tag returns an empty string.
+
+// GC. Modified to avoid reading the entire zip file if it's not a jf_ file reference.
+//     Otherwise we end up with a very big string in memory!
 std::string get_tag(const std::string &filename) {
-    std::ifstream file(filename);
-    if (file.is_open()) {
-       std::string line;
-       while (getline(file, line)) {
-          std::string::size_type start = line.find('>');
-          if (start != line.npos) {
-             std::string::size_type end = line.find('<', start + 1);
-             if (end != line.npos) {
-                ++start;
-                std::string::size_type count_size = end - start;
-                return line.substr(start, count_size);
-             }
-          }
-          return "";
-       }
-       file.close();
+
+    constexpr auto MAX_READ_BYTES = 256;
+    std::string buffer(MAX_READ_BYTES, '\0');
+
+    std::ifstream file(filename, std::ios::in);
+
+    if (!file.is_open()) {
+         std::cerr << "..get_tag. Failed to open file: " << filename << std::endl;
+        return std::string();
     }
-    return "";
+
+    // Read up to MAX_READ_BYTES directly into the string's underlying buffer
+    file.read(buffer.data(), MAX_READ_BYTES-1);          // Leave space for final null terminator set above
+    
+    // Get the actual number of bytes read
+    std::streamsize chars_read = file.gcount();
+
+    if (chars_read == 0) {
+       return std::string(); // File is empty
+    }
+
+    // Check for the "magic number" for zipfiles in case zipfile has already been copied.
+    if (chars_read > 2 && buffer[0] == 'P' && buffer[1] == 'K' ) {
+       return std::string();
+    }
+
+    // Resize string to actual number of chars read
+    buffer.resize(chars_read);
+
+    // Look for the delimiters to find the file reference
+    // We could still be unlucky here and have a binary file which might just
+    // have a > and < in our buffer with garbage in. Negligible risk.
+    const char START_TAG = '>';
+    const char END_TAG = '<';
+
+    auto start_pos = buffer.find(START_TAG);
+
+    if (start_pos == std::string::npos) {
+        return std::string();
+    }
+
+    auto tag_start = start_pos + 1;
+    auto tag_end   = buffer.find(END_TAG, tag_start);
+
+    if (tag_end == std::string::npos) {
+        return std::string();
+    }
+
+    // Extract the file reference
+    // The length is (position of '<') - (position after '>')
+    auto length = tag_end - tag_start;
+    
+    return buffer.substr(tag_start, length);
 }
 
 
 // Read the progress file
-void read_progress_file(std::string progress_file, int& last_cpu_time, int& upload_file_number, std::string& last_iter, int& last_upload, int& model_completed) {
+void read_progress_file(std::string progress_file, int& last_cpu_time, int& upload_file_number, 
+                        std::string& last_iter, int& last_upload, int& model_completed) {
 
     // Parse the progress_file
-    std::string progress_file_line="", delimiter="=";
-    std::ifstream progress_file_filestream;
+    std::string progress_line = "";
+    std::string delimiter = "=";
+    std::ifstream progress_filestream;
     
     // Open the progress_file file
-    if(!(progress_file_filestream.is_open())) {
-       progress_file_filestream.open(progress_file);
+    if(!(progress_filestream.is_open())) {
+       progress_filestream.open(progress_file);
     } 
     
     // Read the namelist file
-    while(std::getline(progress_file_filestream, progress_file_line)) { //get 1 row as a string
-       std::istringstream pfs(progress_file_line);   //put line into stringstream
+    while(std::getline(progress_filestream, progress_line)) { //get 1 row as a string
 
-       if (pfs.str().find("last_cpu_time") != std::string::npos) {
-          last_cpu_time = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //cerr << "last_cpu_time: " << std::to_string(last_cpu_time) << '\n';
+       if (progress_line.find("last_cpu_time") != std::string::npos) {
+          last_cpu_time = std::stoi(progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1));
        }
-       else if (pfs.str().find("upload_file_number") != std::string::npos) {
-          upload_file_number = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //cerr << "upload_file_number: " << std::to_string(upload_file_number) << '\n';
+       else if (progress_line.find("upload_file_number") != std::string::npos) {
+          upload_file_number = std::stoi(progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1));
        }
-       else if (pfs.str().find("last_iter") != std::string::npos) {
-          last_iter = pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1);
-          //cerr << "last_iter: " << last_iter << '\n';
+       else if (progress_line.find("last_iter") != std::string::npos) {
+          last_iter = progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1);
        }
-       else if (pfs.str().find("last_upload") != std::string::npos) {
-          last_upload = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //cerr << "last_upload: " << std::to_string(last_upload) << '\n';
+       else if (progress_line.find("last_upload") != std::string::npos) {
+          last_upload = std::stoi(progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1));
        }
-       else if (pfs.str().find("model_completed") != std::string::npos) {
-          model_completed = std::stoi(pfs.str().substr(pfs.str().find(delimiter)+1, pfs.str().length()-1));
-          //cerr << "model_completed: " << std::to_string(model_completed) << '\n';
+       else if (progress_line.find("model_completed") != std::string::npos) {
+          model_completed = std::stoi(progress_line.substr(progress_line.find(delimiter)+1, progress_line.length()-1));
        }
     }
-    progress_file_filestream.close();
+    progress_filestream.close();
 }
 
 
 // Update the progress file
 void update_progress_file(std::string progress_file, int last_cpu_time, int upload_file_number,
-                          std::string last_iter, int last_upload, int model_completed) {
-
+                          std::string last_iter, int last_upload, int model_completed)
+{
     std::ofstream progress_file_out(progress_file);
-    //cerr << "Writing to progress file: " << progress_file << "\n";
 
     // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
     progress_file_out << "last_cpu_time=" << std::to_string(last_cpu_time) << '\n';
@@ -395,68 +531,55 @@ void update_progress_file(std::string progress_file, int last_cpu_time, int uplo
     progress_file_out << "last_upload=" << std::to_string(last_upload) << '\n';
     progress_file_out << "model_completed="<< std::to_string(model_completed) << std::endl;
     progress_file_out.close();
-
-    //cerr << "last_cpu_time: " << last_cpu_time << "\n";
-    //cerr << "upload_file_number: " << upload_file_number << "\n";
-    //cerr << "last_iter: " << last_iter << "\n";
-    //cerr << "last_upload: " << last_upload << "\n";
-    //cerr << "model_completed: " << model_completed << "\n";
 }
 
 
 // Produce the trickle and either upload to the project server or as a physical file
-void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) {
-    std::string trickle, trickle_location;
-    int rsize;
-
-    //cerr << "current_cpu_time: " << current_cpu_time << "\n";
-    //cerr << "wu_name: " << wu_name << "\n";
-    //cerr << "result_base_name: " << result_base_name << "\n";
-    //cerr << "slot_path: " << slot_path << "\n";
-    //cerr << "timestep: " << timestep << "\n";
-
+void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) 
+{
     std::stringstream trickle_buffer;
     trickle_buffer << "<wu>" << wu_name << "</wu>\n<result>" << result_base_name << "</result>\n<ph></ph>\n<ts>" \
                    << timestep << "</ts>\n<cp>" << current_cpu_time << "</cp>\n<vr></vr>\n";
-    trickle = trickle_buffer.str();
-    cerr << "Contents of trickle: " << trickle << "\n";
+    std::string trickle = trickle_buffer.str();
+
+    // Create null terminated, non-const char buffers for the boinc_send_trickle_up call
+    // to avoid possible memory faults (as seen in the past).
+    std::vector<char> trickle_data(trickle.begin(), trickle.end());
+    trickle_data.push_back('\0');
       
     // Upload the trickle if not in standalone mode
     if (!standalone) {
-       std::string variety("orig");
-       cerr << "Uploading trickle at timestep: " << timestep << "\n";
-       boinc_send_trickle_up(variety.data(), const_cast<char*> (trickle.c_str()));
+       std::cerr << "Uploading trickle at timestep: " << timestep << "\n";
+       boinc_send_trickle_up( (char*)"orig", trickle_data.data());
     }
-
-    // Write out the trickle in standalone mode
     else {
-       std::stringstream trickle_location_buffer;
-       trickle_location_buffer << slot_path << "/trickle_" << time(NULL) << ".xml" << "\n";
-       trickle_location = trickle_location_buffer.str();
-       cerr << "Writing trickle to location: " << trickle_location << "\n";
+       std::stringstream trickle_location_buf;
+       trickle_location_buf << slot_path << "/trickle_" << time(NULL) << ".xml" << '\0';
+       std::string trickle_location = trickle_location_buf.str();
+       std::cerr << "Writing trickle to location: " << trickle_location << "\n";
+
        FILE* trickle_file = fopen(trickle_location.c_str(), "w");
        if (trickle_file) {
-          //fwrite(trickle_file, 1, strlen(trickle.c_str()), trickle.c_str());
-          //fwrite(trickle.c_str(), 1, strlen(trickle.c_str()), trickle_file);
-          std::fwrite(trickle.c_str(), sizeof(char), sizeof(trickle.c_str()), trickle_file);
+          std::fwrite(trickle_data.data(), sizeof(trickle_data.data()), 1, trickle_file);
           fclose(trickle_file);
        }
     }
 }
 
 // Check whether a file exists
-bool file_exists(const std::string& filename)
-{
+bool file_exists(const std::string& filename) {
     std::ifstream infile(filename.c_str());
     return infile.good();
 }
 
+
 // Check whether file is zero bytes long
 // from: https://stackoverflow.com/questions/2390912/checking-for-an-empty-file-in-c
 // returns True if file is zero bytes, otherwise False.
-bool file_is_empty(std::string& fpath) {
-   return (std::filesystem::file_size(fpath) == 0);
+bool file_is_empty(const std::string& fpath) {
+   return ( fs::file_size(fpath) == 0);
 }
+
 
 // Calculate the cpu_time
 double cpu_time(long handleProcess) {
@@ -471,8 +594,8 @@ double cpu_time(long handleProcess) {
     //   return x;
     #else
        //getrusage(RUSAGE_SELF,&usage); //Return resource usage measurement
-       //tv_sec = usage.ru_utime.tv_sec; //Time spent executing in user mode (seconds)
-       //tv_usec = usage.ru_utime.tv_usec; //Time spent executing in user mode (microseconds)
+       //auto tv_sec = usage.ru_utime.tv_sec; //Time spent executing in user mode (seconds)
+       //auto tv_usec = usage.ru_utime.tv_usec; //Time spent executing in user mode (microseconds)
        //return tv_sec+(tv_usec/1000000); //Convert to seconds
        //fprintf(stderr,"tv_sec: %.5f\n",tv_sec);
        //fprintf(stderr,"tv_usec: %.5f\n",(tv_usec/1000000));
@@ -504,7 +627,7 @@ double model_frac_done(double step, double total_steps, int nthreads ) {
    // resolution, computer speed, etc. Tune it looking at varied runtimes & resolutions!
    // Higher is better than lower to underestimate.
    // 
-   // Impact of speedup due to multiple threads is accounted by below.
+   // Impact of speedup due to multiple threads is accounted for below.
    //
    // If we want more accuracy could use the ratio of the model timestep to 1h (T159 tstep) to 
    // provide a 'slowdown' factor for higher resolutions.
@@ -531,30 +654,13 @@ double model_frac_done(double step, double total_steps, int nthreads ) {
    return frac_done;
 }
 
-// Construct the second part of the file to be uploaded
-std::string get_second_part(string last_iter, string exptid) {
-   std::string second_part="";
 
-   if (last_iter.length() == 1) {
-      second_part = exptid +"+"+ "00000" + last_iter;
-   }
-   else if (last_iter.length() == 2) {
-      second_part = exptid + "+" + "0000" + last_iter;
-   }
-   else if (last_iter.length() == 3) {
-      second_part = exptid + "+" + "000" + last_iter;
-   }
-   else if (last_iter.length() == 4) {
-      second_part = exptid + "+" + "00" + last_iter;
-   }
-   else if (last_iter.length() == 5) {
-      second_part = exptid + "+" + "0" + last_iter;
-   }
-   else if (last_iter.length() == 6) {
-      second_part = exptid + "+" + last_iter;
-   }
-
-   return second_part;
+// Construct the second part of the output model filename to be uploaded
+// nb. exptid is always 4 characters for OpenIFS.
+std::string get_second_part(const std::string& last_iter, const std::string& exptid) {
+    std::ostringstream oss;
+    oss << exptid << "+" << std::setw(6) << std::setfill('0') << last_iter;
+    return oss.str();
 }
 
 
@@ -562,14 +668,21 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
     int retval = 0;
 
     // Move result file to the temporary folder in the project directory
-    if(file_exists(slot_path + std::string("/") + first_part + second_part)) {
-       cerr << "Moving to projects directory: " << (slot_path+std::string("/") + first_part + second_part) << "\n";
-       retval = boinc_copy((slot_path + std::string("/") + first_part + second_part).c_str() , \
-                           (temp_path + std::string("/") + first_part + second_part).c_str());
+    std::string result_file = slot_path + "/" + first_part + second_part;
+    std::string temp_file = temp_path + "/" + first_part + second_part;
+    //std::cerr << "Checking for result file: " << result_file << "\n";
+
+    if(file_exists(result_file)) {
+       std::cerr << "Moving result file: " <<  fs::path(result_file).filename() << " to projects directory.\n";
+       retval = boinc_copy( result_file.c_str(), temp_file.c_str() );
 
        // If result file has been successfully copied over, remove it from slots directory
        if (!retval) {
-          std::remove((slot_path + std::string("/") + first_part + second_part).c_str());
+          try {
+               fs::remove(result_file);
+          } catch (const  fs::filesystem_error& e) {
+              std::cerr << "..move_result_file(). Error removing file: " << result_file << ", error: " << e.what() << "\n";
+          }
        }
     }
     return retval;
@@ -582,37 +695,34 @@ bool check_stoi(std::string& cin) {
     //  Returns true on success, false if non-numeric data in input string.
     //  Glenn Carver
 
-    int step;
-
     if (std::any_of(cin.begin(), cin.end(), ::isalpha)) {
-        cerr << "..Invalid characters in stoi string: " << cin << "\n";
+        std::cerr << "..Invalid characters in stoi string: " << cin << "\n";
         return false;
     }
 
     //  check stoi standard exceptions
     //  n.b. still need to check step <= max_step
     try {
-        step = std::stoi(cin);
-        //cerr << "step converted is : " << step << "\n";
+        std::stoi(cin);
         return true;
     }
     catch (const std::invalid_argument &excep) {
-        cerr << "..Invalid input argument for stoi : " << excep.what() << "\n";
+        std::cerr << "..Invalid input argument for stoi : " << excep.what() << "\n";
         return false;
     }
     catch (const std::out_of_range &excep) {
-        cerr << "..Out of range value for stoi : " << excep.what() << "\n";
+        std::cerr << "..Out of range value for stoi : " << excep.what() << "\n";
         return false;
     }
 }
 
-bool oifs_parse_stat(std::string& logline, std::string& stat_column, int index) {
-   //   Parse a line of the OpenIFS ifs.stat log file, previously obtained from oifs_get_statline
+bool oifs_parse_stat(const std::string& logline, std::string& stat_column, const int index) {
+   //   Parse a line of the OpenIFS ifs.stat log file.
    //      logline  : incoming ifs.stat logfile line to be parsed
    //      stat_col : returned string given by position 'index'
    //  Returns false if string is empty.
 
-   istringstream tokens;
+   std::istringstream tokens;
    std::string statstr="";
 
    //  split input, get token specified by 'column' unless file is corrupted
@@ -621,58 +731,64 @@ bool oifs_parse_stat(std::string& logline, std::string& stat_column, int index) 
       tokens >> statstr;
 
    if ( statstr.empty() ){
+      std::cerr << "..oifs_parse_stat: warning, statstr is empty: " << logline << '\n';
       return false;
    } else {
       stat_column = statstr;
-      //cerr << "oifs_parse_ifsstat: parsed string  = " << stat_column << " index " << index << '\n';
       return true;
    }
 }
 
-bool oifs_get_stat(std::ifstream& ifs_stat, std::string& logline) {
-   // Parse content of ifs.stat and always return last non-zero line read from log file.
-   //
-   // Updates stream offset between calls to prevent completely re-reading the file,
-   // to reduce file I/O on the volunteer's machine.
-   //
-   //    ifs_stat : name of logfile (ifs.stat for current generation of OpenIFS models)
-   //    logline  : last line read from ifs.stat. Preserved between calls to this fn.
-   //    NOTE!  The file MUST already be open. This fn does not close it.
-   //
-   // Returns: False if file not open, otherwise true.
-   //
-   // TODO: ideally this should be part of a small class that
-   // inherits from ifstream to manage & read ifs.stat, as it relies on trust the
-   // callee has not opened & closed this file inbetween calls.
-   //
-   //     Glenn
 
-    string             statline = "";         // default: 4th element of ifs.stat file lines
-    static string      current_line = "";
-    static streamoff   p = 0;             // stream offset position
+bool fread_last_line(const std::string& fname, std::string& logline) {
+    //  Function to read & return last line of a file.
+    //  Works in a similar way to 'tail -f' command.
+    //  fname   : name of file to read
+    //  logline : last line read from file, preserved between calls to this fn.
+    //  Returns true if a new line read. returns false and logline unchanged
+    //          if no new line read, returns false and empty logline if file does not exist.
+    //
+    //    Glenn carver
 
-    if ( !ifs_stat.is_open() ) {
-        cerr << "..oifs_get_stat: error, ifs.stat file is not open" << endl;
-        p = 0;
-        current_line = "";
+    static std::streamoff last_offset = 0;
+    static std::string    last_line;
+    std::string           line;
+
+    // Check file exists and non-empty
+    std::ifstream logfile(fname, std::ios::in);
+    if (!logfile.is_open()) {
+        logline.clear();
+        last_offset = 0;
+        std::cerr << ".. file_last_line(): warning, " << fname << " does not exist." << std::endl;
         return false;
     }
 
-    ifs_stat.seekg(p);
-    while ( std::getline(ifs_stat, statline) ) {
-      current_line = statline;
+   // Seek to last offset and read lines to file end
+   logfile.seekg(last_offset, std::ios::beg);
 
-      if ( ifs_stat.tellg() == -1 )     // set p to eof for next call to this fn
-         p = p + statline.size();
-      else
-         p = ifs_stat.tellg();
+   while (std::getline(logfile, line)) {
+      last_line = line;
+   }
+   //std::cerr << "fread_last_line: last line read: " << last_line << '\n';
+
+   // Update last_offset for next call
+   last_offset = logfile.tellg();
+   if (last_offset == -1) {
+      // At EOF, set to file size
+      logfile.clear();                   // must clear stream error before attempting to read again
+      logfile.seekg(0, std::ios::end);   // seek backwards to start of file to get size.
+      last_offset = logfile.tellg();
     }
-    ifs_stat.clear();           // must clear stream error before attempting to read again as file remains open
 
-    logline = current_line;
+    logfile.close();
 
-    return true;
+    if (!last_line.empty()) {
+        logline = last_line;
+        return true;
+    }
+    return false;    // no new line read and arg logline unchanged
 }
+
 
 bool oifs_valid_step(std::string& step, int nsteps) {
    //  checks for a valid step count in arg 'step'
@@ -681,7 +797,7 @@ bool oifs_valid_step(std::string& step, int nsteps) {
 
    // make sure step is valid integer
    if (!check_stoi(step)) {
-      cerr << "..oifs_valid_step: Invalid characters in stoi string, unable to convert step to int: " << step << '\n';
+      std::cerr << "..oifs_valid_step: Invalid characters in stoi string, unable to convert step to int: " << step << '\n';
       return false;
    } else {
       // check step is in valid range: 0 -> total no. of steps
@@ -695,7 +811,7 @@ bool oifs_valid_step(std::string& step, int nsteps) {
 }
 
 
-int print_last_lines(string filename, int maxlines) {
+int print_last_lines(std::string filename, int maxlines) {
    // Opens a file if exists and uses circular buffer to read & print last lines of file to stderr.
    // Returns: zero : either can't open file or file is empty
    //          > 0  : no. of lines in file (may be less than maxlines)
@@ -703,8 +819,8 @@ int print_last_lines(string filename, int maxlines) {
 
    int     count = 0;
    int     start, end;
-   string  lines[maxlines];
-   ifstream filein(filename);
+   std::string  lines[maxlines];
+   std::ifstream filein(filename);
 
    if ( filein.is_open() ) {
       while ( getline(filein, lines[count%maxlines]) )
@@ -714,45 +830,44 @@ int print_last_lines(string filename, int maxlines) {
    if ( count > 0 ) {
       // find the oldest lines first in the buffer, will not be at start if count > maxlines
       start = count > maxlines ? (count%maxlines) : 0;
-      end   = min(maxlines,count);
+      end   = std::min(maxlines,count);
 
-      cerr << ">>> Printing last " << end << " lines from file: " << filename << '\n';
+      std::cerr << ">>> Printing last " << end << " lines from file: " << filename << '\n';
       for ( int i=0; i<end; i++ ) {
-         cerr << lines[ (start+i)%maxlines ] << '\n';
+         std::cerr << lines[ (start+i)%maxlines ] << '\n';
       }
-      cerr << "------------------------------------------------" << '\n';
+      std::cerr << "------------------------------------------------" << '\n';
    }
 
    return count;
 }
 
-
+/**
+ * @brief Read the rcf_file line by line and extract CTIME and CSTEP variables.
+ *        The input stream rcf_file must be at file start and ctime_value & cstep_value
+ *        must be empty strings.
+ */
 bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::string& cstep_value)
 {
-    // Read the rcf_file if it exists and extract the CTIME and CSTEP variables
-    
     std::string delimiter = "\"";
     std::string rcf_file_line;
     int position = 2;
 
     // Extract the values of CSTEP and CTIME from the rcf file
-    while ( std::getline( rcf_file, rcf_file_line )) {
-
+    while ( std::getline( rcf_file, rcf_file_line ))
+    {
        // Check for CSTEP, if present return value
        read_delimited_line(rcf_file_line, delimiter, "CSTEP", position, cstep_value);
 
        // Check for CTIME, if present return value
        read_delimited_line(rcf_file_line, delimiter, "CTIME", position, ctime_value);
-
     }
-    //cerr << "rcf file CSTEP: " << cstep_value << '\n';
-    //cerr << "rcf file CTIME: " << ctime_value << '\n';
 
-    if (cstep_value == "") {
-       cerr << "CSTEP value not present in rcf file" << '\n';
+    if (cstep_value.empty()) {
+       std::cerr << "CSTEP value not present in rcf file" << '\n';
        return false;
-    } else if (ctime_value == "") {
-       cerr << "CTIME value not present in rcf file" << '\n';
+    } else if (ctime_value.empty()) {
+       std::cerr << "CTIME value not present in rcf file" << '\n';
        return false;
     } else {
        return true;
@@ -760,19 +875,20 @@ bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::strin
 }
 
 
-bool read_delimited_line(std::string& file_line, std::string delimiter, std::string string_to_find, int position, std::string& returned_value)
+bool read_delimited_line(std::string file_line, const std::string& delimiter, const std::string& to_find, int position, std::string& returned_value)
 {
-    // Extracts a value from a delimited position on a line of a file
+    // Extracts a substring following a positional delimiter if found.
 
     size_t pos = 0;
     int count = 0;
 
-    if (file_line.find(string_to_find) != std::string::npos ) {
+    if (file_line.find(to_find) != std::string::npos ) {
        // From the file line take the field specified by the position
        while ((pos = file_line.find(delimiter)) != std::string::npos) {
           count = count + 1;
           if (count == position) {  
              returned_value = file_line.substr(0,pos);
+
              // Remove whitespace
              returned_value.erase( std::remove_if( returned_value.begin(), \
                                    returned_value.end(), ::isspace ), returned_value.end() );
@@ -780,53 +896,103 @@ bool read_delimited_line(std::string& file_line, std::string delimiter, std::str
           file_line.erase(0, pos + delimiter.length());
        }
     }
+    return !returned_value.empty();
+}
 
-    if ( returned_value != "" ) {
-       return true;
-    } else {
-       return false;
+
+/**
+ * @brief Searches a line for a specific key and extracts the value substring.
+ * 
+ * This function is designed to extract the value of an input 'key' in a typical
+ * key=value pair contained in the input line.
+ * NOTE! It is similar to read_delimited_line but that functions works by a 
+ * positional search of a delimiter, rather than expecting a key/value pair.
+ * 
+ * @param line The input string to search (e.g., the line read from a file).
+ * @param key The substring to look for (e.g., "IFSDATA_FILE").
+ * @param delimiter The character separating the key from the value (e.g., '=' or ':').
+ * @param out_value Reference to a string where the extracted and stripped value will be stored.
+ * @return true if the key was found and a value successfully extracted; false otherwise.
+ */
+bool extract_key_value( const std::string& line, const std::string& key, char delimiter, std::string& out_value ) 
+{
+    if (line.find(key) == std::string::npos) {
+        return false;
     }
+
+    auto pos = line.find(delimiter);
+    if (pos == std::string::npos) {
+        return false;
+    }
+
+    // Extract the substring (the value part)
+    // substr(pos + 1) takes the rest of the string after the delimiter.
+    out_value = line.substr(pos + 1);
+
+    // Remove space and trailing commas (as in a namelist entry).
+    out_value.erase( std::remove(out_value.begin(), out_value.end(), ','), out_value.end() );
+    out_value.erase( std::remove(out_value.begin(), out_value.end(), ' '), out_value.end() );
+
+    return true;
 }
 
 
 // Takes the zip file, checks existence and whether empty and copies it to destination and unzips it
-int copy_and_unzip(std::string zipfile, std::string destination, std::string unzip_path, std::string type) {
+// GC. TODO. Convert this to accept  fs::path args.
+int copy_and_unzip(const std::string& zipfile, const std::string& destination, const std::string& unzip_path, const std::string& type) {
     int retval = 0;
 
     // Check for the existence of the zip file
     if( !file_exists(zipfile) ) {
-       cerr << "..The " << type << " zip file does not exist: " << zipfile << std::endl;
+       std::cerr << "..The " << type << " zip file does not exist: " << zipfile << std::endl;
        return 1;        // should terminate, the model won't run.
     }
 
     // Check whether the zip file is empty
     if( file_is_empty(zipfile) ) {
-       cerr << "..The " << type << " zip file is empty: " << zipfile << std::endl;
+       std::cerr << "..The " << type << " zip file is empty: " << zipfile << std::endl;
        return 1;        // should terminate, the model won't run.
     }
 		
     // Get the name of the 'jf_' filename from a link within the 'zipfile' file
-    std::string source = "";
-    source = get_tag(zipfile);
+    std::string source = get_tag(zipfile);
 
-    // Copy and unzip the zip file only if the zip file contains a string between tags
+    // Copy and unzip the zip file only if the zip file contains a string between tags.
+    // If it doesn't, the real zip file is likely already in the working directory from a previous run.
     if ( !source.empty() ) {
-       // Copy the 'jf_' to the working directory and rename
-       cerr << "Copying the " << type << " files from: " << source << " to: " << destination << '\n';
-       retval = call_boinc_copy(source, destination);
-       if (retval) {
-          cerr << "..Copying the " << type << " files to the working directory failed" << std::endl;
-          return retval;
+       // Copy the 'jf_' file to the working directory and rename
+       if ( file_exists(source) ) {
+          std::cerr << "Copying the " << type << " file from: " << source << " to: " << destination << '\n';
+          try {
+              fs::copy_file(source, destination,  fs::copy_options::overwrite_existing);
+          } 
+          catch (const  fs::filesystem_error& e) {
+             std::cerr << "..copy_and_unzip: Error copying file: " << source << " to: " << destination << ",\nError: " << e.what() << "\n";
+             return 1;
+          }
        }
-
-       // Unzip the zip file
-       cerr << "Unzipping the " << type << " zip file: " << destination << '\n';
-       retval = call_boinc_unzip(destination, unzip_path);
-       if (retval) {
-          cerr << "..Unzipping the " << type << " file failed" << std::endl;
-          return retval;
+       else {
+          std::cerr << "..The " << type << " file retrieved from get_tag does not exist: " << source << std::endl;
+          return 1;      // GC what should we do here -- return or carry on and check destination exists from a previous run?
        }
     }
-	// Success, retval is 0
+
+    // If 'source' is empty, the 'jf_' link wasn't there so we assume the real zip file is already in the working directory.
+    // We could assume that the real zip file has already been unzipped, but to be safe unzip it if found.
+    if (file_exists(destination) ) {
+       std::cerr << "Unzipping the " << type << " zip file: " << destination << '\n';
+       if (!cpdn_unzip(destination, unzip_path)) {
+         std::cerr << "..Unzipping the " << type << " file failed" << std::endl;
+         return 1;
+       }
+    }
+    else {
+       std::cerr << "..The " << type << " file does not exist in the working directory: " << destination << std::endl;
+       return 1;
+    }
+
+	 // Success, retval is 0
     return retval;
 }
+
+

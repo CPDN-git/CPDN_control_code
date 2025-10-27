@@ -251,7 +251,21 @@ int main(int argc, char** argv) {
        }
 
        cerr << "resolved_name: " << resolved_name << "\n";
-       strncpy(const_cast<char*> (result_base_name.c_str()), strip_path(resolved_name.c_str()), strlen(strip_path(resolved_name.c_str()))-6);
+
+//GC recoded this as it's potentially hazardous & could cause memory errors (& strip_path() has been removed from control_code.cpp)
+//   1. C++ standard forbids c_str() to be cast to non-const char* in order to modify the string's internal buffer.
+//      (modifying internal buffer of a string is undefined behaviour)
+//   2. strncpy() does not null-terminate if the source string is longer than the specified length
+//   3. -6 is applied without testing the length of the string and could cause a negative length and overwrite memory.
+//       strncpy(const_cast<char*> (result_base_name.c_str()), strip_path(resolved_name.c_str()), strlen(strip_path(resolved_name.c_str()))-6);
+       std::filesystem::path p_resolved(resolved_name);
+       std::string      base_name = p_resolved.filename().string();
+       constexpr auto   res_len = strlen("_0.zip");
+
+       auto result_sub_len = (base_name.length() > res_len) ? base_name.length() - res_len : 0;
+       result_base_name = base_name.substr(0, result_sub_len);
+//GC end of recode
+
        cerr << "result_base_name: " << result_base_name << "\n";
        if (strcmp(result_base_name.c_str(), "upload_file")==0) {
           cerr << "..Failed to get result name" << "\n";

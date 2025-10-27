@@ -3,6 +3,7 @@
 # Script to setup the file structure required to run a test of new checked in code using GitHub Action 
 
 # This script has been written by Andy Bowery (Oxford University, 2024)
+# Modifications by Glenn Carver (CPDN)
 
 if __name__ == "__main__":
 
@@ -73,17 +74,22 @@ if __name__ == "__main__":
 
 
       # Create fort.4 file
-      fort_file_string = " IFSDATA_FILE=ifsdata_0\n" +\
-                         " IC_ANCIL_FILE=ic_ancil_0\n" +\
-                         " CLIMATE_DATA_FILE=clim_data_0\n" +\
-                         " HORIZ_RESOLUTION=\n" +\
-                         " VERT_RESOLUTION=\n" +\
-                         " GRID_TYPE=\n" +\
-                         " UPLOAD_INTERVAL=1\n" +\
-                         " TRICKLE_UPLOAD_FREQUENCY=1\n" +\
-                         " UTSTEP=1\n" +\
-                         " !NFRPOS=1\n" +\
-                         " NFRRES=1\n"
+      fort_file_string = "!WU_TEMPLATE_VERSION=43r3-seasonal-20250801\n"+\
+                         "!EXPTID=NNNN\n"+\
+                         "!UNIQUE_MEMBER_ID=1353\n"+\
+                         "!IFSDATA_FILE=ifsdata_0\n" +\
+                         "!IC_ANCIL_FILE=ic_ancil_0\n" +\
+                         "!CLIMATE_DATA_FILE=clim_data_0\n" +\
+                         "!HORIZ_RESOLUTION=319\n" +\
+                         "!VERT_RESOLUTION=91\n" +\
+                         "!GRID_TYPE=l_2\n" +\
+                         "!UPLOAD_INTERVAL=288.0\n" +\
+                         "!TRICKLE_UPLOAD_FREQUENCY=1\n" +\
+                         "!TSTEP=3600\n" +\
+                         "&NAMCT0\n"+\
+                         " UTSTEP=3600.0,\n" +\
+                         " NFRPOS=1,\n" +\
+                         " NFRRES=1,\n"
 
       fort_file=open("fort.4","w")
       fort_file.write(fort_file_string)
