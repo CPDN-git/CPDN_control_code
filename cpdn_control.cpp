@@ -298,8 +298,6 @@ int check_boinc_status(long handleProcess, int process_status) {
     }
 }
 
-// GC. TODO. There does not need to be two separate functions for launching WRF and OpenIFS.
-//     This should be combined with more args to handle differences.
 // Returns process id on success, -1 on failure.
 long launch_process_oifs(const std::string& project_path, const std::string& slot_path, 
                          const std::string& strCmd, const std::string& nthreads,
@@ -358,35 +356,6 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
     }
     return handleProcess;
 }
-
-
-long launch_process_wrf(const std::string slot_path, const char* strCmd) {
-    int retval = 0;
-    long handleProcess;
-
-    switch((handleProcess=fork())) {
-       case -1: {
-          std::cerr << "..Unable to start a new child process" << std::endl;
-          exit(0);
-          break;
-       }
-       case 0: { //The child process
-          std::cerr << "Executing the command: " << strCmd << "\n";
-          retval = execl(strCmd,strCmd,NULL,NULL,NULL);
-
-          // If execl returns then there was an error
-          if (retval) {
-             std::cerr << "..The execl() command failed slot_path=" << slot_path << ",strCmd=" << strCmd << std::endl;
-             exit(retval);
-             break;
-          }
-       }
-       default: 
-          std::cerr << "The child process has been launched with process id: " << handleProcess << std::endl;
-    }
-    return handleProcess;
-}
-
 
 
 // Open a file and return the "jf_*" string contained between the arrow tags else empty string

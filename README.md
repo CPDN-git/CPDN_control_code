@@ -2,7 +2,7 @@
 
 This respository contains the instructions and code for building the controlling application 
 used for controlling the climate models in the climateprediction.net project, at this point 
-the ECMWF OpenIFS (43r3) and WRF models.
+the ECMWF OpenIFS (43r3) models.
 
 ## Prerequisite: BOINC library
 
@@ -139,16 +139,6 @@ Or for macOS:
     ./oifs_43r3_1.00_x86_64-apple-darwin 2000010100 gw3a 0001 1 00001 1 oifs_43r3 1.00
 ```
 
-### WRF
-
-The WRF model currently does not work with the control code. 
-
-To build the WRF model:
-
-```
-    g++ wrf.cpp cpdn_control.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lcpdn_zip -static -pthread -std=c++17 -o wrf_1.00_x86_64-pc-linux-gnu
-```
-    
 ## Control code command line parameters
 
 The command line parameters are: 
