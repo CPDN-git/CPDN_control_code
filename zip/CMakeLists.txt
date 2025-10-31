@@ -25,7 +25,7 @@
 #  we can also be included.
 #
 # To build and run:
-# 1. cd ../CPDN_control_code/zip
+# 1. cd ../cpdn_control/zip
 # 2. mkdir build
 # 3. cd build
 #    Configure with your desired installation path
@@ -33,7 +33,7 @@
 # 5. make
 # 6. make install
 # 7. ./test_zip
-# 8. In CPDN_control_code, make sure Makefile uses ../zip/install/lib and ../zip/install/include
+# 8. In cpdn_control, make sure Makefile uses ../zip/install/lib and ../zip/install/include
 # 9. make clean; make
 #
 # For cpdn_zip, use 'make clean' in the build directory or simply delete the zip/build and zip/install directories.

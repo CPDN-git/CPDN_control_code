@@ -10,7 +10,7 @@ VERSION = 43r3_1.00
 TARGET  = oifs_$(VERSION)_x86_64-pc-linux-gnu
 DEBUG   = oifs_$(VERSION)_x86_64-pc-linux-gnu-debug
 TEST    = oifs_43r3_test.exe
-SRC     = lib/utils.cpp   openifs.cpp CPDN_control_code.cpp
+SRC     = lib/utils.cpp   openifs.cpp cpdn_control.cpp
 
 CC       = g++
 CVERSION := -DCODE_VERSION='"$(shell git rev-parse HEAD | cut -c 1-8)"'	# use single quotes to preserve the double quotes in the code

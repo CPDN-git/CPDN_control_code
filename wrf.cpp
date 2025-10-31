@@ -5,7 +5,7 @@
 // Contributions from Glenn Carver (ex-ECMWF), 2022->
 //
 
-#include "CPDN_control_code.h"
+#include "cpdn_control.h"
 
 int main(int argc, char** argv) {
     std::string ifsdata_file, ic_ancil_file, climate_data_file, horiz_resolution, vert_resolution, grid_type;

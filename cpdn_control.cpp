@@ -5,7 +5,7 @@
 // Further development: Glenn Carver, CPDN, 2022->
 //
 
-#include "CPDN_control_code.h"
+#include "cpdn_control.h"
 #include "openifs.h"
 #include "lib/utils.h"
 

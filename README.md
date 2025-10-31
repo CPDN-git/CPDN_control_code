@@ -72,7 +72,7 @@ more details.
 
  To build the cpdn_zip library and optionally run a small test:
 
- 1. cd CPDN_control_code/zip
+ 1. cd cpdn_control/zip
  2. mkdir build
  3. cd build
  4. cmake -DCMAKE_INSTALL_PREFIX=../install ..
@@ -146,7 +146,7 @@ The WRF model currently does not work with the control code.
 To build the WRF model:
 
 ```
-    g++ wrf.cpp CPDN_control_code.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lcpdn_zip -static -pthread -std=c++17 -o wrf_1.00_x86_64-pc-linux-gnu
+    g++ wrf.cpp cpdn_control.cpp -I../boinc-install/include -L../boinc-install/lib  -lboinc_api -lboinc -lcpdn_zip -static -pthread -std=c++17 -o wrf_1.00_x86_64-pc-linux-gnu
 ```
     
 ## Control code command line parameters

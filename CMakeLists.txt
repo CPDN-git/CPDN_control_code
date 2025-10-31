@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(control_code VERSION 1.0.0 LANGUAGES C CXX)
+project(cpdn_control VERSION 1.0.0 LANGUAGES C CXX)
 
 # Require C++17 standard
 set(CMAKE_CXX_STANDARD 17)
@@ -40,19 +40,19 @@ endif()
 enable_testing()
 
 # Add the source so tests can link against it
-add_library(control_code ./CPDN_control_code.cpp)
-target_include_directories(control_code PUBLIC .)
+add_library(cpdn_control ./cpdn_control.cpp)
+target_include_directories(cpdn_control PUBLIC .)
 
 # Add external header paths for boinc and cpdnzip
 # These paths are PUBLIC because code needs them to compile.
-target_include_directories(control_code PUBLIC 
+target_include_directories(cpdn_control PUBLIC 
     ${BOINC_INCLUDE_DIR}
     ${CPDNZIP_INCLUDE_DIR}
 )
 
 # Link the external libraries
 # These are PRIVATE links, meaning only rcf_utility needs them directly for linking.
-target_link_libraries(control_code PRIVATE
+target_link_libraries(cpdn_control PRIVATE
     ${BOINC_API} ${BOINC_LIB}
     ${CPDNZIP_LIB}
 )
