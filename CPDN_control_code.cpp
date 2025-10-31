@@ -5,9 +5,10 @@
 // Further development: Glenn Carver, CPDN, 2022->
 //
 
-#include <iomanip>
 #include "CPDN_control_code.h"
 #include "openifs.h"
+#include "lib/utils.h"
+
 
 // Initialise BOINC and set the options
 int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {
@@ -38,12 +39,6 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     standalone = boinc_is_standalone();
     
     return boinc_init_options(&options);
-}
-
-
-// GC. recoded from original. do not use putenv, it stores the pointer of memory passed in (see multiple stackexchange posts on this issue)
-bool set_env_var(const std::string& name, const std::string& val) {
-    return (setenv(name.c_str(), val.c_str(), 1) == 0);     // 1 = overwrite existing value, true on success.
 }
 
 
@@ -154,24 +149,6 @@ bool process_env_overrides(const fs::path& override_envs)
     }
 
     return success;
-}
-
-
-// Set executable permissions on a file
-// GC. this is a workaround currently as cpdn_unzip does not set unix permissions correctly.
-bool set_exec_perms(const std::string& filepath) {
-    // 0755 is a standard permission set:
-    // Owner: Read, Write, Execute
-    // Group: Read, Execute
-    // Others: Read, Execute
-
-#if defined(__unix__) || defined(__APPLE__) || defined(__linux__)
-    if (chmod(filepath.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0 ) {
-        return false;
-    }
-#endif
-
-    return true;
 }
 
 
@@ -572,20 +549,6 @@ void process_trickle(double current_cpu_time, std::string wu_name, std::string r
     }
 }
 
-// Check whether a file exists
-bool file_exists(const std::string& filename) {
-    std::ifstream infile(filename.c_str());
-    return infile.good();
-}
-
-
-// Check whether file is zero bytes long
-// from: https://stackoverflow.com/questions/2390912/checking-for-an-empty-file-in-c
-// returns True if file is zero bytes, otherwise False.
-bool file_is_empty(const std::string& fpath) {
-   return ( fs::file_size(fpath) == 0);
-}
-
 
 // Calculate the cpu_time
 double cpu_time(long handleProcess) {
@@ -817,36 +780,6 @@ bool oifs_valid_step(std::string& step, int nsteps) {
 }
 
 
-int print_last_lines(std::string filename, int maxlines) {
-   // Opens a file if exists and uses circular buffer to read & print last lines of file to stderr.
-   // Returns: zero : either can't open file or file is empty
-   //          > 0  : no. of lines in file (may be less than maxlines)
-   //  Glenn
-
-   int     count = 0;
-   std::string  lines[maxlines];
-   std::ifstream filein(filename);
-
-   if ( filein.is_open() ) {
-      while ( getline(filein, lines[count%maxlines]) )
-         count++;
-   }
-
-   if ( count > 0 ) {
-      // find the oldest lines first in the buffer, will not be at start if count > maxlines
-      int start = count > maxlines ? (count%maxlines) : 0;
-      int end   = std::min(maxlines,count);
-
-      std::cerr << ">>> Printing last " << end << " lines from file: " << filename << '\n';
-      for ( int i=0; i<end; i++ ) {
-         std::cerr << lines[ (start+i)%maxlines ] << '\n';
-      }
-      std::cerr << "------------------------------------------------" << '\n';
-   }
-
-   return count;
-}
-
 /**
  * @brief Read the rcf_file line by line and extract CTIME and CSTEP variables.
  *        The input stream rcf_file must be at file start and ctime_value & cstep_value
@@ -902,43 +835,6 @@ bool read_delimited_line(std::string file_line, const std::string& delimiter, co
        }
     }
     return !returned_value.empty();
-}
-
-
-/**
- * @brief Searches a line for a specific key and extracts the value substring.
- * 
- * This function is designed to extract the value of an input 'key' in a typical
- * key=value pair contained in the input line.
- * NOTE! It is similar to read_delimited_line but that functions works by a 
- * positional search of a delimiter, rather than expecting a key/value pair.
- * 
- * @param line The input string to search (e.g., the line read from a file).
- * @param key The substring to look for (e.g., "IFSDATA_FILE").
- * @param delimiter The character separating the key from the value (e.g., '=' or ':').
- * @param out_value Reference to a string where the extracted and stripped value will be stored.
- * @return true if the key was found and a value successfully extracted; false otherwise.
- */
-bool extract_key_value( const std::string& line, const std::string& key, char delimiter, std::string& out_value ) 
-{
-    if (line.find(key) == std::string::npos) {
-        return false;
-    }
-
-    auto pos = line.find(delimiter);
-    if (pos == std::string::npos) {
-        return false;
-    }
-
-    // Extract the substring (the value part)
-    // substr(pos + 1) takes the rest of the string after the delimiter.
-    out_value = line.substr(pos + 1);
-
-    // Remove space and trailing commas (as in a namelist entry).
-    out_value.erase( std::remove(out_value.begin(), out_value.end(), ','), out_value.end() );
-    out_value.erase( std::remove(out_value.begin(), out_value.end(), ' '), out_value.end() );
-
-    return true;
 }
 
 

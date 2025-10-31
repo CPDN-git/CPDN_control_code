@@ -1,0 +1,10 @@
+#pragma once
+
+#include <string>
+
+bool set_env_var(const std::string&, const std::string&);
+bool file_exists(const std::string&);
+bool file_is_empty(const std::string&);
+bool set_exec_perms(const std::string&);
+bool extract_key_value(const std::string&, const std::string&, char, std::string& );
+int  print_last_lines(const std::string& filename, int nlines);
