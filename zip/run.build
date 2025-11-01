@@ -19,3 +19,5 @@ make install
 # run the short test
 echo "Running short test of cpdn_zip..."
 ./test_zip
+
+set +x
