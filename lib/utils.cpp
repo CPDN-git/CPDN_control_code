@@ -65,6 +65,62 @@ bool set_exec_perms(const std::string& filepath) {
 }
 
 
+
+/**
+ * @brief Attempts to parse a single line as a key/value pair.
+ * * Handles common shell formats like "VAR=VALUE" or "export VAR='VALUE'".
+ *
+ * @param line  The line of text to parse.
+ * @param key   Returned parameter for the key.
+ * @param value Returned parameter for the value.
+ * @return true if successful, false if the line is empty, a comment, or invalid.
+ */
+bool parse_key_value(const std::string& line, std::string& key, std::string& value)
+{
+    std::string working_line = line;
+
+    // Trim leading whitespace
+    working_line.erase(0, working_line.find_first_not_of(" \t\n\r"));
+    
+    // Ignore comments and empty lines
+    if (working_line.empty() || working_line[0] == '#') {
+        return false;
+    }
+
+    // Strip 'export' keyword if present
+    const std::string export_prefix = "export ";
+    if (working_line.rfind(export_prefix, 0) == 0) {
+        working_line.erase(0, export_prefix.length());
+    }
+
+    // Find the '=' delimiter
+    auto eq_pos = working_line.find('=');
+    if (eq_pos == std::string::npos || eq_pos == 0) {
+        return false;
+    }
+
+    key   = working_line.substr(0, eq_pos);
+    value = working_line.substr(eq_pos + 1);
+
+    // Tidy up the value (remove surrounding quotes if present)
+    value.erase(0, value.find_first_not_of(" \t\n\r"));     // Trim leading whitespace
+    value.erase(value.find_last_not_of(" \t\n\r") + 1);     // Trim trailing whitespace
+
+    if ( value.length() >= 2 && 
+       ( (value.front() == '"' && value.back() == '"') || 
+         (value.front() == '\'' && value.back() == '\'') ) ) 
+    {
+        // Remove surrounding quotes
+        value = value.substr(1, value.length() - 2);
+    }
+    
+    // Tidy up the key (trimming is sufficient)
+    key.erase(key.find_last_not_of(" \t\n\r") + 1);
+    
+    return true;
+}
+
+
 /**
  * @brief Searches a line for a specific key and extracts the value substring.
  * 

@@ -57,7 +57,6 @@ void update_progress_file(std::string&, int, int, std::string&, int, int);
 bool read_rcf_file(std::ifstream&, std::string&, std::string&);
 bool read_delimited_line(std::string, const std::string&, const std::string&, int, std::string&);
 int copy_and_unzip(const std::string&, const std::string&, const std::string&, const std::string&);
-bool parse_export(const std::string&, std::string&, std::string&);
 bool process_env_overrides(const std::filesystem::path&);
 
 using namespace rapidxml;

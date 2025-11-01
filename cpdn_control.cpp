@@ -42,65 +42,10 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
 }
 
 
-// Next two functions allow the use of an override file to set environment variables for testing
+// Next function allows the use of an override file to set environment variables for testing
 // on live tasks on remote machines.  The file is a simple text file with one variable per line in the format:
 // VAR=VALUE  or export VAR='VALUE'  (single or double quotes can be used, or no quotes)
 // e.g. export OMP_NUM_THREADS=6
-
-// GC. This function should be in a utility library eventually.
-/**
- * @brief Attempts to parse a single line from the override file.
- * * Handles common shell formats like "VAR=VALUE" or "export VAR='VALUE'".
- *
- * @param line The line of text to parse.
- * @param name Output parameter for the variable name.
- * @param value Output parameter for the variable value.
- * @return true if successful, false if the line is empty, a comment, or invalid.
- */
-bool parse_export(const std::string& line, std::string& name, std::string& value)
-{
-    std::string working_line = line;
-
-    // Trim leading whitespace
-    working_line.erase(0, working_line.find_first_not_of(" \t\n\r"));
-    
-    // Ignore comments and empty lines
-    if (working_line.empty() || working_line[0] == '#') {
-        return false;
-    }
-
-    // Strip 'export' keyword if present
-    const std::string export_prefix = "export ";
-    if (working_line.rfind(export_prefix, 0) == 0) {
-        working_line.erase(0, export_prefix.length());
-    }
-
-    // Find the '=' delimiter
-    auto eq_pos = working_line.find('=');
-    if (eq_pos == std::string::npos || eq_pos == 0) {
-        return false;
-    }
-
-    name = working_line.substr(0, eq_pos);
-    value = working_line.substr(eq_pos + 1);
-
-    // Tidy up the value (remove surrounding quotes if present)
-    value.erase(0, value.find_first_not_of(" \t\n\r")); // Trim leading whitespace
-    value.erase(value.find_last_not_of(" \t\n\r") + 1); // Trim trailing whitespace
-
-    if (value.length() >= 2 && 
-        ((value.front() == '"' && value.back() == '"') || 
-         (value.front() == '\'' && value.back() == '\''))) 
-    {
-        // Remove surrounding quotes
-        value = value.substr(1, value.length() - 2);
-    }
-    
-    // Tidy up the name (trimming is sufficient)
-    name.erase(name.find_last_not_of(" \t\n\r") + 1);
-    
-    return true;
-}
 
 
 /**
@@ -135,7 +80,7 @@ bool process_env_overrides(const fs::path& override_envs)
         std::string var_name;
         std::string var_value;
 
-        if (parse_export(line, var_name, var_value))
+        if (parse_key_value(line, var_name, var_value))
         {
             try {
                 set_env_var(var_name, var_value);
