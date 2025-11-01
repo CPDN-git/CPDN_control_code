@@ -233,7 +233,9 @@ int main(int argc, char** argv)
     std::string temp_path = project_path + app_name + "_" + wuid;
     std::cerr << "Location of temp folder: " << temp_path << '\n';
     if ( !file_exists(temp_path) ) {
-      if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) std::cerr << "..mkdir for temp folder for results failed" << std::endl;
+      if (mkdir(temp_path.c_str(),S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH) != 0) {
+         std::cerr << "..mkdir for temp folder for results failed" << std::endl;
+      }
     }
 
     //  Unpack application into slot
@@ -322,15 +324,6 @@ int main(int argc, char** argv)
             upload_interval = 0;
           }
        }
-       else if ( extract_key_value( namelist_line, "TRICKLE_FREQUENCY", equals, tmpstr ) ) {
-          try {
-            trickle_freq=std::stoi(tmpstr);
-          }
-          catch (...) {
-            std::cerr << ".. Warning, unable to parse trickle upload frequency from namelist, setting to 240, got string: " << tmpstr << '\n';
-            trickle_freq = 240;   // assume 1hr timestep and trickle every 10 days.
-          }
-       }
        else if ( extract_key_value( namelist_line, "UTSTEP", equals, tmpstr) ) {
           try {
             timestep = std::stoi(tmpstr);
@@ -390,7 +383,6 @@ int main(int argc, char** argv)
                << " vert_resolution: " << vert_resolution << '\n'
                << " grid_type: " << grid_type << '\n'
                << " Upload_interval: " << upload_interval << '\n'
-               << " Default trickle frequency: " << trickle_freq << '\n'
                << " UTSTEP (timestep interval): " << timestep << '\n'
                << " NFRPOS (frequency of model output): " << ICM_file_interval << '\n'
                << " NFFRES (frequency of restarts/checkpoints): " << restart_interval << std::endl;
@@ -415,7 +407,7 @@ int main(int argc, char** argv)
     if ( trickle_freq < freq_min ) {
       trickle_freq = freq_min;
     }
-    std::cerr << "Adjusted trickle frequency is every : " << trickle_freq << " model steps, "
+    std::cerr << "Trickle frequency is every 10% of model run : " << trickle_freq << " model steps, "
                 << ((float)trickle_freq*(float)timestep)/86400.0 << " days.\n";
 
     //-------------------------------------------------------------------------------------------------------
@@ -884,7 +876,7 @@ int main(int argc, char** argv)
 
              // Trickle every required fraction of the model run
              if ( (std::stoi(iter) % trickle_freq) == 0 ) {
-               std::cerr << "Sending progress trickle message to CPDN for step: " << iter << '\n';
+               std::cerr << "Sending progress trickle message to CPDN at step: " << iter << '\n';
                process_trickle(current_cpu_time, wu_name, result_base_name, slot_path, current_iter, standalone );
                last_trickle_iter = current_iter;
              }
