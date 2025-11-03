@@ -423,8 +423,10 @@ void update_progress_file(std::string& progress_file, int last_cpu_time, int upl
 
     // Write out the new progress file. Note this truncates progress_file to zero bytes if it already exists (as in a model restart)
     // GC Oct/2025. Make progress file a fortran namelist, so the models can easily read it to check the control process is still running.
+    //              Also include controller pid so running model has additional way to check if controller is still alive.
     progress_file_out << "! CPDN controller progress file & fortran namelist\n"
                       << "&CPDN\n"
+                      << "control_pid=" << std::to_string(getpid()) << '\n'
                       << "last_cpu_time=" << std::to_string(last_cpu_time) << '\n'
                       << "upload_file_number=" << std::to_string(upload_file_number) << '\n'
                       << "last_iter=" << last_iter << '\n'
