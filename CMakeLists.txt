@@ -1,3 +1,14 @@
+#  CMakeLists.txt for cpdn_controller
+#
+#  Sets up the build configuration for the CPDN Controller app,
+#  and linking against the BOINC and CPDNZIP libraries.
+#
+#  Currently only runs the CTest unit tests in the 'utests' subdirectory.
+#  Will be extended later to build the full application.
+#
+#      Glenn Carver, CPDN, Oct, 2025.
+
+
 cmake_minimum_required(VERSION 3.10)
 project(cpdn_control VERSION 1.0.0 LANGUAGES C CXX)
 
@@ -40,8 +51,14 @@ endif()
 enable_testing()
 
 # Add the source so tests can link against it
-add_library(cpdn_control ./cpdn_control.cpp)
-target_include_directories(cpdn_control PUBLIC .)
+add_library(cpdn_control 
+    ./cpdn_control.cpp
+    ./lib/utils.cpp
+)
+target_include_directories(cpdn_control PUBLIC 
+    .
+    ./lib
+)
 
 # Add external header paths for boinc and cpdnzip
 # These paths are PUBLIC because code needs them to compile.
