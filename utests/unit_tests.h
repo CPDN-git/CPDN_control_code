@@ -14,3 +14,4 @@
 // Declare all external test functions for main program (see individual test source files)
 int t_read_rcf_file();
 int t_read_progress_file();
+int t_cputime_comparison();

@@ -26,7 +26,8 @@ bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) { r
     // Map the test name (as set in CMakeLists.txt) to the test function.
     std::map< std::string, std::function<int()> > test_map = {
                 {"Read RCF File",       t_read_rcf_file},
-                {"Read Progress File",  t_read_progress_file}
+                {"Read Progress File",  t_read_progress_file},
+                {"CPU Time Comparison", t_cputime_comparison},
                 // Add new test functions here! Remember previous trailing comma!
     };
 

@@ -4,6 +4,7 @@
  *    Glenn Carver, CPDN, 2025.
  */
 
+#include "cpdn_linux_cpu_time.h"
 
 #include <string>
 #include <filesystem>
@@ -187,4 +188,21 @@ int print_last_lines(const std::string& filename, int maxlines)
    }
 
    return count;
+}
+
+
+// Calculate the cpu_time
+double cpu_time(long handleProcess) {
+    #ifdef __APPLE_CC__
+       double x;
+       int retval = boinc_calling_thread_cpu_time(x);
+       return x;
+    // Placeholder for Windows
+    //#elif defined(_WIN32) || defined(_WIN64)
+    //   double x;
+    //   int retval = boinc_process_cpu_time(GetCurrentProcess(), x);
+    //   return x;
+    #else
+       return cpdn_linux_cpu_time(handleProcess);       // recoded version of boinc linux_cpu_time().
+    #endif
 }

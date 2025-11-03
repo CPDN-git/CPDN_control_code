@@ -54,6 +54,7 @@ enable_testing()
 add_library(cpdn_control 
     ./cpdn_control.cpp
     ./lib/utils.cpp
+    ./lib/cpdn_linux_cpu_time.cpp
     ./api/trickle_handler.cpp
 )
 target_include_directories(cpdn_control PUBLIC 

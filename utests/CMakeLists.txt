@@ -13,6 +13,7 @@
 add_executable(unit_tests unit_tests.cpp
                         t_read_rcf_file.cpp
                         t_read_progress_file.cpp
+                        t_cputime_comparison.cpp
 )
 
 # Link the test executable to the control code
@@ -23,3 +24,4 @@ target_link_libraries(unit_tests PRIVATE cpdn_control)
 # CTest automatically runs this executable and checks its return code (0 = PASS, non-zero = FAIL).
 add_test( NAME RCFTest       COMMAND unit_tests "Read RCF File" )
 add_test( NAME ProgressTest  COMMAND unit_tests "Read Progress File" )
+add_test( NAME CPUTimeComparisonTest COMMAND unit_tests "CPU Time Comparison" )

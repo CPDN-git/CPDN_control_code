@@ -437,29 +437,6 @@ void update_progress_file(std::string& progress_file, int last_cpu_time, int upl
 }
 
 
-// Calculate the cpu_time
-double cpu_time(long handleProcess) {
-    #ifdef __APPLE_CC__
-       double x;
-       int retval = boinc_calling_thread_cpu_time(x);
-       return x;
-    // Placeholder for Windows
-    //#elif defined(_WIN32) || defined(_WIN64)
-    //   double x;
-    //   int retval = boinc_process_cpu_time(GetCurrentProcess(), x);
-    //   return x;
-    #else
-       //getrusage(RUSAGE_SELF,&usage); //Return resource usage measurement
-       //auto tv_sec = usage.ru_utime.tv_sec; //Time spent executing in user mode (seconds)
-       //auto tv_usec = usage.ru_utime.tv_usec; //Time spent executing in user mode (microseconds)
-       //return tv_sec+(tv_usec/1000000); //Convert to seconds
-       //fprintf(stderr,"tv_sec: %.5f\n",tv_sec);
-       //fprintf(stderr,"tv_usec: %.5f\n",(tv_usec/1000000));
-       return linux_cpu_time(handleProcess);
-    #endif
-}
-
-
 // returns fraction completed of model run
 // (candidate for moving into OpenIFS specific src file)
 double model_frac_done(double step, double total_steps, int nthreads ) {
