@@ -21,5 +21,5 @@ target_link_libraries(unit_tests PRIVATE cpdn_control)
 # Add the targets to the CTest test suite
 # The command is the path to the executable just built.
 # CTest automatically runs this executable and checks its return code (0 = PASS, non-zero = FAIL).
-add_test( NAME Control_code_RCFTest       COMMAND unit_tests "Read RCF File" )
-add_test( NAME Control_code_ProgressTest  COMMAND unit_tests "Read Progress File" )
+add_test( NAME RCFTest       COMMAND unit_tests "Read RCF File" )
+add_test( NAME ProgressTest  COMMAND unit_tests "Read Progress File" )
