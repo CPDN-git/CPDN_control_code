@@ -9,6 +9,10 @@
 #include "openifs.h"
 #include "lib/utils.h"
 
+#include "boinc/boinc_api.h"
+#include "boinc/diagnostics.h"
+#include "boinc/util.h"
+
 
 // Initialise BOINC and set the options
 int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {

@@ -30,9 +30,6 @@
 #include <sys/stat.h>   // for mkdir
 #include <sys/resource.h>
 
-#include "boinc/boinc_api.h"
-#include "boinc/diagnostics.h"
-#include "boinc/util.h"
 #include "rapidxml.hpp"
 #include "zip/cpdn_zip.h"
 
