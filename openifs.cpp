@@ -7,6 +7,9 @@
 
 #include "cpdn_control.h"
 #include "lib/utils.h"
+#include "trickle_handler.h"
+
+#include "boinc/boinc_api.h"
 
 
 // Set the required OpenIFS environment variables
@@ -631,6 +634,9 @@ int main(int argc, char** argv)
        }
     }
 
+    // Create the trickle handler (only trickle if not in standalone mode)
+    TrickleHandler trickler(wu_name, result_base_name, slot_path);
+
     // Determine which OpenIFS executable to run.
     // GC. This should be an input parameter on the command line.
 
@@ -877,7 +883,7 @@ int main(int argc, char** argv)
              // Trickle every required fraction of the model run
              if ( (std::stoi(iter) % trickle_freq) == 0 ) {
                std::cerr << "Sending progress trickle message to CPDN at step: " << iter << '\n';
-               process_trickle(current_cpu_time, wu_name, result_base_name, slot_path, current_iter, standalone );
+               trickler.process_trickle(current_cpu_time, current_iter);
                last_trickle_iter = current_iter;
              }
           }                               // end of if it's a new timestep block.
@@ -1050,7 +1056,7 @@ int main(int argc, char** argv)
 
 	       // Produce final trickle it's the same timestep as the last main loop trickle
           if ( current_iter > last_trickle_iter ) {
-            process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
+            trickler.process_trickle(current_cpu_time,current_iter);
           }
        }
        boinc_end_critical_section();
@@ -1086,8 +1092,6 @@ int main(int argc, char** argv)
                 }
              }
          }
-         // Produce final trickle
-         process_trickle(current_cpu_time,wu_name,result_base_name,slot_path,current_iter,standalone);
        }
     }
 

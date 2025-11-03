@@ -35,7 +35,7 @@ endif()
 
 # --- CONFIGURATION FOR CPDNZIP LIBRARY (Headers & Lib)
 
-set(CPDNZIP_LIB_NAME "cpdn_zip")
+set(CPDNZIP_LIB_NAME    "cpdn_zip")
 set(CPDNZIP_INCLUDE_DIR "zip/install/include" CACHE PATH "Path to CPDNZIP library headers.")
 set(CPDNZIP_LIB_DIR     "zip/install/lib"     CACHE PATH "Path to CPDNZIP library files.")
 
@@ -54,10 +54,12 @@ enable_testing()
 add_library(cpdn_control 
     ./cpdn_control.cpp
     ./lib/utils.cpp
+    ./api/trickle_handler.cpp
 )
 target_include_directories(cpdn_control PUBLIC 
     .
     ./lib
+    ./api
 )
 
 # Add external header paths for boinc and cpdnzip

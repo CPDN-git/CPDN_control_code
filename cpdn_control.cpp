@@ -435,39 +435,6 @@ void update_progress_file(std::string& progress_file, int last_cpu_time, int upl
 }
 
 
-// Produce the trickle and either upload to the project server or as a physical file
-void process_trickle(double current_cpu_time, std::string wu_name, std::string result_base_name, std::string slot_path, int timestep, int standalone) 
-{
-    std::stringstream trickle_buffer;
-    trickle_buffer << "<wu>" << wu_name << "</wu>\n<result>" << result_base_name << "</result>\n<ph></ph>\n<ts>" \
-                   << timestep << "</ts>\n<cp>" << current_cpu_time << "</cp>\n<vr></vr>\n";
-    std::string trickle = trickle_buffer.str();
-
-    // Create null terminated, non-const char buffers for the boinc_send_trickle_up call
-    // to avoid possible memory faults (as seen in the past).
-    std::vector<char> trickle_data(trickle.begin(), trickle.end());
-    trickle_data.push_back('\0');
-      
-    // Upload the trickle if not in standalone mode
-    if (!standalone) {
-       std::cerr << "Uploading trickle at timestep: " << timestep << "\n";
-       boinc_send_trickle_up( (char*)"orig", trickle_data.data());
-    }
-    else {
-       std::stringstream trickle_location_buf;
-       trickle_location_buf << slot_path << "/trickle_" << time(NULL) << ".xml" << '\0';
-       std::string trickle_location = trickle_location_buf.str();
-       std::cerr << "Writing trickle to location: " << trickle_location << "\n";
-
-       FILE* trickle_file = fopen(trickle_location.c_str(), "w");
-       if (trickle_file) {
-          std::fwrite(trickle_data.data(), sizeof(trickle_data.data()), 1, trickle_file);
-          fclose(trickle_file);
-       }
-    }
-}
-
-
 // Calculate the cpu_time
 double cpu_time(long handleProcess) {
     #ifdef __APPLE_CC__

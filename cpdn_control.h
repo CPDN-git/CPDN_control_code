@@ -40,7 +40,6 @@ int check_child_status(long, int);
 int check_boinc_status(long, int);
 long launch_process_oifs(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&);
 std::string get_tag(const std::string &str);
-void process_trickle(double, const std::string, const std::string, const std::string, int, int);
 double cpu_time(long);
 double model_frac_done(double, double, int);
 std::string get_second_part(const std::string&, const std::string&);
