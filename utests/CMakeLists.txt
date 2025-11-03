@@ -16,7 +16,7 @@ add_executable(unit_tests unit_tests.cpp
 )
 
 # Link the test executable to the control code
-target_link_libraries(unit_tests PRIVATE control_code)
+target_link_libraries(unit_tests PRIVATE cpdn_control)
 
 # Add the targets to the CTest test suite
 # The command is the path to the executable just built.
