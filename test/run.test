@@ -4,21 +4,22 @@
 
 # Usage: ./oifs_43r3_1.00_x86_64-pc-linux-gnu-debug <start_date> <exptid> <unique_member_id> <batchid> <wuid> <fclen> <app_name> <nthreads> [app_version]
 
-# First run oifs_test_setup.py in the 'test' directory.
-#../oifs_test_setup.py
+# First run setup_test.py in the 'test' directory.
 
 set -x
 set -e
 
-cd slots
+cd slots/0
 
 [ -f stderr.txt ] && rm stderr.txt
 
-# copy test app executable
-cp ../../oifs_43r3_test.exe .
+# copy test app executable and link it to the expected name.
+# this will change when we set the app name as input to the controller.
+cp ../../../test_model.exe .
+ln -s test_model.exe   oifs_43r3_test.exe
 
 # put control code exe into projects
-cp ../../oifs_43r3_1.00_x86_64-pc-linux-gnu-debug ../projects
+cp ../../../oifs_43r3_1.00_x86_64-pc-linux-gnu-debug ../projects
 
 # adjust input file names
 # by default the test_setup.py creates a 1hr run, but this script is set to run 24hrs.
