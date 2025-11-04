@@ -1,8 +1,10 @@
 //
-// Control code functions for the climateprediction.net project (CPDN)
+// Controller functions for CPDN BOINC model applications.
 //
-// Written by Andy Bowery (Oxford eResearch Centre, Oxford University) May 2023
-// Further development: Glenn Carver, CPDN, 2022->
+//    Glenn Carver, CPDN, 2025.
+//
+// Original code: Andy Bowery (Oxford eResearch Centre, Oxford University) May 2023
+// Rewritten and refactored into class structure and modular form: Glenn Carver (CPDN), 2025->
 //
 
 #include "cpdn_control.h"
@@ -14,6 +16,7 @@
 #include "boinc/util.h"
 
 
+// *********** CONTROLLER *******************
 // Initialise BOINC and set the options
 int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {
 
@@ -51,7 +54,7 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
 // VAR=VALUE  or export VAR='VALUE'  (single or double quotes can be used, or no quotes)
 // e.g. export OMP_NUM_THREADS=6
 
-
+//*********** CONTROLLER ***************
 /**
  * @brief Checks for the override file and sets environment variables if found.
  * * 
@@ -101,7 +104,7 @@ bool process_env_overrides(const fs::path& override_envs)
 }
 
 
-// Move and unzip the app file
+// *********** CONTROLLER *******************
 int move_and_unzip_app_file(std::string app_name, std::string version, std::string project_path, std::string slot_path) {
    // GC. TODO. This code could be combined with copy_and_unzip() to avoid code duplication.
 
@@ -153,6 +156,7 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
 }
 
 
+// *********** CONTROLLER *******************
 int check_child_status(long handleProcess, int process_status) {
     int stat,pid;
 
@@ -187,6 +191,7 @@ int check_child_status(long handleProcess, int process_status) {
 }
 
 
+// ************* CONTROLLER *******************
 int check_boinc_status(long handleProcess, int process_status) {
     BOINC_STATUS status;
     boinc_get_status(&status);
@@ -247,10 +252,12 @@ int check_boinc_status(long handleProcess, int process_status) {
     }
 }
 
+
+// *********** CONTROLLER *******************
 // Returns process id on success, -1 on failure.
-long launch_process_oifs(const std::string& project_path, const std::string& slot_path, 
-                         const std::string& strCmd, const std::string& nthreads,
-                         const std::string& exptid, const std::string& app_name)
+long launch_process(const std::string& project_path, const std::string& slot_path, 
+                    const std::string& strCmd, const std::string& nthreads,
+                    const std::string& exptid, const std::string& app_name)
 {
     long handleProcess;
 
@@ -307,6 +314,7 @@ long launch_process_oifs(const std::string& project_path, const std::string& slo
 }
 
 
+// *********** CONTROLLER *******************
 // Open a file and return the "jf_*" string contained between the arrow tags else empty string
 // Explanation for Glenn's benefit :).  First run of task the filename contains a 'reference'
 // to the real zip file stored in the projects directory.  The reference is in the form of a
@@ -376,7 +384,7 @@ std::string get_tag(const std::string &filename) {
 }
 
 
-// Read the progress file
+// ************ CONTROLLER -- CANDIDATE FOR A NEW CLASS? ***************
 void read_progress_file(std::string progress_file, int& last_cpu_time, int& upload_file_number, 
                         std::string& last_iter, int& last_upload, int& model_completed) {
 
@@ -413,6 +421,7 @@ void read_progress_file(std::string progress_file, int& last_cpu_time, int& uplo
 }
 
 
+// ************** CONTROLLER -- CANDIDATE FOR A NEW CLASS? ***************
 /**
  * @brief Store task progress in progress_file
  */
@@ -437,6 +446,7 @@ void update_progress_file(std::string& progress_file, int last_cpu_time, int upl
 }
 
 
+//************* CONTROLLER OR MODEL? ************
 // returns fraction completed of model run
 // (candidate for moving into OpenIFS specific src file)
 double model_frac_done(double step, double total_steps, int nthreads ) {
@@ -488,6 +498,7 @@ double model_frac_done(double step, double total_steps, int nthreads ) {
 }
 
 
+//********** MODEL **********
 // Construct the second part of the output model filename to be uploaded
 // nb. exptid is always 4 characters for OpenIFS.
 std::string get_second_part(const std::string& last_iter, const std::string& exptid) {
@@ -497,6 +508,7 @@ std::string get_second_part(const std::string& last_iter, const std::string& exp
 }
 
 
+//*********** CONTROLLER BUT NEED TO REMOVE MODEL SPECIFICS ***************
 int move_result_file(std::string slot_path, std::string temp_path, std::string first_part, std::string second_part) {
     int retval = 0;
 
@@ -522,6 +534,7 @@ int move_result_file(std::string slot_path, std::string temp_path, std::string f
 }
 
 
+//********* UTILITY OR CONTROLLER ********************
 bool check_stoi(std::string& cin) {
     //  check input string is convertable to an integer by checking for any letters
     //  nb. stoi() will convert leading digits if alphanumeric but we know step must be all digits.
@@ -549,6 +562,8 @@ bool check_stoi(std::string& cin) {
     }
 }
 
+
+// ************ MODEL ************
 bool oifs_parse_stat(const std::string& logline, std::string& stat_column, const int index) {
    //   Parse a line of the OpenIFS ifs.stat log file.
    //      logline  : incoming ifs.stat logfile line to be parsed
@@ -572,7 +587,7 @@ bool oifs_parse_stat(const std::string& logline, std::string& stat_column, const
    }
 }
 
-
+// ***************** MODEL ****************
 bool oifs_valid_step(std::string& step, int nsteps) {
    //  checks for a valid step count in arg 'step'
    //  Returns :   true if step is valid, otherwise false
@@ -594,6 +609,7 @@ bool oifs_valid_step(std::string& step, int nsteps) {
 }
 
 
+//********** MODEL *********
 /**
  * @brief Read the rcf_file line by line and extract CTIME and CSTEP variables.
  *        The input stream rcf_file must be at file start and ctime_value & cstep_value
@@ -627,6 +643,7 @@ bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::strin
 }
 
 
+//******  CONTROLLER *******
 // Takes the zip file, checks existence and whether empty and copies it to destination and unzips it
 // GC. TODO. Convert this to accept  fs::path args.
 int copy_and_unzip(const std::string& zipfile, const std::string& destination, const std::string& unzip_path, const std::string& type) {

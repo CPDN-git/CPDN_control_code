@@ -670,7 +670,7 @@ int main(int argc, char** argv)
     int process_status=1;
 
     std::cerr << "Launching OpenIFS executable: " << exe_cmd << std::endl;
-    long model_process = launch_process_oifs(project_path, slot_path, exe_cmd, nthreads, exptid, app_name);
+    long model_process = launch_process(project_path, slot_path, exe_cmd, nthreads, exptid, app_name);
     if (model_process > 0) process_status = 0;     //GC TODO. Need to handle when model_process =-1, i.e. launch failed (see code in launch_process_oifs)
 
     boinc_end_critical_section();
