@@ -48,7 +48,7 @@ jobs:
     - name: List contents of slots folder
       run: cd test/slots/0 && ls -lt >> ../stdout_and_stderr
     - name: Run test model
-      run: cd test/slots/0 && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 && cat stderr.txt >> ../stdout_and_stderr
+      run: cd test/slots/0 && ../../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 && cat stderr.txt >> ../stdout_and_stderr
     - name: Upload test log
       if: ${{ failure() }}
       uses: actions/upload-artifact@v4
