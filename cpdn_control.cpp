@@ -573,56 +573,6 @@ bool oifs_parse_stat(const std::string& logline, std::string& stat_column, const
 }
 
 
-bool fread_last_line(const std::string& fname, std::string& logline) {
-    //  Function to read & return last line of a file.
-    //  Works in a similar way to 'tail -f' command.
-    //  fname   : name of file to read
-    //  logline : last line read from file, preserved between calls to this fn.
-    //  Returns true if a new line read. returns false and logline unchanged
-    //          if no new line read, returns false and empty logline if file does not exist.
-    //
-    //    Glenn carver
-
-    static std::streamoff last_offset = 0;
-    static std::string    last_line;
-    std::string           line;
-
-    // Check file exists and non-empty
-    std::ifstream logfile(fname, std::ios::in);
-    if (!logfile.is_open()) {
-        logline.clear();
-        last_offset = 0;
-        std::cerr << ".. file_last_line(): warning, " << fname << " does not exist." << std::endl;
-        return false;
-    }
-
-   // Seek to last offset and read lines to file end
-   logfile.seekg(last_offset, std::ios::beg);
-
-   while (std::getline(logfile, line)) {
-      last_line = line;
-   }
-   //std::cerr << "fread_last_line: last line read: " << last_line << '\n';
-
-   // Update last_offset for next call
-   last_offset = logfile.tellg();
-   if (last_offset == -1) {
-      // At EOF, set to file size
-      logfile.clear();                   // must clear stream error before attempting to read again
-      logfile.seekg(0, std::ios::end);   // seek backwards to start of file to get size.
-      last_offset = logfile.tellg();
-    }
-
-    logfile.close();
-
-    if (!last_line.empty()) {
-        logline = last_line;
-        return true;
-    }
-    return false;    // no new line read and arg logline unchanged
-}
-
-
 bool oifs_valid_step(std::string& step, int nsteps) {
    //  checks for a valid step count in arg 'step'
    //  Returns :   true if step is valid, otherwise false

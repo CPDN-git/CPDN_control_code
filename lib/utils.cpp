@@ -192,7 +192,7 @@ bool read_delimited_line(std::string file_line, const std::string& delimiter, co
 
 /**
  * @brief Opens a file if exists and uses circular buffer to read & print last lines of file to stderr
- * Returns: zero : either can't open file or file is empty
+ * @return zero : either can't open file or file is empty
  *          > 0  : no. of lines in file (may be less than maxlines)
  */
 int print_last_lines(const std::string& filename, int maxlines)
@@ -236,4 +236,61 @@ double cpu_time(long handleProcess) {
     #else
        return cpdn_linux_cpu_time(handleProcess);       // recoded version of boinc linux_cpu_time().
     #endif
+}
+
+
+/**
+ * @brief Reads and returns the last line of a file.
+ * 
+ * This function maintains its state between calls to track the last read position
+ * in the file, allowing it to return only new lines added since the last call.
+ * It behaves similarly to the 'tail -f' command.
+ * 
+ *     Glenn Carver, CPDN, 2025.
+ * 
+ * @param fname   The name of the file to read.
+ * @param logline Last line read from file; stored between calls.
+ * @return        True if a new line was read; returns false and logline unchanged
+ *                if no new line was read; returns false and empty logline
+ *                if the file does not exist.
+ */
+bool fread_last_line(const std::string& fname, std::string& logline) {
+
+    static std::streamoff last_offset = 0;
+    static std::string    last_line;
+    std::string           line;
+
+    // Check file exists and non-empty
+    std::ifstream logfile(fname, std::ios::in);
+    if (!logfile.is_open()) {
+        logline.clear();
+        last_offset = 0;
+        std::cerr << ".. file_last_line(): warning, " << fname << " does not exist." << std::endl;
+        return false;
+    }
+
+   // Seek to last offset and read lines to file end
+   logfile.seekg(last_offset, std::ios::beg);
+
+   while (std::getline(logfile, line)) {
+      last_line = line;
+   }
+   //std::cerr << "fread_last_line: last line read: " << last_line << '\n';
+
+   // Update last_offset for next call
+   last_offset = logfile.tellg();
+   if (last_offset == -1) {
+      // At EOF, set to file size
+      logfile.clear();                   // must clear stream error before attempting to read again
+      logfile.seekg(0, std::ios::end);   // seek backwards to start of file to get size.
+      last_offset = logfile.tellg();
+    }
+
+    logfile.close();
+
+    if (!last_line.empty()) {
+        logline = last_line;
+        return true;
+    }
+    return false;    // no new line read and arg logline unchanged
 }

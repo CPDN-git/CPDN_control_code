@@ -45,7 +45,6 @@ std::string get_second_part(const std::string&, const std::string&);
 int move_result_file(std::string, std::string, std::string, std::string);
 bool check_stoi(std::string& cin);
 bool oifs_parse_stat(const std::string&, std::string&, const int);
-bool fread_last_line(const std::string&, std::string&);
 bool oifs_valid_step(std::string&,int);
 void read_progress_file(std::string, int&, int&, std::string&, int&, int&);
 void update_progress_file(std::string&, int, int, std::string&, int, int);
