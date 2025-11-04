@@ -14,6 +14,9 @@ public:
             const std::string& slot_path);
     
     ~TrickleHandler();  // Destructor
+
+    static int get_trickle_frequency(int timestep, int total_timesteps);     // static as does not depend on a class instance.
+
     
     // Delete copy constructor and assignment operator
     // as these are not appropriate for this class.

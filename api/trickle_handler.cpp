@@ -47,3 +47,24 @@ void TrickleHandler::process_trickle(double current_cpu_time, int timestep)
         std::cerr << "Error sending trickle, boinc_send_trickle_up returned: " << reval << "\n";
     }
 }
+
+
+/**
+ * @brief Calculate the trickle frequency based on timestep (secs) and total number of model timesteps.
+ *        Returns a trickle frequency of 10% of model run, with a minimum of every 24 model hours.
+ * @param timestep     The model timestep in seconds.
+ * @param total_nsteps The total number of steps in the model run.
+ * @return The trickle frequency in model steps.
+ */
+static int get_trickle_frequency(int timestep, int total_timesteps) {
+    //GC. Oct/25. Trickles are now fixed at every 10% of the model run with a final trickle at the end of the run.
+
+    int freq_min = (24*3600)/timestep;         // minimum of a trickle every 24 model hrs.
+    int fraction = 10;
+
+    int trickle_freq = int(total_timesteps) / fraction;
+    if ( trickle_freq < freq_min ) {
+      trickle_freq = freq_min;
+    }
+    return trickle_freq;
+}

@@ -404,12 +404,8 @@ int main(int argc, char** argv)
 
     //GC. Oct/25. Trickles are now fixed at every 10% of the model run with a final trickle at the end of the run.
     //    Value read from fort.4 namelist is ignored and should be removed.
+    trickle_freq = TrickleHandler::get_trickle_frequency(timestep, (int)total_nsteps);
 
-    int freq_min = 24*3600/timestep;         // minimum of a trickle every 24 model hrs.
-    trickle_freq = int(total_nsteps) / 10;
-    if ( trickle_freq < freq_min ) {
-      trickle_freq = freq_min;
-    }
     std::cerr << "Trickle frequency is every 10% of model run : " << trickle_freq << " model steps, "
                 << ((float)trickle_freq*(float)timestep)/86400.0 << " days.\n";
 
