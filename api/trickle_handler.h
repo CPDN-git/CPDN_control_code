@@ -8,6 +8,7 @@
 #include <string>
 
 class TrickleHandler {
+    
 public:
     TrickleHandler(const std::string& wu_name, 
             const std::string& result_base_name, 

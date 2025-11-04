@@ -56,7 +56,7 @@ void TrickleHandler::process_trickle(double current_cpu_time, int timestep)
  * @param total_nsteps The total number of steps in the model run.
  * @return The trickle frequency in model steps.
  */
-static int get_trickle_frequency(int timestep, int total_timesteps) {
+int TrickleHandler::get_trickle_frequency(int timestep, int total_timesteps) {
     //GC. Oct/25. Trickles are now fixed at every 10% of the model run with a final trickle at the end of the run.
 
     int freq_min = (24*3600)/timestep;         // minimum of a trickle every 24 model hrs.
