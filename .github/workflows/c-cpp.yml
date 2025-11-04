@@ -35,24 +35,22 @@ jobs:
       with:
         name: Build failure log
         path: ${{ runner.temp }}/build_log
-    - name: Set up ancillary files
-      run: chmod 744 oifs_test_setup.py
-    - name: Run oifs_test_setup
-      run: ./oifs_test_setup.py
+    - name: Set up test environment
+      run: cd test && chmod 744 setup_test.py && ./setup_test.py
     - name: Move executable
       run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu projects/
     - name: Build c++ test executable
-      run: g++ oifs_43r3_test.cpp -std=c++17 -o oifs_43r3_test.exe
+      run: g++ test_model.cpp -std=c++17 -o test_model.exe
     - name: List contents of the root folder
       run: ls -lt >> stdout_and_stderr
     - name: List contents of projects folder
       run: cd projects/ && ls -lt >> ../stdout_and_stderr
-    - name: move oifs_43r3_test.exe to slots
-      run: mv oifs_43r3_test.exe slots/
+    - name: move test_model to slots
+      run: mv test_model.exe slots/0/oifs_43r3_test.exe
     - name: List contents of slots folder
-      run: cd slots/ && ls -lt >> ../stdout_and_stderr
-    - name: change directory to slots and run test
-      run: cd slots/ && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 && cat stderr.txt >> ../stdout_and_stderr
+      run: cd slots/0 && ls -lt >> ../stdout_and_stderr
+    - name: Run test
+      run: cd slots/0 && ../projects/oifs_43r3_1.00_x86_64-pc-linux-gnu yyyymmddhh 0000 NNNN d000 0 1 oifs_43r3 1 1.00 0 && cat stderr.txt >> ../stdout_and_stderr
     - name: Upload test log
       if: ${{ failure() }}
       uses: actions/upload-artifact@v4
