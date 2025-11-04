@@ -8,33 +8,33 @@
 
 if __name__ == "__main__":
 
-      import os, secrets, zipfile, shutil
+    import os, secrets, zipfile, shutil
 
-      # Make sure we're in the 'test' directory, if not then exit with error
-      current_path = os.getcwd()
-      if not current_path.endswith("test"):
-        print("Error: test_setup.py must be run from within the 'test' directory")
-        exit(1)
+    # Make sure we're in the 'test' directory, if not then exit with error
+    current_path = os.getcwd()
+    if not current_path.endswith("test"):
+      print("Error: test_setup.py must be run from within the 'test' directory")
+      exit(1)
 
-      if not os.path.isdir("projects"):
-        os.mkdir("projects")
+    if not os.path.isdir("projects"):
+      os.mkdir("projects")
 
-      if not os.path.isdir("slot"):
-        os.mkdir("slot")
+    if not os.path.isdir("slot"):
+      os.mkdir("slot")
 
-      os.chdir("projects")
+    os.chdir("projects")
 
-      # Produce fake oifs_43r3_app file
-      with open('oifs_43r3_app_1.00_x86_64-pc-linux-gnu', 'a') as oifs_app_file:
-        oifs_app_file.write(secrets.token_hex(4000) + '\n')
-      zip_file = zipfile.ZipFile('./oifs_43r3_app_1.00_x86_64-pc-linux-gnu.zip','w')
-      zip_file.write('oifs_43r3_app_1.00_x86_64-pc-linux-gnu')
-      zip_file.close()
+    # Produce fake oifs_43r3_app file
+    with open('oifs_43r3_app_1.00_x86_64-pc-linux-gnu', 'a') as oifs_app_file:
+      oifs_app_file.write(secrets.token_hex(4000) + '\n')
+    zip_file = zipfile.ZipFile('./oifs_43r3_app_1.00_x86_64-pc-linux-gnu.zip','w')
+    zip_file.write('oifs_43r3_app_1.00_x86_64-pc-linux-gnu')
+    zip_file.close()
 
-      os.chdir("../slot")
+    os.chdir("../slot")
 
-      # Create the init_data.xml, needed by BOINC
-      init_data_string="   <app_init_data>\n" +\
+    # Create the init_data.xml, needed by BOINC
+    init_data_string = "   <app_init_data>\n" +\
                        "     <major_version>0</major_version>\n" +\
                        "     <minor_version>0</minor_version>\n" +\
                        "     <release>0</release>\n" +\
@@ -67,13 +67,13 @@ if __name__ == "__main__":
                        "     </global_preferences>\n" +\
                        "   </app_init_data>\n"
 
-      init_data_file=open("init_data.xml","w")
-      init_data_file.write(init_data_string)
-      init_data_file.close()
+    init_data_file=open("init_data.xml","w")
+    init_data_file.write(init_data_string)
+    init_data_file.close()
 
 
-      # Create the fake model namelist file, fort.4.
-      fort_file_string = "!WU_TEMPLATE_VERSION=43r3-seasonal-20250801\n"+\
+    # Create the fake model namelist file, fort.4.
+    fort_file_string = "!WU_TEMPLATE_VERSION=43r3-seasonal-20250801\n"+\
                          "!EXPTID=NNNN\n"+\
                          "!UNIQUE_MEMBER_ID=1353\n"+\
                          "!IFSDATA_FILE=ifsdata_0\n" +\
@@ -89,64 +89,64 @@ if __name__ == "__main__":
                          " NFRPOS=1,\n" +\
                          " NFRRES=1,\n"
 
-      fort_file=open("fort.4","w")
-      fort_file.write(fort_file_string)
-      fort_file.close()
-      zip_file = zipfile.ZipFile('./jf_namelist','w')
-      zip_file.write('fort.4')
-      zip_file.close()
+    fort_file=open("fort.4","w")
+    fort_file.write(fort_file_string)
+    fort_file.close()
+    zip_file = zipfile.ZipFile('./jf_namelist','w')
+    zip_file.write('fort.4')
+    zip_file.close()
 
-      # The OpenIFS BOINC implementation uses mapped logical filenames to
-      # identify the various input files.  Here we create the files with
-      # the logical names expected by the model.
-      # It is less than ideal as it makes the code more complex to handle
-      # resolving these files. It also makes it harder to debug as the
-      # filenames are not descriptive.
+    # The OpenIFS BOINC implementation uses mapped logical filenames to
+    # identify the various input files.  Here we create the files with
+    # the logical names expected by the model.
+    # It is less than ideal as it makes the code more complex to handle
+    # resolving these files. It also makes it harder to debug as the
+    # filenames are not descriptive.
 
-      # Create logical namelist file
-      namelist_string = ">jf_namelist<\n"
-      namelist_file=open("oifs_43r3_NNNN_yyyymmddhh_1_d000_0.zip","w")
-      namelist_file.write(namelist_string)
-      namelist_file.close()
+    # Create logical namelist file
+    namelist_string = ">jf_namelist<\n"
+    namelist_file=open("oifs_43r3_NNNN_yyyymmddhh_1_d000_0.zip","w")
+    namelist_file.write(namelist_string)
+    namelist_file.close()
 
-      # Create ic_ancil file
-      ic_ancil_string = ">jf_ic_ancil<\n"
-      ic_ancil_file=open("ic_ancil_0.zip","w")
-      ic_ancil_file.write(ic_ancil_string)
-      ic_ancil_file.close()
+    # Create ic_ancil file
+    ic_ancil_string = ">jf_ic_ancil<\n"
+    ic_ancil_file=open("ic_ancil_0.zip","w")
+    ic_ancil_file.write(ic_ancil_string)
+    ic_ancil_file.close()
 
-      # Produce jf_ic_ancil file
-      with open('jf_ic_ancil', 'a') as jf_ic_ancil_file:
-        jf_ic_ancil_file.write(secrets.token_hex(4000) + '\n')
-      zip_file = zipfile.ZipFile('./jf_ic_ancil.zip','w')
-      zip_file.write('jf_ic_ancil')
-      zip_file.close()
-      shutil.move('./jf_ic_ancil.zip','./jf_ic_ancil')
+    # Produce jf_ic_ancil file
+    with open('jf_ic_ancil', 'a') as jf_ic_ancil_file:
+      jf_ic_ancil_file.write(secrets.token_hex(4000) + '\n')
+    zip_file = zipfile.ZipFile('./jf_ic_ancil.zip','w')
+    zip_file.write('jf_ic_ancil')
+    zip_file.close()
+    shutil.move('./jf_ic_ancil.zip','./jf_ic_ancil')
 
-      # Create ifsdata file
-      ifsdata_string = ">jf_ifsdata<\n"
-      ifsdata_file=open("ifsdata_0.zip","w")
-      ifsdata_file.write(ifsdata_string)
-      ifsdata_file.close()
+    # Create ifsdata file
+    ifsdata_string = ">jf_ifsdata<\n"
+    ifsdata_file=open("ifsdata_0.zip","w")
+    ifsdata_file.write(ifsdata_string)
+    ifsdata_file.close()
 
-      # Produce jf_ifsdata file
-      with open('jf_ifsdata', 'a') as jf_ifsdata_file:
-        jf_ifsdata_file.write(secrets.token_hex(4000) + '\n')
-      zip_file = zipfile.ZipFile('./jf_ifsdata.zip','w')
-      zip_file.write('jf_ifsdata')
-      zip_file.close()
-      shutil.move('./jf_ifsdata.zip','./jf_ifsdata')
+    # Produce jf_ifsdata file
+    with open('jf_ifsdata', 'a') as jf_ifsdata_file:
+      jf_ifsdata_file.write(secrets.token_hex(4000) + '\n')
+    zip_file = zipfile.ZipFile('./jf_ifsdata.zip','w')
+    zip_file.write('jf_ifsdata')
+    zip_file.close()
+    shutil.move('./jf_ifsdata.zip','./jf_ifsdata')
 
-      # Create clim_data file
-      clim_data_string = ">jf_clim_data<\n"
-      clim_data_file=open("clim_data_0.zip","w")
-      clim_data_file.write(clim_data_string)
-      clim_data_file.close()
+    # Create clim_data file
+    clim_data_string = ">jf_clim_data<\n"
+    clim_data_file=open("clim_data_0.zip","w")
+    clim_data_file.write(clim_data_string)
+    clim_data_file.close()
 
-      # Produce jf_clim_data file
-      with open('jf_clim_data', 'a') as jf_clim_data_file:
-        jf_clim_data_file.write(secrets.token_hex(4000) + '\n')
-      zip_file = zipfile.ZipFile('./jf_clim_data.zip','w')
-      zip_file.write('jf_clim_data')
-      zip_file.close()
-      shutil.move('./jf_clim_data.zip','./jf_clim_data')
+    # Produce jf_clim_data file
+    with open('jf_clim_data', 'a') as jf_clim_data_file:
+      jf_clim_data_file.write(secrets.token_hex(4000) + '\n')
+    zip_file = zipfile.ZipFile('./jf_clim_data.zip','w')
+    zip_file.write('jf_clim_data')
+    zip_file.close()
+    shutil.move('./jf_clim_data.zip','./jf_clim_data')
