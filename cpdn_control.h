@@ -50,7 +50,6 @@ bool oifs_valid_step(std::string&,int);
 void read_progress_file(std::string, int&, int&, std::string&, int&, int&);
 void update_progress_file(std::string&, int, int, std::string&, int, int);
 bool read_rcf_file(std::ifstream&, std::string&, std::string&);
-bool read_delimited_line(std::string, const std::string&, const std::string&, int, std::string&);
 int copy_and_unzip(const std::string&, const std::string&, const std::string&, const std::string&);
 bool process_env_overrides(const std::filesystem::path&);
 

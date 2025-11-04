@@ -677,31 +677,6 @@ bool read_rcf_file(std::ifstream& rcf_file, std::string& ctime_value, std::strin
 }
 
 
-bool read_delimited_line(std::string file_line, const std::string& delimiter, const std::string& to_find, int position, std::string& returned_value)
-{
-    // Extracts a substring following a positional delimiter if found.
-
-    size_t pos = 0;
-    int count = 0;
-
-    if (file_line.find(to_find) != std::string::npos ) {
-       // From the file line take the field specified by the position
-       while ((pos = file_line.find(delimiter)) != std::string::npos) {
-          count = count + 1;
-          if (count == position) {  
-             returned_value = file_line.substr(0,pos);
-
-             // Remove whitespace
-             returned_value.erase( std::remove_if( returned_value.begin(), \
-                                   returned_value.end(), ::isspace ), returned_value.end() );
-          }
-          file_line.erase(0, pos + delimiter.length());
-       }
-    }
-    return !returned_value.empty();
-}
-
-
 // Takes the zip file, checks existence and whether empty and copies it to destination and unzips it
 // GC. TODO. Convert this to accept  fs::path args.
 int copy_and_unzip(const std::string& zipfile, const std::string& destination, const std::string& unzip_path, const std::string& type) {

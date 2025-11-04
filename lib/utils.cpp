@@ -160,6 +160,37 @@ bool extract_key_value(const std::string& line, const std::string& key, char del
 
 
 /**
+ * @brief Extracts a substring following a positional delimiter (if found).
+ *        This function does a similar job to extract_key_value but works by
+ *        searching for a positional delimiter rather than a key/value pair.
+ *        TODO: Could be combined with extract_key_value to reduce code duplication or replaced by extract_key_value.
+ * 
+ * @return true if value was found false otherwise. Found substring is in 'returned_value' parameter
+ */
+bool read_delimited_line(std::string file_line, const std::string& delimiter, const std::string& to_find, int position, std::string& returned_value)
+{
+    size_t pos = 0;
+    int count = 0;
+
+    if (file_line.find(to_find) != std::string::npos ) {
+       // From the file line take the field specified by the position
+       while ((pos = file_line.find(delimiter)) != std::string::npos) {
+          count = count + 1;
+          if (count == position) {  
+             returned_value = file_line.substr(0,pos);
+
+             // Remove whitespace
+             returned_value.erase( std::remove_if( returned_value.begin(), \
+                                   returned_value.end(), ::isspace ), returned_value.end() );
+          }
+          file_line.erase(0, pos + delimiter.length());
+       }
+    }
+    return !returned_value.empty();
+}
+
+
+/**
  * @brief Opens a file if exists and uses circular buffer to read & print last lines of file to stderr
  * Returns: zero : either can't open file or file is empty
  *          > 0  : no. of lines in file (may be less than maxlines)
