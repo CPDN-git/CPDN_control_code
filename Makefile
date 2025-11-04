@@ -9,7 +9,7 @@
 VERSION = 43r3_1.00
 TARGET  = oifs_$(VERSION)_x86_64-pc-linux-gnu
 DEBUG   = oifs_$(VERSION)_x86_64-pc-linux-gnu-debug
-TEST    = oifs_43r3_test.exe
+TEST    = test_model.exe
 SRC     = lib/utils.cpp lib/cpdn_linux_cpu_time.cpp   api/trickle_handler.cpp   openifs.cpp cpdn_control.cpp
 
 CC       = g++
@@ -38,8 +38,8 @@ $(TARGET): $(SRC)
 $(DEBUG): $(SRC)
 	$(CC) $(CVERSION) $(SRC) $(CDEBUG) $(INCLUDES)  $(LIBS) -o $(DEBUG)
 
-$(TEST): oifs_43r3_test.cpp
-	$(CC) -g -std=c++17 -Wall -o $(TEST) oifs_43r3_test.cpp
+$(TEST): test_model.cpp
+	$(CC) -g -std=c++17 -Wall -o $(TEST) test_model.cpp
 
 clean:
 	$(RM) *.o $(TARGET) $(DEBUG) $(TEST)
