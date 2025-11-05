@@ -90,31 +90,31 @@ if __name__ == "__main__":
     # HORIZ_RESOLUTION = 159 : Horizontal resolution l159
     # VERT_RESOLUTION = 91 : Vertical resolution 91 levels
     # GRID_TYPE = l_2 : Reduced Gaussian grid type l_2
-    # UPLOAD_INTERVAL = 2880 : Upload interval in seconds (48 model time steps of 1 hour)
+    # UPLOAD_INTERVAL = 12 : Upload interval in model steps (12 model time steps of 1 hour i.e. 2 uploads per 24 hours)
     # UTSTEP = 3600.0 : Model time step in seconds (1 hour)
-    # CUSTOP = 240 : Total number of model time steps to run (240 time steps = 10 days)
+    # CUSTOP = 24 : Total number of model time steps to run (24 time steps = 1 days)
     # CNMEXP = 'NNNN' : Dummy experiment ID
     # NFRRES = 24 : Frequency of restart file output in model time steps (every 24 time steps = daily restarts)
     # NFRPOS = 6 : Frequency of post-processed output in model time steps (every 6 time steps = every 6 hrs)
 
     fort_file_string = "!WU_TEMPLATE_VERSION=43r3-seasonal-20250801\n"+\
-                         "!EXPTID=NNNN\n"+\
-                         "!UNIQUE_MEMBER_ID=1353\n"+\
+                         "!EXPTID=EXPT\n"+\
+                         "!UNIQUE_MEMBER_ID=NNNN\n"+\
                          "!IC_ANCIL_FILE=ic_ancil_0\n" +\
                          "!IFSDATA_FILE=ifsdata_0\n" +\
                          "!CLIMATE_DATA_FILE=clim_data_0\n" +\
                          "!HORIZ_RESOLUTION=159\n" +\
                          "!VERT_RESOLUTION=91\n" +\
                          "!GRID_TYPE=l_2\n" +\
-                         "!UPLOAD_INTERVAL=2880\n" +\
+                         "!UPLOAD_INTERVAL=12\n" +\
                          "\n\n"+\
                          "&NAMARG\n"+\
                          " UTSTEP=3600.0,\n" +\
-                         " CUSTOP=240,\n" +\
-                         " CNMEXP='NNNN',\n" +\
+                         " CUSTOP=24,\n" +\
+                         " CNMEXP='EXPT',\n" +\
                          "/\n"+\
                          "&NAMRES\n"+\
-                         " NFRRES=24,\n"+\
+                         " NFRRES=12,\n"+\
                          "/\n"+\
                          "&NAMCT0\n"+\
                          " NFRPOS=6,\n" +\
