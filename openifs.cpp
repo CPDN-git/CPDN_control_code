@@ -11,6 +11,11 @@
 
 #include "boinc/boinc_api.h"
 
+// Define the code version if not defined at compile time with -D option.
+#ifndef CODE_VERSION
+ #define CODE_VERSION "1.0.0"
+#endif
+
 
 // Set the required OpenIFS environment variables
 bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
