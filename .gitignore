@@ -3,6 +3,10 @@ build
 zip/build
 zip/install
 
+# Ignore test model directories
+test/projects
+test/slots
+
 # Prerequisites
 *.d
 
