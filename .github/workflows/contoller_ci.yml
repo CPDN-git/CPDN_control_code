@@ -37,14 +37,14 @@ jobs:
         path: ${{ runner.temp }}/build_log
     - name: Set up test environment
       run: cd test && chmod 744 setup_test.py && ./setup_test.py
-    - name: Move executable
-      run: mv oifs_43r3_1.00_x86_64-pc-linux-gnu test/projects/
+    - name: Copy task controller
+      run: cp oifs_43r3_1.00_x86_64-pc-linux-gnu test/projects/
     - name: List contents of the root folder
       run: ls -lt >> stdout_and_stderr
     - name: List contents of projects folder
       run: cd test/projects/ && ls -lt >> ../stdout_and_stderr
-    - name: move test_model to slot
-      run: mv test_model.exe test/slots/0/oifs_43r3_test.exe
+    - name: Copy test_model to slot
+      run: cp test_model.exe test/slots/0/oifs_43r3_test.exe
     - name: List contents of slots folder
       run: cd test/slots/0 && ls -lt >> ../stdout_and_stderr
     - name: Run test model
