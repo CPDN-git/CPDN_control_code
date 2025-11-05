@@ -9,6 +9,7 @@ bool set_exec_perms(const std::string&);
 bool parse_key_value(const std::string&, std::string&, std::string&);
 bool extract_key_value(const std::string&, const std::string&, char, std::string& );
 bool read_delimited_line(std::string, const std::string&, const std::string&, int, std::string&);
-int  print_last_lines(const std::string& filename, int nlines);
+int  print_last_lines(const std::string& filename, const int nlines);
 double cpu_time(long handleProcess);
 bool fread_last_line(const std::string&, std::string&);
+std::string getDateTime();

@@ -11,7 +11,11 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
-
+#if defined(_WIN32) || defined(_WIN64)
+  #include <Windows.h>   // for SetFileAttributes
+#else
+  #include <unistd.h>    // for access
+#endif
 #include <sys/stat.h>  // for chmod
 
 namespace  fs = std::filesystem;
@@ -195,7 +199,7 @@ bool read_delimited_line(std::string file_line, const std::string& delimiter, co
  * @return zero : either can't open file or file is empty
  *          > 0  : no. of lines in file (may be less than maxlines)
  */
-int print_last_lines(const std::string& filename, int maxlines)
+int print_last_lines(const std::string& filename, const int maxlines)
 {
    int     count = 0;
    std::string  lines[maxlines];
@@ -211,11 +215,11 @@ int print_last_lines(const std::string& filename, int maxlines)
       int start = count > maxlines ? (count%maxlines) : 0;
       int end   = std::min(maxlines,count);
 
-      std::cerr << ">>> Printing last " << end << " lines from file: " << filename << '\n';
+      std::cerr << "\n~~~~~ Printing last " << end << " lines from file: " << filename << " ~~~~~\n";
       for ( int i=0; i<end; i++ ) {
          std::cerr << lines[ (start+i)%maxlines ] << '\n';
       }
-      std::cerr << "------------------------------------------------" << '\n';
+      std::cerr << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" << std::endl;
    }
 
    return count;
@@ -293,4 +297,29 @@ bool fread_last_line(const std::string& fname, std::string& logline) {
         return true;
     }
     return false;    // no new line read and arg logline unchanged
+}
+
+
+/**
+ * @brief Get current date/time string formatted for logging
+ * 
+ * @return Formatted date/time string
+ */
+std::string getDateTime() {
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+
+    std::stringstream ss; 
+    std::tm  tm_buf;
+#if defined(_WIN32) || defined(_WIN64)
+    localtime_s(&tm_buf, &in_time_t);   // use thread-safe otherwise put_time can fail
+#else
+    localtime_r(&in_time_t, &tm_buf);
+#endif
+#if defined(MONITOR)                    // Monitor is the old name for the cpdn task controller.
+    ss << std::put_time(&tm_buf, "[Mntr: %d/%m %H:%M:%S] ");
+#else
+    ss << std::put_time(&tm_buf, "[%d/%m %H:%M:%S] ");
+#endif
+    return ss.str();
 }
