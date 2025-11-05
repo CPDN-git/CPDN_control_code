@@ -219,8 +219,8 @@ int main(int argc, char** argv)
     // Running in standalone
     else {
       std::cerr << "Running in standalone mode" << '\n';
-      // Set the project path
-      project_path = slot_path + std::string("/../projects/");
+      // Set the project path. Assume usual boinc dir structure.
+      project_path = slot_path + std::string("/../../projects/");
       std::cerr << "Project directory is: " << project_path << '\n';
 
       // In standalone get the app version from the command line
@@ -940,7 +940,7 @@ int main(int argc, char** argv)
          print_last_lines("ifs.stat",8);
          print_last_lines("rcf",11);              // openifs restart control
          print_last_lines("waminfo",17);          // wave model restart control
-         print_last_lines(progress_file,8);
+         print_last_lines(progress_file,10);      // model progress file
          std::cerr << "..Failed, model did not complete successfully" << std::endl;
          return 1;
        }
