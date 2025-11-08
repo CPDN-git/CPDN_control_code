@@ -41,8 +41,8 @@ $(TARGET): $(SRC)
 $(DEBUG): $(SRC)
 	$(CC) $(CVERSION) $(SRC) $(CDEBUG) $(INCLUDES)  $(LIBS) -o $(DEBUG)
 
-$(TEST): test_model.cpp
-	$(CC) -g -std=c++17 -Wall -o $(TEST) test_model.cpp
+$(TEST): models/test/test_model.cpp
+	$(CC) -g -std=c++17 -Wall -o $(TEST) models/test/test_model.cpp
 
 clean:
 	$(RM) *.o $(TARGET) $(DEBUG) $(TEST)
