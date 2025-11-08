@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cstdlib>      // for EXIT_SUCCESS & EXIT_FAILURE
 
-#include "../cpdn_control.h"
+#include "cpdn_control.h"
 
 
 // Handy macros to standardize part of the test code.
