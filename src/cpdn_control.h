@@ -31,7 +31,7 @@
 #include <sys/resource.h>
 
 #include "rapidxml.hpp"
-#include "zip/cpdn_zip.h"
+#include "cpdn_zip.h"
 
 
 int initialise_boinc(std::string&, std::string&, std::string&, int&);

@@ -7,7 +7,7 @@
 
 #include "cpdn_control.h"
 #include "lib/utils.h"
-#include "trickle_handler.h"
+#include "api/trickle_handler.h"
 
 #include "boinc/boinc_api.h"
 
