@@ -11,6 +11,11 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <vector>
+#include <chrono>
+#include <thread>
+#include <limits>
+
 #if defined(_WIN32) || defined(_WIN64)
   #include <Windows.h>   // for SetFileAttributes
 #else
@@ -316,10 +321,75 @@ std::string getDateTime() {
 #else
     localtime_r(&in_time_t, &tm_buf);
 #endif
-#if defined(MONITOR)                    // Monitor is the old name for the cpdn task controller.
-    ss << std::put_time(&tm_buf, "[Mntr: %d/%m %H:%M:%S] ");
-#else
     ss << std::put_time(&tm_buf, "[%d/%m %H:%M:%S] ");
-#endif
     return ss.str();
 }
+
+
+/** 
+ * @brief Get list of output files in current directory with specified suffix
+ * 
+ * @param suffix  File suffix to search for (e.g., ".grb", ".nc")
+ * @return Vector<std::string> of filenames matching the suffix
+ */
+std::vector<std::string> get_out_files(const std::string& suffix) {                                                                    
+
+    std::vector<std::string> outFiles;
+    std::string currentPath = fs::current_path().string();
+
+    for (const auto& entry : fs::directory_iterator(currentPath)) {
+        if (entry.is_regular_file() && entry.path().extension() == suffix) {
+            outFiles.push_back(entry.path().filename().string());
+        }   
+    }   
+    return outFiles;
+}
+
+
+/**
+ * @brief Sleeps for the specified number of seconds.
+ *        Seconds may be fractional.
+ *        Handles very large sleep durations by breaking them into smaller chunks.
+ */
+void sleep_seconds(double seconds)
+{
+    if (seconds < 0.0 || seconds > std::numeric_limits<double>::max() / 1000.0) {
+        return;         // Or throw an exception?
+    }
+    if (seconds == 0.0) {
+        return;
+    }
+
+    // internally chrono::duration stores values as milliseconds, so find the double
+    // corresponding to the largest long long (in millisecs)
+    double max_sleep = static_cast<double>(std::numeric_limits<long long>::max()) / 1000.0 ;
+
+    if (seconds <= max_sleep) {
+        std::chrono::duration<double> duration(seconds);
+        std::this_thread::sleep_for(duration);
+    }
+    else {
+        // Handle very large sleeps that might overflow max std::chrono::duration
+        // This will split the sleep into smaller chunks.
+        double remaining = seconds;
+
+        while (remaining > max_sleep){
+            std::chrono::duration<double> duration(max_sleep);
+            std::this_thread::sleep_for(duration);
+            remaining = remaining - max_sleep;
+        }
+        std::chrono::duration<double> duration(remaining);
+        std::this_thread::sleep_for(duration);
+    }
+}   
+
+
+/**
+ * @brief Prints a banner to stderr at start of controller with model name and version.
+ */
+void banner(const std::string& model_name, const std::string& model_version)                                                                                                      
+{
+    fprintf(stderr, "\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    fprintf(stderr, "|  CPDN task controller starting: Model %s, Version %s \n", model_name.c_str(), model_version.c_str());
+    fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
+} 

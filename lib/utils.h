@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 bool set_env_var(const std::string&, const std::string&);
 bool file_exists(const std::string&);
@@ -13,3 +14,6 @@ int  print_last_lines(const std::string& filename, const int nlines);
 double cpu_time(long handleProcess);
 bool fread_last_line(const std::string&, std::string&);
 std::string getDateTime();
+std::vector<std::string> get_out_files(const std::string&);
+void sleep_seconds(double seconds);
+void banner(const std::string& model_name, const std::string& model_version);

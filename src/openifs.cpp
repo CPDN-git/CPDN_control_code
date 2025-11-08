@@ -122,9 +122,11 @@ int main(int argc, char** argv)
        return retval;
     }
 
+    banner("OpenIFS 43r3", CODE_VERSION);    // TODO. will come from XML input later.
+
     // Argument processing; at least 9 args always.
     if (argc < 9) {
-        std::cerr << "Control code error: Not enough command line arguments provided.\n"
+        std::cerr << "CPDN Controller error: Not enough command line arguments provided.\n"
                   << "Usage: " << argv[0] << " <start_date> <exptid> <unique_member_id> <batchid> <wuid> <fclen> <app_name> <nthreads> [app_version]\n";
         return 1;
     }
@@ -705,7 +707,7 @@ int main(int argc, char** argv)
 
     while (process_status == 0 && model_completed == 0)
     {
-       std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(1)); // Time delay to reduce overhead
+       sleep_seconds(1);         // Time delay to reduce overhead
 
        count++;
 
