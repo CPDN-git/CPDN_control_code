@@ -722,11 +722,12 @@ int main(int argc, char** argv)
              // GC. Why do this every timestep? This should be done at same frequency as NFRPOS.
              std::vector<std::string> icm = {"ICMGG", "ICMSH", "ICMUA"};
              for (const auto& part : icm) {
-                  retval = move_result_file(slot_path, temp_path, part, second_part);
-                  if (retval) {
-                     std::cerr << "..Copying " << part << " result file to the temp folder in the projects directory failed" << "\n";
-                     return retval;
-                  }
+               std::string result = part + second_part;
+               retval = move_result_file(slot_path, temp_path, result);
+               if (retval) {
+                  std::cerr << "..Copying " << part << " result file to the temp folder in the projects directory failed" << "\n";
+                  return retval;
+               }
              }
 
              // Convert iteration number to seconds
@@ -947,7 +948,8 @@ int main(int argc, char** argv)
     // Move the ICMGG, ICMSH and ICMUA model output files to the task folder in the project directory
     std::vector<std::string> icm = {"ICMGG", "ICMSH", "ICMUA"};
     for (const auto& part : icm) {
-       retval = move_result_file(slot_path, temp_path, part, second_part);    // GC. TODO: combine part with second_part and pass as single argument
+       std::string result = part + second_part;
+       retval = move_result_file(slot_path, temp_path, result);
        if (retval) {
           std::cerr << "..Copying " << part << " result file to the temp folder in the projects directory failed" << "\n";
           return retval;

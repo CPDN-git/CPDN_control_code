@@ -46,7 +46,7 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     //options.multi_process = true;           // if your app uses multiple processes, do this before creating any threads or processes, or storing the PID
     options.check_heartbeat = true;         // controller monitors 'heartbeat' messages from the client.
     options.handle_process_control = true;  // controller will handle all suspend/quit/resume messages from the boinc client.
-    options.direct_process_action = false;  // controller will will respond to quit messages and heartbeat failures by exiting, 
+    options.direct_process_action = false;  // controller will respond to quit messages and heartbeat failures by exiting, 
                                             // and will respond to suspend and resume messages by suspending and resuming
     options.send_status_msgs = false;       // If set, the program will report its CPU time and fraction done to the client. 
                                             // Set in worker programs.
@@ -167,7 +167,8 @@ int move_and_unzip_app_file(std::string app_name, std::string version, std::stri
 
 // *********** CONTROLLER *******************
 int check_child_status(long handleProcess, int process_status) {
-    int stat,pid;
+    int stat = 0;
+    int pid = 0;
 
     // Check whether child processed has exited
     // waitpid will return process id of zombie (finished) process; zero if still running
@@ -250,7 +251,7 @@ int check_boinc_status(long handleProcess, int process_status) {
                 process_status = 1;
                 return process_status;
              }
-             std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(1));
+             sleep_seconds(1);
           }
           // Resume child process
           std::cerr << "Resuming the child process" << "\n";
@@ -298,7 +299,7 @@ long launch_process(const std::string& project_path, const std::string& slot_pat
           core_limits.rlim_cur = core_limits.rlim_max = 0;
           if (setrlimit(RLIMIT_CORE, &core_limits) != 0) {
              std::cerr << "..Setting the core dump size to 0 failed" << std::endl;
-             return 1;
+             exit(1);
           }
 
           // Set the stack limit to be unlimited
@@ -308,11 +309,11 @@ long launch_process(const std::string& project_path, const std::string& slot_pat
              stack_limits.rlim_cur = stack_limits.rlim_max = RLIM_INFINITY;
              if (setrlimit(RLIMIT_STACK, &stack_limits) != 0) {
                 std::cerr << "..Setting the stack limit to unlimited failed" << std::endl;
-             return 1;
+             exit(1);
           }
           #endif
 
-          // Execute OpenIFS
+          // Execute model process.
           // OpenIFS 40r1 requires the -e exptid argument, later versions do not.
           // GC. TODO. This should be an input arg, not decided here.
 
@@ -537,12 +538,12 @@ std::string get_second_part(const std::string& last_iter, const std::string& exp
 
 
 //*********** CONTROLLER BUT NEED TO REMOVE MODEL SPECIFICS ***************
-int move_result_file(std::string slot_path, std::string temp_path, std::string first_part, std::string second_part) {
+int move_result_file(const std::string& slot_path, const std::string& temp_path, const std::string& result) {
     int retval = 0;
 
     // Move result file to the temporary folder in the project directory
-    std::string result_file = slot_path + "/" + first_part + second_part;
-    std::string temp_file = temp_path + "/" + first_part + second_part;
+    std::string result_file = slot_path + "/" + result;
+    std::string temp_file = temp_path + "/" + result;
     //std::cerr << "Checking for result file: " << result_file << "\n";
 
     if(file_exists(result_file)) {
