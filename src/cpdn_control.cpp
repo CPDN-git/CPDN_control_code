@@ -18,6 +18,7 @@
 
 // *********** CONTROLLER *******************
 // Initialise BOINC and set the options
+// TODO: all the workunit parameters should be part of a struct/class.
 int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string& version, int& standalone) {
 
     //boinc_init_diagnostics(BOINC_DIAG_DEFAULTS);
@@ -35,12 +36,20 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     // Set BOINC optional values
     BOINC_OPTIONS options;
     boinc_options_defaults(options);
-    options.main_program = true;
-    options.multi_process = true;
-    options.check_heartbeat = true;
-    options.handle_process_control = true;  // the control code will handle all suspend/quit/resume
-    options.direct_process_action = false;  // the control won't get suspended/killed by BOINC
-    options.send_status_msgs = false;
+    options.main_program = true;            // tell boinc client this is the main program
+    // Nov/2025. This option appears to sometimes cause a memory corruption (!prev); possible race condition
+    //          on 'static std::vector<UPLOAD_FILE_STATUS> upload_file_status'; in boinc_api.cpp upon destruction.  
+    //          Disable for now. Monitor code did not use it.
+    //          If this is set true, the client will kill all our child processes on exit (supposedly).
+    //          It also appears to execute suspend/resume on child processes, which we do here.
+    //          If I disable this, then we should make sure all descendants are killed on exit.
+    //options.multi_process = true;           // if your app uses multiple processes, do this before creating any threads or processes, or storing the PID
+    options.check_heartbeat = true;         // controller monitors 'heartbeat' messages from the client.
+    options.handle_process_control = true;  // controller will handle all suspend/quit/resume messages from the boinc client.
+    options.direct_process_action = false;  // controller will will respond to quit messages and heartbeat failures by exiting, 
+                                            // and will respond to suspend and resume messages by suspending and resuming
+    options.send_status_msgs = false;       // If set, the program will report its CPU time and fraction done to the client. 
+                                            // Set in worker programs.
 
     // Check whether BOINC is running in standalone mode
     standalone = boinc_is_standalone();
