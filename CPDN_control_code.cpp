@@ -28,7 +28,9 @@ int initialise_boinc(std::string& wu_name, std::string& project_dir, std::string
     BOINC_OPTIONS options;
     boinc_options_defaults(options);
     options.main_program = true;
-    options.multi_process = true;
+    // GC. Nov/2025. Don't enable. Seems to be responsible for the double free (!prev)
+    //     error we get ~10% of time. Think it's due to a race condition.
+    // options.multi_process = true;
     options.check_heartbeat = true;
     options.handle_process_control = true;  // the control code will handle all suspend/quit/resume
     options.direct_process_action = false;  // the control won't get suspended/killed by BOINC
