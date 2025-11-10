@@ -12,50 +12,54 @@
 #
 #    Final executables can be found in the 'build' subdir.
 #
+#  Structure of a CMakeLists.txt file broadly follows:
+#    1. Set up variables and configurations.
+#    2. Create targets: add_library(), add_library().
+#    3. Apply properties to targets: target_link_options(), target_compile_options().
+#
 #      Glenn Carver, CPDN, Oct, 2025.
 
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
-project(cpdn_control VERSION 1.0.0 LANGUAGES C CXX)
+project(cpdn_control VERSION 1.0.0  DESCRIPTION "CPDN BOINC task controller"  LANGUAGES C CXX)
 
 # Require C++17 standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Version string and compiler flag configuration (mirrors the Makefile variables)
-set(APP_VERSION "1.00"                 CACHE STRING "Version string appended to the executable names.")
-set(PLATFORM    "x86_64-pc-linux-gnu"  CACHE_STRING "Platform and operating system.")
-set(RELEASE_OUTPUT_NAME "cpdn_control_${APP_VERSION}_${PLATFORM}")
-set(DEBUG_OUTPUT_NAME   "cpdn_control_${APP_VERSION}_${PLATFORM}-debug")
+# Configuration
+set(PLATFORM  "x86_64-pc-linux-gnu"  CACHE STRING "Platform and operating system.")
 
-set(TARGET_COMPILE_OPTIONS -g -pthread -Wall CACHE STRING "Compile options for release target.")
-set(TARGET_LINK_OPTIONS    -static           CACHE STRING "Linker options for release target.")
+set(RELEASE_OUTPUT_NAME "cpdn_control_${CMAKE_PROJECT_VERSION}_${PLATFORM}")
+set(DEBUG_OUTPUT_NAME   "cpdn_control_${CMAKE_PROJECT_VERSION}_${PLATFORM}-debug")
+
+# Compiler configuration
+set(RELEASE_COMPILE_OPTIONS -g -pthread -Wall CACHE STRING "Compile options for release target.")
+set(RELEASE_LINK_OPTIONS    -static           CACHE STRING "Linker options for release target.")
 set(DEBUG_COMPILE_OPTIONS  -fsanitize=address -ggdb3 -pthread -Wall CACHE STRING "Compile options for debug target.")
 set(DEBUG_LINK_OPTIONS     -fsanitize=address                       CACHE STRING "Linker options for debug target.")
 
 include(cmake/GitHelpers.cmake)
-get_git_hash(CODE_VERSION_HASH)
+include(cmake/TargetHelpers.cmake)
 
 set(RELEASE_TARGET_NAME cpdn_release)
 set(DEBUG_TARGET_NAME   cpdn_debug)
 
-# --- CONFIGURATION FOR BOINC LIBRARY
+# --- CONFIGURATION FOR BOINC LIBRARY (headers & lib)
 include(cmake/BoincConfig.cmake)
 configure_boinc()
 
-# --- CONFIGURATION FOR CPDNZIP LIBRARY (Headers & Lib)
+# --- CONFIGURATION FOR CPDNZIP LIBRARY (headers & lib)
 include(cmake/CPDNzipConfig.cmake)
 configure_cpdnzip()
 
+# Other packages required
 find_package(Threads REQUIRED)
 
 # ----------------------------------------------------
 
-#  Enable CTest support for the project
-enable_testing()
-
-# Add the source so tests can link against it
+# Add the source include dirs
 set(LOCAL_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -63,20 +67,23 @@ set(LOCAL_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/api
 )
 
+# Unit tests need just these source files; create a library for them to link against.
 add_library(cpdn_control 
     ./src/cpdn_control.cpp
     ./lib/utils.cpp
     ./lib/cpdn_linux_cpu_time.cpp
     ./api/trickle_handler.cpp
 )
-target_include_directories(cpdn_control PUBLIC ${LOCAL_INCLUDE_DIRS})
 
 # Add external header paths for boinc and cpdnzip
-# These paths are PUBLIC because code needs them to compile.
+# These paths are PUBLIC because the main code needs them to compile.
 target_include_directories(cpdn_control PUBLIC 
     ${BOINC_INCLUDE_DIR}
     ${CPDNZIP_INCLUDE_DIR}
 )
+
+# Add local header paths
+target_include_directories(cpdn_control PUBLIC ${LOCAL_INCLUDE_DIRS})
 
 # Link the external libraries
 # Marked PUBLIC so downstream executables inherit the requirement.
@@ -85,31 +92,22 @@ target_link_libraries(cpdn_control PUBLIC
     ${CPDNZIP_LIB}
 )
 
+# this executes git to retrieve the current hash of the branch and sets a macro the code uses.
+get_git_hash(CODE_VERSION_HASH)
 target_compile_definitions(cpdn_control PUBLIC CODE_VERSION="${CODE_VERSION_HASH}")
 
-add_executable(${RELEASE_TARGET_NAME}
-    ./src/openifs.cpp
-)
-set_target_properties(${RELEASE_TARGET_NAME} PROPERTIES OUTPUT_NAME ${RELEASE_OUTPUT_NAME})
-target_link_libraries(${RELEASE_TARGET_NAME} PRIVATE cpdn_control Threads::Threads)
-if(TARGET_COMPILE_OPTIONS)
-    target_compile_options(${RELEASE_TARGET_NAME} PRIVATE ${TARGET_COMPILE_OPTIONS})
-endif()
-if(TARGET_LINK_OPTIONS)
-    target_link_options(${RELEASE_TARGET_NAME} PRIVATE ${TARGET_LINK_OPTIONS})
-endif()
+# Configure release and debug targets using the helper function
+add_cpdn_executable(${RELEASE_TARGET_NAME} ${RELEASE_OUTPUT_NAME} 
+                    "${RELEASE_COMPILE_OPTIONS}" "${RELEASE_LINK_OPTIONS}")
 
-add_executable(${DEBUG_TARGET_NAME}
-    ./src/openifs.cpp
-)
-set_target_properties(${DEBUG_TARGET_NAME} PROPERTIES OUTPUT_NAME ${DEBUG_OUTPUT_NAME})
-target_link_libraries(${DEBUG_TARGET_NAME} PRIVATE cpdn_control Threads::Threads)
-if(DEBUG_COMPILE_OPTIONS)
-    target_compile_options(${DEBUG_TARGET_NAME} PRIVATE ${DEBUG_COMPILE_OPTIONS})
-endif()
-if(DEBUG_LINK_OPTIONS)
-    target_link_options(${DEBUG_TARGET_NAME} PRIVATE ${DEBUG_LINK_OPTIONS})
-endif()
+add_cpdn_executable(${DEBUG_TARGET_NAME} ${DEBUG_OUTPUT_NAME}
+                    "${DEBUG_COMPILE_OPTIONS}" "${DEBUG_LINK_OPTIONS}")
+
+
+#------- UNIT TESTS CONFIGURATION
+
+#  Enable CTest support for the project
+enable_testing()
 
 # Include the 'tests' subdirectory to process its CMakeLists.txt
 add_subdirectory(utests)
