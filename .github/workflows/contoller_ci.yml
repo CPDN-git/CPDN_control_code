@@ -21,7 +21,9 @@ jobs:
       run: ls -lt boinc-install/include/boinc > stdout_and_stderr
     - name: Build cpdn-zip library
       run:  cd zip && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=../install .. && make && make install
-    - name: Build the OpenIFS control code executable - this builds test model as well
+    - name: Build the CPDN control executable
+      run:  mkdir build && cd build && cmake .. && make && cp oifs*pc-linux-gnu ..
+    - name: Build the test model -- uses Makefile for now
       run:  BOINC_DIR=./boinc-install make 
     - name: Upload built executable
       if: ${{ success() }}
@@ -37,7 +39,7 @@ jobs:
         path: ${{ runner.temp }}/build_log
     - name: Set up test environment
       run: cd test && chmod 744 setup_test.py && ./setup_test.py
-    - name: Copy task controller
+    - name: Copy CPDN controller exe
       run: cp oifs_43r3_1.00_x86_64-pc-linux-gnu test/projects/
     - name: List contents of the root folder
       run: ls -lt >> stdout_and_stderr
