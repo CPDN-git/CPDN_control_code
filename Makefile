@@ -32,8 +32,9 @@ CPDNZIP_LIB  = -L$(ZIP_DIR)/lib -lcpdn_zip		# note this is a combined static lib
 LIBS = $(BOINC_LIB) $(CPDNZIP_LIB)
 
 
-
-all: $(TARGET) $(DEBUG) $(TEST)
+# 10/Nov: cmake now builds the release and debug executables
+#all: $(TARGET) $(DEBUG) $(TEST)
+all: $(TEST)
 
 $(TARGET): $(SRC)
 	$(CC) $(CVERSION) $(SRC) $(CFLAGS) $(INCLUDES) $(LIBS) -o $(TARGET)
