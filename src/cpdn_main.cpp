@@ -1,8 +1,8 @@
 //
-// Control code for the OpenIFS application in the climateprediction.net project
+// BOINC task controller for CPDN.
 //
-// Written by Andy Bowery (Oxford eResearch Centre, Oxford University) December 2023
-// Contributions from Glenn Carver (ex-ECMWF), 2022->
+// This version written by Glenn Carver, CPDN, 2025.
+// Original version by Andy Bowery (Oxford eResearch Centre, Oxford University) December 2023.
 //
 
 #include "cpdn_control.h"
@@ -17,7 +17,7 @@
 #endif
 
 
-// Set the required OpenIFS environment variables
+// Set the required OpenIFS environment variables THIS NEEDS TO MOVE TO OPENIFS Model class.
 bool oifs_setenvs(const std::string& slot_path, const std::string& nthreads) {
 
     // For memory safety, keep env strings static so they persist for the life of the program.
@@ -122,9 +122,12 @@ int main(int argc, char** argv)
        return retval;
     }
 
-    banner("OpenIFS 43r3", CODE_VERSION);    // TODO. will come from XML input later.
+    banner("CPDN task controller", CODE_VERSION);    // TODO. will come from XML input later.
+
+    // TODO. Read in the model config.xml
 
     // Argument processing; at least 9 args always.
+    // TODO: THIS NEEDS TO BE HANDLED BY THE SPECIFIC MODEL CLASS
     if (argc < 9) {
         std::cerr << "CPDN Controller error: Not enough command line arguments provided.\n"
                   << "Usage: " << argv[0] << " <start_date> <exptid> <unique_member_id> <batchid> <wuid> <fclen> <app_name> <nthreads> [app_version]\n";
@@ -186,7 +189,7 @@ int main(int argc, char** argv)
       }
     }
 
-    std::cerr << "\nControl Code version: " << CODE_VERSION << '\n' // CODE_VERSION is a macro set at compile time
+    std::cerr << "\nCPDN task controller version: " << CODE_VERSION << '\n' // CODE_VERSION is a macro set at compile time
               << "wu_name: " << wu_name << '\n'
               << "project_dir: " << project_dir << '\n'
               << "version: " << version << '\n';
@@ -473,7 +476,7 @@ int main(int argc, char** argv)
     //-------------------------------------------------------------------------------------------------------
 
     // Define the name and location of the progress file and the rcf file
-    std::string progress_file = slot_path + "/progress_file_" + wuid;
+    std::string progress_file = slot_path + "/progress_file";
     std::string rcf_file = slot_path + "/rcf";
 
     std::string last_iter = "0";
@@ -909,7 +912,7 @@ int main(int argc, char** argv)
 
 
     // Time delay to ensure model files are all flushed to disk
-    std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(60));
+    sleep_seconds(60);
 
     // Print content of key model files to help with diagnosing problems
     print_last_lines("NODE.001_01", 70);    //  main model output log	
@@ -1088,7 +1091,7 @@ int main(int argc, char** argv)
     boinc_end_critical_section();
 
     // Delay to ensure all files are flushed to disk before exiting
-    std::this_thread::sleep_until(chrono::system_clock::now() + chrono::seconds(120));
+    sleep_seconds(120);
     std::cerr << "Task finished." << std::endl;
 
     // if finished normally
