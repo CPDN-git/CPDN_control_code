@@ -37,8 +37,8 @@ set(DEBUG_OUTPUT_NAME   "cpdn_control_${CMAKE_PROJECT_VERSION}_${PLATFORM}-debug
 # Compiler configuration
 set(RELEASE_COMPILE_OPTIONS -g -pthread -Wall CACHE STRING "Compile options for release target.")
 set(RELEASE_LINK_OPTIONS    -static           CACHE STRING "Linker options for release target.")
-set(DEBUG_COMPILE_OPTIONS  -fsanitize=address -ggdb3 -pthread -Wall CACHE STRING "Compile options for debug target.")
-set(DEBUG_LINK_OPTIONS     -fsanitize=address                       CACHE STRING "Linker options for debug target.")
+set(DEBUG_COMPILE_OPTIONS   -fsanitize=address -ggdb3 -pthread -Wall CACHE STRING "Compile options for debug target.")
+set(DEBUG_LINK_OPTIONS      -fsanitize=address                       CACHE STRING "Linker options for debug target.")
 
 include(cmake/GitHelpers.cmake)
 include(cmake/TargetHelpers.cmake)
@@ -69,17 +69,17 @@ set(LOCAL_INCLUDE_DIRS
 
 # Unit tests need just these source files; create a library for them to link against.
 add_library(cpdn_control 
-    ./src/cpdn_control.cpp
-    ./lib/utils.cpp
-    ./lib/cpdn_linux_cpu_time.cpp
-    ./api/trickle_handler.cpp
+        ./src/cpdn_control.cpp
+        ./lib/utils.cpp
+        ./lib/cpdn_linux_cpu_time.cpp
+        ./api/trickle_handler.cpp
 )
 
 # Add external header paths for boinc and cpdnzip
 # These paths are PUBLIC because the main code needs them to compile.
 target_include_directories(cpdn_control PUBLIC 
-    ${BOINC_INCLUDE_DIR}
-    ${CPDNZIP_INCLUDE_DIR}
+                    ${BOINC_INCLUDE_DIR}
+                    ${CPDNZIP_INCLUDE_DIR}
 )
 
 # Add local header paths
@@ -88,8 +88,8 @@ target_include_directories(cpdn_control PUBLIC ${LOCAL_INCLUDE_DIRS})
 # Link the external libraries
 # Marked PUBLIC so downstream executables inherit the requirement.
 target_link_libraries(cpdn_control PUBLIC
-    ${BOINC_API} ${BOINC_LIB}
-    ${CPDNZIP_LIB}
+                    ${BOINC_API} ${BOINC_LIB}
+                    ${CPDNZIP_LIB}
 )
 
 # this executes git to retrieve the current hash of the branch and sets a macro the code uses.
@@ -97,11 +97,13 @@ get_git_hash(CODE_VERSION_HASH)
 target_compile_definitions(cpdn_control PUBLIC CODE_VERSION="${CODE_VERSION_HASH}")
 
 # Configure release and debug targets using the helper function
-add_cpdn_executable(${RELEASE_TARGET_NAME} ${RELEASE_OUTPUT_NAME} 
-                    "${RELEASE_COMPILE_OPTIONS}" "${RELEASE_LINK_OPTIONS}")
+add_cpdn_executable(${RELEASE_TARGET_NAME} ./src/cpdn_main.cpp ${RELEASE_OUTPUT_NAME} 
+                    "${RELEASE_COMPILE_OPTIONS}" 
+                    "${RELEASE_LINK_OPTIONS}")
 
-add_cpdn_executable(${DEBUG_TARGET_NAME} ${DEBUG_OUTPUT_NAME}
-                    "${DEBUG_COMPILE_OPTIONS}" "${DEBUG_LINK_OPTIONS}")
+add_cpdn_executable(${DEBUG_TARGET_NAME} .src/cpdn_main.cpp ${DEBUG_OUTPUT_NAME}
+                    "${DEBUG_COMPILE_OPTIONS}" 
+                    "${DEBUG_LINK_OPTIONS}")
 
 
 #------- UNIT TESTS CONFIGURATION
