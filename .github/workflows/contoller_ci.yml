@@ -22,7 +22,7 @@ jobs:
     - name: Build cpdn-zip library
       run:  cd zip && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=../install .. && make && make install
     - name: Build the CPDN control executable
-      run:  mkdir build && cd build && cmake .. && make && cp oifs*pc-linux-gnu ..
+      run:  mkdir build && cd build && cmake .. -DBOINC_DIR=./boinc-install && make && cp oifs*pc-linux-gnu ..
     - name: Build the test model -- uses Makefile for now
       run:  BOINC_DIR=./boinc-install make 
     - name: Upload built executable
