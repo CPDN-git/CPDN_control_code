@@ -7,12 +7,13 @@
 # 
 # Parameters:
 #   target_name   - The CMake target name
+#   target_src    - The source file with the main() function for the target
 #   output_name   - The output executable name
 #   compile_opts  - List of compile options (can be empty)
 #   link_opts     - List of link options (can be empty)
 #
-function(add_cpdn_executable target_name output_name compile_opts link_opts)
-    add_executable(${target_name} ./src/openifs.cpp)
+function(add_cpdn_executable target_name target_src output_name compile_opts link_opts)
+    add_executable(${target_name} ${target_src})
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${output_name})
     target_link_libraries(${target_name} PRIVATE cpdn_control Threads::Threads)
     
