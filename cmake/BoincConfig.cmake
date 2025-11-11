@@ -1,16 +1,14 @@
 # Helper to configure the BOINC dependency for this project.
-function(configure_boinc)
+function(configure_boinc boinc_dir)
     set(BOINC_LIB_NAME "boinc")
     set(BOINC_API_NAME "boinc_api")
 
-    set(
-        BOINC_INCLUDE_DIR
-        "../boinc-8.0.2-x86_64/include"
+    set(BOINC_INCLUDE_DIR
+        "${boinc_dir}/include"
         CACHE PATH "Path to BOINC headers."
     )
-    set(
-        BOINC_LIB_DIR
-        "../boinc-8.0.2-x86_64/lib"
+    set(BOINC_LIB_DIR
+        "${boinc_dir}/lib"
         CACHE PATH "Path to BOINC libraries."
     )
 
@@ -22,17 +20,13 @@ function(configure_boinc)
     set(CMAKE_FIND_LIBRARY_SUFFIXES ${_BOINC_OLD_SUFFIXES})
 
     if (NOT BOINC_LIB)
-        message(
-            FATAL_ERROR
-            "Could not find BOINC library ${BOINC_LIB_NAME}. Check BOINC_LIB_DIR."
-        )
+        message(FATAL_ERROR
+            "Could not find BOINC library ${BOINC_LIB_NAME}. Check BOINC_LIB_DIR." )
     endif()
 
     if (NOT BOINC_API)
-        message(
-            FATAL_ERROR
-            "Could not find BOINC API library ${BOINC_API_NAME}. Check BOINC_LIB_DIR."
-        )
+        message(FATAL_ERROR
+            "Could not find BOINC API library ${BOINC_API_NAME}. Check BOINC_LIB_DIR." )
     endif()
 
     # Promote variables so the parent scope can use them when linking.
