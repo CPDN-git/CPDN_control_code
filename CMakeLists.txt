@@ -48,7 +48,8 @@ set(DEBUG_TARGET_NAME   cpdn_debug)
 
 # --- CONFIGURATION FOR BOINC LIBRARY (headers & lib)
 include(cmake/BoincConfig.cmake)
-configure_boinc()
+set(BOINC_DIR "../boinc-8.0.2-x86_64" CACHE STRING "Root directory of BOINC install." ) 
+configure_boinc(${BOINC_DIR})
 
 # --- CONFIGURATION FOR CPDNZIP LIBRARY (headers & lib)
 include(cmake/CPDNzipConfig.cmake)
@@ -101,7 +102,7 @@ add_cpdn_executable(${RELEASE_TARGET_NAME} ./src/cpdn_main.cpp ${RELEASE_OUTPUT_
                     "${RELEASE_COMPILE_OPTIONS}" 
                     "${RELEASE_LINK_OPTIONS}")
 
-add_cpdn_executable(${DEBUG_TARGET_NAME} .src/cpdn_main.cpp ${DEBUG_OUTPUT_NAME}
+add_cpdn_executable(${DEBUG_TARGET_NAME} ./src/cpdn_main.cpp ${DEBUG_OUTPUT_NAME}
                     "${DEBUG_COMPILE_OPTIONS}" 
                     "${DEBUG_LINK_OPTIONS}")
 
