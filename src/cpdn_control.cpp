@@ -8,8 +8,8 @@
 //
 
 #include "cpdn_control.h"
-#include "openifs.h"
 #include "lib/utils.h"
+#include "src/cpdn_main.h" // this can be removed once we have a class fn for call to oifs_setenvs.
 
 #include "boinc/boinc_api.h"
 #include "boinc/diagnostics.h"
