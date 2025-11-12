@@ -4,6 +4,9 @@ This respository contains the instructions and code for building the controlling
 used for controlling the climate models in the climateprediction.net project, at this point 
 the ECMWF OpenIFS (43r3) models.
 
+[![CTest Unit Tests](https://github.com/CPDN-git/cpdn_control/actions/workflows/run_unit_tests.yml/badge.svg)](https://github.com/CPDN-git/cpdn_control/actions/workflows/run_unit_tests.yml)
+[![Controller CI](https://github.com/CPDN-git/cpdn_control/actions/workflows/controller_ci.yml/badge.svg)](https://github.com/CPDN-git/cpdn_control/actions/workflows/controller_ci.yml)
+
 ## Prerequisite: BOINC library
 
 To compile the controlling code you will need to download and build the BOINC code (this is available from: https://github.com/BOINC/boinc). 
